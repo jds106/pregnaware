@@ -21,33 +21,34 @@ scalastyleConfig := new sbt.File("project/scalastyle-config.xml")
 coverageOutputHTML := false
 coverageOutputCobertura := true
 
-// Logging dependencies
-libraryDependencies ++= Seq(
-  "ch.qos.logback" % "logback-classic" % "1.1.3",
-  "com.typesafe.scala-logging" %% "scala-logging" % "3.1.0"
-)
+// Default versions
+val akka = "2.3.6"
+val swagger = "0.5.1"
+val spray = "1.3.3"
 
-// Scalatra
-libraryDependencies ++= Seq(
-  "org.scalatra" %% "scalatra" % "2.4.+",
-  "org.scalatra" %% "scalatra-json" % "2.4.+",
-  "org.scalatra" %% "scalatra-swagger"% "2.4.+"
-)
+libraryDependencies ++= Seq (
+  // -- json --
+  "org.json4s" %% "json4s-jackson" % "3.3.0"
 
-// JSON
-libraryDependencies ++= Seq(
-  "org.json4s"   %% "json4s-jackson" % "3.3.0"
-)
+  // -- Logging --
+  ,"ch.qos.logback" % "logback-classic" % "1.1.3"
 
-// Jetty
-libraryDependencies ++= Seq(
-  "org.eclipse.jetty" % "jetty-webapp" % "9.3.7.v20160115",
-  "org.eclipse.jetty.orbit" % "javax.servlet" % "3.0.0.v201112011016"
-)
+  // -- Akka --
+  ,"com.typesafe.akka" %% "akka-actor" % akka
+  ,"com.typesafe.akka" %% "akka-slf4j" % akka
 
-// Unit testing
-libraryDependencies ++= Seq(
-  "org.scalatest" %% "scalatest" % "2.2.6"
+  // -- Spray --
+  ,"io.spray" %% "spray-routing" % spray
+  ,"io.spray" %% "spray-client" % spray
+
+  // -- Swagger --
+  ,"com.gettyimages" %% "spray-swagger" % swagger
+
+  // -- config --
+  ,"com.typesafe" % "config" % "1.2.1"
+
+  // -- Testing --
+  ,"org.scalatest" %% "scalatest" % "2.2.6" % "test"
 )
 
 // Discard unnecessary duplicate files

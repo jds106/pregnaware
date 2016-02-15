@@ -3,39 +3,41 @@ package app
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-import org.json4s.Formats
-import spray.routing.HttpService
 import com.wordnik.swagger.annotations._
-import spray.http.StatusCodes.OK
-import spray.routing.HttpService
+import spray.routing.{HttpService, Route}
+import utils.Json4sSupport
 
 /** Controller for the due date */
+@Api(value = "/progress", description = "Pregnancy-progress related end-points", produces = "application/json")
 trait ProgressHttpService extends HttpService {
-
-  import utils.Json4sSupport._
+  import Json4sSupport._
 
   // Human gestation period
   private val gestationPeriod = 280
 
+  /** The routes defined by this service */
   val routes = getProgress
 
-  @ApiOperation(value = "Gets the current progress", notes = "", nickname = "getPerson", httpMethod = "GET")
+  @ApiOperation(value = "Gets the current progress", nickname = "getPerson", httpMethod = "GET")
   @ApiImplicitParams(Array(
-    new ApiImplicitParam(name = "body", value = "Person with name", dataType = "Person", required = true, paramType = "body")
+    new ApiImplicitParam(name="year", value="Due date (year)", dataType="int", required=true, paramType="query"),
+    new ApiImplicitParam(name="month", value="Due date (month)", dataType="int", required=true, paramType="query"),
+    new ApiImplicitParam(name="day", value="Due date (day)", dataType="int", required=true, paramType="query")
   ))
   @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "The progress")
+    new ApiResponse(code=200, message="Progress information", response=classOf[ProgressModel])
   ))
-  def getProgress =
+  def getProgress : Route =
     path("progress") {
-      get {
-        val conceptionDate = LocalDate.of(2015, 10, 15)
-        val dueDate = conceptionDate.plusDays(gestationPeriod)
-        val passed = ChronoUnit.DAYS.between(conceptionDate, LocalDate.now)
-        val remaining = ChronoUnit.DAYS.between(LocalDate.now, dueDate)
+      parameters('year.as[Int], 'month.as[Int], 'day.as[Int]) { (year, month, day) =>
+        get {
+          val conceptionDate = LocalDate.of(year, month, day)
+          val dueDate = conceptionDate.plusDays(gestationPeriod)
+          val passed = ChronoUnit.DAYS.between(conceptionDate, LocalDate.now)
+          val remaining = ChronoUnit.DAYS.between(LocalDate.now, dueDate)
 
-        complete(ProgressModel(dueDate, passed, remaining))
+          complete(ProgressModel(dueDate, passed, remaining))
+        }
       }
     }
 }
-

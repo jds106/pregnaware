@@ -1,41 +1,42 @@
 package utils
 
-import java.time.LocalDate
-import java.time.temporal.ChronoUnit
-
+import app.ProgressModel
 import com.wordnik.swagger.annotations._
+import spray.http.StatusCodes
 import spray.routing.{HttpService, Route}
 
 /** Controller for the due date */
-@Api(value = "/progress", description = "Pregnancy-progress related end-points", produces = "application/json")
+@Api(value = "/health", description = "Health end-point", produces = "application/json")
 trait HealthHttpService extends HttpService {
-  import utils.Json4sSupport._
 
-  // Human gestation period
-  private val gestationPeriod = 280
+  import Json4sSupport._
+
+  case class DetailedHealthResponse(component: String, detail: String)
+
+  case class HealthResponse(ok: Boolean, detail: Seq[DetailedHealthResponse])
+
+  /** Override this with a more detailed response */
+  def getHealthResponse: HealthResponse = HealthResponse(ok = true, Seq.empty[DetailedHealthResponse])
 
   /** The routes defined by this service */
-  val routes = getProgress
+  val routes = getHealth
 
-  @ApiOperation(value = "Gets the current progress", nickname = "getPerson", httpMethod = "GET")
-  @ApiImplicitParams(Array(
-    new ApiImplicitParam(name="year", value="Due date (year)", dataType="int", required=true, paramType="query"),
-    new ApiImplicitParam(name="month", value="Due date (month)", dataType="int", required=true, paramType="query"),
-    new ApiImplicitParam(name="day", value="Due date (day)", dataType="int", required=true, paramType="query")
-  ))
+  @ApiOperation(value = "Health end-point", nickname = "getHealth", httpMethod = "GET")
   @ApiResponses(Array(
-    new ApiResponse(code=200, message="Progress information", response=classOf[ProgressModel])
+    new ApiResponse(code = 200, message = "All systems operational", response = classOf[ProgressModel])
   ))
-  def getProgress : Route =
-    path("progress") {
-      parameters('year.as[Int], 'month.as[Int], 'day.as[Int]) { (year, month, day) =>
-        get {
-          val conceptionDate = LocalDate.of(year, month, day)
-          val dueDate = conceptionDate.plusDays(gestationPeriod)
-          val passed = ChronoUnit.DAYS.between(conceptionDate, LocalDate.now)
-          val remaining = ChronoUnit.DAYS.between(LocalDate.now, dueDate)
-
-          complete(ProgressModel(dueDate, passed, remaining))
+  def getHealth: Route =
+    path("health") {
+      get {
+        val response = getHealthResponse
+        if (response.ok) {
+          complete {
+            StatusCodes.OK -> response
+          }
+        } else {
+          complete {
+            StatusCodes.ServiceUnavailable -> response
+          }
         }
       }
     }

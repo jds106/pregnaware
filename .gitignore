@@ -2,7 +2,7 @@
 *.log
 
 # Mac-specific
-.DS_Store
+*.DS_Store
 
 # Artifact folders
 bin/

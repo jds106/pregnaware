@@ -1,8 +1,9 @@
 package app
 
-/**
-  * Created by james on 09/02/2016.
-  */
-class ProgressModel {
+import java.time.LocalDate
 
-}
+/** Simple due-date model */
+case class ProgressModel(
+  dueDate: LocalDate,
+  daysPassed: Long,
+  daysRemaining: Long)

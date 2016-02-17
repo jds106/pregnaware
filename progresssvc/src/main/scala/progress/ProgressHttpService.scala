@@ -1,4 +1,4 @@
-package app
+package progress
 
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -6,6 +6,10 @@ import java.time.temporal.ChronoUnit
 import com.wordnik.swagger.annotations._
 import spray.routing.{HttpService, Route}
 import utils.Json4sSupport
+
+object ProgressHttpService {
+  val serviceName = "ProgressSvc"
+}
 
 /** Controller for the due date */
 @Api(value = "/progress", description = "Pregnancy-progress related end-points", produces = "application/json")
@@ -16,7 +20,9 @@ trait ProgressHttpService extends HttpService {
   private val gestationPeriod = 280
 
   /** The routes defined by this service */
-  val routes = getProgress
+  val routes = pathPrefix(ProgressHttpService.serviceName) {
+    getProgress
+  }
 
   @ApiOperation(value = "Gets the current progress", nickname = "getPerson", httpMethod = "GET")
   @ApiImplicitParams(Array(
@@ -31,8 +37,8 @@ trait ProgressHttpService extends HttpService {
     path("progress") {
       parameters('year.as[Int], 'month.as[Int], 'day.as[Int]) { (year, month, day) =>
         get {
-          val conceptionDate = LocalDate.of(year, month, day)
-          val dueDate = conceptionDate.plusDays(gestationPeriod)
+          val dueDate = LocalDate.of(year, month, day)
+          val conceptionDate = dueDate.minusDays(gestationPeriod)
           val passed = ChronoUnit.DAYS.between(conceptionDate, LocalDate.now)
           val remaining = ChronoUnit.DAYS.between(LocalDate.now, dueDate)
 

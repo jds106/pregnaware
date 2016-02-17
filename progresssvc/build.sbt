@@ -41,6 +41,9 @@ libraryDependencies ++= Seq (
   ,"io.spray" %% "spray-routing" % spray
   ,"io.spray" %% "spray-client" % spray
 
+  // -- JBCrypt --
+  ,"org.mindrot" % "jbcrypt" % "0.3m"
+
   // -- Swagger --
   ,"com.gettyimages" %% "spray-swagger" % swagger
 

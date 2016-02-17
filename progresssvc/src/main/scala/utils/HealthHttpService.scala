@@ -1,6 +1,6 @@
 package utils
 
-import app.ProgressModel
+import progress.ProgressModel
 import com.wordnik.swagger.annotations._
 import spray.http.StatusCodes
 import spray.routing.{HttpService, Route}

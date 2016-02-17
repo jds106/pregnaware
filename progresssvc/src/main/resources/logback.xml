@@ -10,6 +10,14 @@
         <appender-ref ref="console" />
     </logger>
 
+    <logger name="com.gettyimages.spray.swagger" level="warn" additivity="false">
+        <appender-ref ref="console" />
+    </logger>
+
+    <logger name="spray.can" level="warn" additivity="false">
+        <appender-ref ref="console" />
+    </logger>
+
     <root level="info">
         <appender-ref ref="console"/>
     </root>

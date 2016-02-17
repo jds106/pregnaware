@@ -11,6 +11,7 @@ bin/
 .project
 .settings/
 model/
+*tmp/
 
 # sbt specific
 .cache

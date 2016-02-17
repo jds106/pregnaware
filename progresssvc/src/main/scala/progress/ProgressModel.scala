@@ -1,4 +1,4 @@
-package app
+package progress
 
 import java.time.LocalDate
 

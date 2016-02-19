@@ -6,7 +6,7 @@ import java.time.LocalDate
 case class SessionEntry(userId: Int, sessionId: String)
 
 /** A holder for new user data */
-case class NewUser(displayName: String, email: String, dueDate: LocalDate, password: String)
+case class NewUser(displayName: String, email: String, password: String)
 
 /** A holder for returning user data */
 case class ReturningUser(email: String, password: String)

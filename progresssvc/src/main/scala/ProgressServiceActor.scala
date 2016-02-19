@@ -7,7 +7,7 @@ import akka.io.Tcp.Bound
 import com.typesafe.scalalogging.StrictLogging
 import frontend.{FrontEndHttpService, FileSessionPersister}
 import naming.{FileNamePersister, NamingHttpService}
-import progress.ProgressHttpService
+import progress.{FileProgressPersister, ProgressHttpService}
 import spray.can.Http
 import spray.routing._
 import user.{FileUserPersister, UserHttpService}
@@ -22,12 +22,15 @@ class ProgressServiceActor extends HttpServiceActor with ActorLogging {
   val fileRoots = Map[String, File](
     NamingHttpService.serviceName -> new File(fileRoot, NamingHttpService.serviceName),
     UserHttpService.serviceName -> new File(fileRoot, UserHttpService.serviceName),
-    FrontEndHttpService.serviceName -> new File(fileRoot, FrontEndHttpService.serviceName))
+    FrontEndHttpService.serviceName -> new File(fileRoot, FrontEndHttpService.serviceName),
+    ProgressHttpService.serviceName -> new File(fileRoot, ProgressHttpService.serviceName)
+  )
 
   // Ensure the file roots exists
   fileRoots.values.filter(!_.exists()).foreach(_.mkdirs())
 
-  val progressService = new ProgressHttpService {
+  val progressService = new ProgressHttpService with FileProgressPersister {
+    def root = fileRoots(ProgressHttpService.serviceName)
     def actorRefFactory = context
   }
 

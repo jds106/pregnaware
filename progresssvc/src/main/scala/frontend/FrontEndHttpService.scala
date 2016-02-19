@@ -14,8 +14,8 @@ import spray.http.Uri.{Authority, Host, Path}
 import spray.http._
 import spray.routing._
 import user.UserEntry
-import utils.ConsulWrapper
 import utils.Json4sSupport._
+import utils.{ConsulWrapper, HeaderKeys}
 
 import scala.annotation.tailrec
 import scala.concurrent.ExecutionContext
@@ -69,7 +69,7 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
             } else {
               // The user was not found - create it
               val newUserEntry =
-                UserEntry(-1, user.displayName, user.email, user.dueDate, BCrypt.hashpw(user.password, salt))
+                UserEntry(-1, user.displayName, user.email, BCrypt.hashpw(user.password, salt))
 
               sendRequest(Put(s"$userUrl/user", newUserEntry)) { response =>
                 val persistedUserEntry = response ~> unmarshal[UserEntry]
@@ -122,30 +122,51 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
     }
   }
 
-  val getGeneralResponse1 = (get | put | post | delete) {
-    pathPrefix(Segment) { serviceName =>
-      logger.info(s"Processing request to $serviceName")
-      pathSuffix(RestPath) { remainingUrl =>
-        logger.info(s"Matched remaining URL: $remainingUrl")
-        complete("OK")
+  val logout = get {
+    path("logout") {
+      cookie("sessionId") { sessionCookie =>
+        sessions.get(sessionCookie.content) match {
+          case None =>
+            logger.warn(s"Unknown user attempted logout: s${sessionCookie.content}")
+            complete(StatusCodes.OK)
+
+          case Some(session) =>
+            logger.info(s"User logged out: ${session.userId} / ${session.sessionId}")
+            sessions.remove(session.sessionId)
+            deleteSession(session)
+            complete(StatusCodes.OK)
+        }
       }
     }
   }
 
+  /** Strips the "part" from the path (and any leading slashes) */
   @tailrec
-  private def removePath(path: Uri.Path, part: String) : Uri.Path = {
+  private def removePath(path: Uri.Path, part: String): Uri.Path = {
     path match {
       case Path.Slash(tail) =>
-        logger.info(s"Removing leading slash from $path -> $tail")
         removePath(tail, part)
       case Path.Segment(head, tail) if head == part =>
-        logger.info(s"Removing head from $path -> $tail")
         removePath(tail, part)
       case p =>
-        logger.info(s"No change to path: $p")
         p
     }
   }
+
+  private def fetchUser(userHandler: UserEntry => Route): Route =
+    cookie("sessionId") { sessionCookie =>
+      sessions.get(sessionCookie.content) match {
+        case None =>
+          complete(StatusCodes.Unauthorized -> "User not logged in")
+
+        case Some(session) =>
+          getService(userServiceName) { userUrl =>
+            sendRequest(Get(s"$userUrl/user/${session.userId}")) { response =>
+              userHandler(response ~> unmarshal[UserEntry])
+            }
+          }
+      }
+    }
 
   val getGeneralResponse = (get | put | post | delete) {
     pathPrefix(Segment) { serviceName =>
@@ -155,35 +176,37 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
         logger.info(s"Rejecting unknown service: $serviceName - must be one of: $serviceNames")
         reject
       } else {
-        logger.info(s"Processing request to $serviceName")
-
         requestInstance { request =>
 
           val remainingUrl = removePath(removePath(request.uri.path, FrontEndHttpService.serviceName), serviceName)
 
           logger.info(s"Routing to service $serviceName with remaining url: $remainingUrl")
+          fetchUser { user =>
+            logger.info(s"Routing user ${user.userId} / ${user.email} to $serviceName")
 
-          getServiceAddress(serviceName) { address =>
+            getServiceAddress(serviceName) { address =>
 
-            // Scheme://authority/path?query#fragment ( see 3.1 of http://tools.ietf.org/html/rfc3986)
-            val newAuthority = Authority(Host(address.getHostName), address.getPort)
-            val newUri = request.uri.copy(
-              scheme = "http",
-              authority = newAuthority,
-              path = Path./ + serviceName ++ Path./ ++ remainingUrl)
+              // Scheme://authority/path?query#fragment ( see 3.1 of http://tools.ietf.org/html/rfc3986)
+              val newAuthority = Authority(Host(address.getHostName), address.getPort)
+              val newUri = request.uri.copy(
+                scheme = "http",
+                authority = newAuthority,
+                path = Path./ + serviceName ++ Path./ ++ remainingUrl)
 
-            val forwardingRequest = request.copy(uri = newUri)
+              val forwardingRequest =
+                new RequestBuilder(request.method)(newUri, user) ~> addHeader(HeaderKeys.EntryId, user.userId.toString)
 
-            logger.info(s"Forwarding on request: $forwardingRequest")
-            onComplete(httpRef.ask(forwardingRequest).mapTo[HttpResponse]) {
-              case Failure(ex) =>
-                val msg = s"Failed when making request: ${request.uri.toString}"
-                logger.error(msg, ex)
-                complete(StatusCodes.InternalServerError -> s"$msg - ${ex.getMessage}")
+              logger.info(s"Forwarding on request: $forwardingRequest")
+              onComplete(httpRef.ask(forwardingRequest).mapTo[HttpResponse]) {
+                case Failure(ex) =>
+                  val msg = s"Failed when making request: ${request.uri.toString}"
+                  logger.error(msg, ex)
+                  complete(StatusCodes.InternalServerError -> s"$msg - ${ex.getMessage}")
 
-              case Success(response) =>
-                logger.info(s"Had a response: $response")
-                complete(response.entity.asString)
+                case Success(response) =>
+                  logger.info(s"Had a response: $response")
+                  complete(response.entity.asString)
+              }
             }
           }
         }
@@ -191,34 +214,16 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
     }
   }
 
-  //  val getProgress = get {
-  //    path("progress") {
-  //      cookie("sessionId") { sessionCookie =>
-  //        sessions.get(sessionCookie.content) match {
-  //          case None =>
-  //            complete(StatusCodes.Unauthorized)
-  //
-  //          case Some(session) =>
-  //            getService(userServiceName) { userUrl =>
-  //              sendRequest(Get(s"$userUrl/user/${session.sessionId}")) { response =>
-  //                if (response.status.isSuccess) {
-  //                  val user = response ~> unmarshal[UserEntry]
-  //                  val query = s"year=${user.dueDate.getYear}&month=${user.dueDate.getMonthValue}&day=${user.dueDate.getDayOfMonth}"
-  //                  sendRequest(Get(s"$progressUrl/progress?$query")) { response =>
-  //                  }
-  //                } else {
-  //
-  //                }
-  //              }
-  //            }
-  //        }
-  //      }
-  //    }
-  //  }
+  val staticRoutes =
+    pathEndOrSingleSlash { getFromResource("html/index.html") } ~
+    pathPrefix("login") { getFromResource("html/login.html") }  ~
+    pathPrefix("main") { getFromResource("html/main.html") }  ~
+    pathPrefix("css") { getFromResourceDirectory("css") } ~
+    pathPrefix("js") { getFromResourceDirectory("js") }
 
   /** The routes defined by this service */
   val routes = pathPrefix(FrontEndHttpService.serviceName) {
-    newUser ~ login ~ getGeneralResponse
+    newUser ~ login ~ logout ~ staticRoutes ~ getGeneralResponse
   }
 
   private def getServiceAddress(serviceName: String)(responseHandler: InetSocketAddress => Route): Route = {
@@ -260,6 +265,9 @@ trait SessionPersister {
 
   /** Persist changes */
   def saveSession(session: SessionEntry): Unit
+
+  /** Delete a user session */
+  def deleteSession(session: SessionEntry): Unit
 }
 
 trait FileSessionPersister extends SessionPersister {
@@ -286,5 +294,12 @@ trait FileSessionPersister extends SessionPersister {
     } finally {
       writer.close()
     }
+  }
+
+  /** Delete a user session */
+  def deleteSession(session: SessionEntry): Unit = {
+    val file = new File(root, s"${session.userId}.json")
+    if (file.exists())
+      file.delete()
   }
 }

@@ -6,6 +6,7 @@ import com.typesafe.scalalogging.StrictLogging
 import org.json4s.jackson.Serialization.{read, write}
 import spray.http.StatusCodes
 import spray.routing.{HttpService, Route}
+import utils.HeaderKeys
 import utils.Json4sSupport._
 
 import scala.io.Source
@@ -22,7 +23,7 @@ trait NamingHttpService extends HttpService with NamePersister with StrictLoggin
 
   /** The routes defined by this service */
   val routes = pathPrefix(NamingHttpService.serviceName) {
-    getNames ~ putName ~ deleteName ~ users
+    getNames ~ putName ~ deleteName
   }
 
   // Load in previous naming suggestions
@@ -48,8 +49,8 @@ trait NamingHttpService extends HttpService with NamePersister with StrictLoggin
   /** Returns the current list of known names */
   def getNames : Route = get {
     path("names") {
-      parameter('userId.as[Int]) { userId =>
-        complete(StatusCodes.OK -> NamingEntries(userId, names.getOrElse(userId, Seq.empty[NamingEntry])))
+      userIdFromHeader { userId =>
+        complete(StatusCodes.OK -> NamingEntries(names.getOrElse(userId, Seq.empty[NamingEntry])))
       }
     }
   }
@@ -57,12 +58,14 @@ trait NamingHttpService extends HttpService with NamePersister with StrictLoggin
   /** Adds a new name to the list */
   def putName : Route = put {
     path("name") {
-      entity(as[NamingEntry]) { entry =>
-        val currentEntries = getEntries(entry.userId)
+      userIdFromHeader { userId =>
+        entity(as[NamingEntry]) { entry =>
+          val currentEntries = getEntries(userId)
 
-        currentEntries += entry
-        saveNames(entry.userId, currentEntries)
-        complete(StatusCodes.OK)
+          currentEntries += entry
+          saveNames(userId, currentEntries)
+          complete(StatusCodes.OK)
+        }
       }
     }
   }
@@ -70,39 +73,41 @@ trait NamingHttpService extends HttpService with NamePersister with StrictLoggin
   /** Bulk-adds names - replaces existing names */
   def putNames : Route = put {
     path("names") {
-      entity(as[NamingEntries]) { entries =>
+      userIdFromHeader { userId =>
+        entity(as[NamingEntries]) { entries =>
 
-        val currentEntries = getEntries(entries.userId)
-        currentEntries.clear()
-        entries.entries.foreach(e => currentEntries += e)
+          val currentEntries = getEntries(userId)
+          currentEntries.clear()
+          entries.entries.foreach(e => currentEntries += e)
 
-        saveNames(entries.userId, currentEntries)
-        complete(StatusCodes.OK)
+          saveNames(userId, currentEntries)
+          complete(StatusCodes.OK)
+        }
       }
     }
   }
 
   def deleteName : Route = delete {
     path("name") {
-      entity(as[NamingEntry]) { entry =>
-        names.get(entry.userId) match {
-          case None =>
-            logger.error(s"Could not find any entries for user ${entry.userId}")
-            complete(StatusCodes.BadRequest)
+      userIdFromHeader { userId =>
+        entity(as[NamingEntry]) { entry =>
+          names.get(userId) match {
+            case None =>
+              logger.error(s"Could not find any entries for user $userId")
+              complete(StatusCodes.BadRequest)
 
-          case Some(currentEntries) =>
-            currentEntries.find(_ == entry).foreach(e => currentEntries -= e)
-            saveNames(entry.userId, currentEntries)
-            complete(StatusCodes.OK)
+            case Some(currentEntries) =>
+              currentEntries.find(_ == entry).foreach(e => currentEntries -= e)
+              saveNames(userId, currentEntries)
+              complete(StatusCodes.OK)
+          }
         }
       }
     }
   }
 
-  def users : Route = get {
-    path("users") {
-      complete(names.keySet)
-    }
+  private def userIdFromHeader(handler: Int => Route) : Route = {
+    headerValueByName(HeaderKeys.EntryId)(s => handler(s.toInt))
   }
 }
 
@@ -133,7 +138,7 @@ trait FileNamePersister extends NamePersister {
 
   /** Persist changes */
   def saveNames(userId: Int, entryList: Seq[NamingEntry]) : Unit = {
-    val entries = NamingEntries(userId, entryList)
+    val entries = NamingEntries(entryList)
 
     val file = new File(root, s"$userId.json")
     val writer = new FileWriter(file)

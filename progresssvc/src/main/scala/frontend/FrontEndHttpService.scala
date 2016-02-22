@@ -56,30 +56,30 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
 
   val newUser = put {
     path("newUser") {
-      entity(as[NewUser]) { user =>
-        getService(userServiceName) { userUrl =>
-          sendRequest(Get(s"$userUrl/findUser/${user.email}")) { response =>
-            logger.info(s"Received response to findUser: $response")
+      requestInstance { ri =>
+        logger.info(s"Found new user requets: $ri")
+        entity(as[NewUser]) { user =>
+          getService(userServiceName) { userUrl =>
+            sendRequest(Get(s"$userUrl/findUser/${user.email}")) { response =>
+              logger.info(s"Received response to findUser: $response")
 
-            if (response.status.isSuccess) {
-              // The user was found - cannot create a new user with this e-mail address
-              logger.info(s"User already exists")
-              complete(StatusCodes.Conflict -> s"User ${user.email} already exists")
+              if (response.status.isSuccess) {
+                // The user was found - cannot create a new user with this e-mail address
+                logger.info(s"User already exists")
+                complete(StatusCodes.Conflict -> s"User ${user.email} already exists")
 
-            } else {
-              // The user was not found - create it
-              val newUserEntry =
-                UserEntry(-1, user.displayName, user.email, BCrypt.hashpw(user.password, salt))
+              } else {
+                // The user was not found - create it
+                val newUserEntry =
+                  UserEntry(-1, user.displayName, user.email, BCrypt.hashpw(user.password, salt))
 
-              sendRequest(Put(s"$userUrl/user", newUserEntry)) { response =>
-                val persistedUserEntry = response ~> unmarshal[UserEntry]
-                val session = SessionEntry(persistedUserEntry.userId, java.util.UUID.randomUUID().toString)
+                sendRequest(Put(s"$userUrl/user", newUserEntry)) { response =>
+                  val persistedUserEntry = response ~> unmarshal[UserEntry]
+                  val session = SessionEntry(persistedUserEntry.userId, java.util.UUID.randomUUID().toString)
 
-                saveSession(session)
-                sessions.put(session.sessionId, session)
-
-                setCookie(makeCookie(session.sessionId)) {
-                  complete(StatusCodes.OK)
+                  saveSession(session)
+                  sessions.put(session.sessionId, session)
+                  complete(StatusCodes.OK -> session.sessionId)
                 }
               }
             }
@@ -89,32 +89,37 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
     }
   }
 
-  val login = get {
+  val login = post {
     path("login") {
-      entity(as[ReturningUser]) { user =>
-        getService(userServiceName) { userUrl =>
-          sendRequest(Get(s"$userUrl/findUser/${user.email}")) { response =>
-            if (response.status.isSuccess) {
-              // User found
-              val userEntry = response ~> unmarshal[UserEntry]
-              val session = sessions.values.find(_.userId == userEntry.userId) match {
-                case Some(s) =>
-                  s
+      logRequestResponse("Login", akka.event.Logging.ErrorLevel) {
+        entity(as[ReturningUser]) { user =>
+          getService(userServiceName) { userUrl =>
+            sendRequest(Get(s"$userUrl/findUser/${user.email}")) { response =>
+              if (response.status.isFailure) {
+                complete(StatusCodes.Unauthorized -> s"Unknown user: ${user.email}")
 
-                case None =>
-                  val newSession = SessionEntry(userEntry.userId, java.util.UUID.randomUUID().toString)
+              } else {
+                val userEntry = response ~> unmarshal[UserEntry]
+                if (!BCrypt.checkpw(user.password, userEntry.passwordHash)) {
+                  complete(StatusCodes.Unauthorized -> s"Invalid password for user: ${user.email}")
 
-                  saveSession(newSession)
-                  sessions.put(newSession.sessionId, newSession)
-                  newSession
+                } else {
+
+                  val session = sessions.values.find(_.userId == userEntry.userId) match {
+                    case Some(s) =>
+                      s
+
+                    case None =>
+                      val newSession = SessionEntry(userEntry.userId, java.util.UUID.randomUUID().toString)
+
+                      saveSession(newSession)
+                      sessions.put(newSession.sessionId, newSession)
+                      newSession
+                  }
+
+                  complete(StatusCodes.OK -> session.sessionId)
+                }
               }
-
-              setCookie(makeCookie(session.sessionId)) {
-                complete(StatusCodes.OK)
-              }
-            } else {
-              // The user was not found - cannot log in
-              complete(StatusCodes.Unauthorized)
             }
           }
         }
@@ -122,12 +127,12 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
     }
   }
 
-  val logout = get {
+  val logout = post {
     path("logout") {
-      cookie("sessionId") { sessionCookie =>
-        sessions.get(sessionCookie.content) match {
+      parameters('sessionId.as[String]) { sessionId =>
+        sessions.get(sessionId) match {
           case None =>
-            logger.warn(s"Unknown user attempted logout: s${sessionCookie.content}")
+            logger.warn(s"Unknown user attempted logout: s${sessionId}")
             complete(StatusCodes.OK)
 
           case Some(session) =>
@@ -154,8 +159,9 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
   }
 
   private def fetchUser(userHandler: UserEntry => Route): Route =
-    cookie("sessionId") { sessionCookie =>
-      sessions.get(sessionCookie.content) match {
+    parameters('sessionId.as[String]) { sessionId =>
+      logger.info(s"Found session id: $sessionId")
+      sessions.get(sessionId) match {
         case None =>
           complete(StatusCodes.Unauthorized -> "User not logged in")
 
@@ -169,44 +175,46 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
     }
 
   val getGeneralResponse = (get | put | post | delete) {
-    pathPrefix(Segment) { serviceName =>
-      val serviceNames = Seq(userServiceName, progressServiceName, namingServiceName)
+    logRequestResponse("GeneralRequest", akka.event.Logging.ErrorLevel) {
+      pathPrefix(Segment) { serviceName =>
+        val serviceNames = Seq(userServiceName, progressServiceName, namingServiceName)
 
-      if (!serviceNames.contains(serviceName)) {
-        logger.info(s"Rejecting unknown service: $serviceName - must be one of: $serviceNames")
-        reject
-      } else {
-        requestInstance { request =>
+        if (!serviceNames.contains(serviceName)) {
+          logger.info(s"Rejecting unknown service: $serviceName - must be one of: $serviceNames")
+          reject
+        } else {
+          requestInstance { request =>
+              val remainingUrl = removePath(removePath(request.uri.path, FrontEndHttpService.serviceName), serviceName)
 
-          val remainingUrl = removePath(removePath(request.uri.path, FrontEndHttpService.serviceName), serviceName)
+              logger.info(s"Routing to service $serviceName with remaining url: $remainingUrl")
+              fetchUser { user =>
+                logger.info(s"Routing user ${user.userId} / ${user.email} to $serviceName")
 
-          logger.info(s"Routing to service $serviceName with remaining url: $remainingUrl")
-          fetchUser { user =>
-            logger.info(s"Routing user ${user.userId} / ${user.email} to $serviceName")
+                getServiceAddress(serviceName) { address =>
 
-            getServiceAddress(serviceName) { address =>
+                  // Scheme://authority/path?query#fragment (see 3.1 of http://tools.ietf.org/html/rfc3986)
+                  val newAuthority = Authority(Host(address.getHostName), address.getPort)
+                  val newUri = request.uri.copy(
+                    scheme = "http",
+                    authority = newAuthority,
+                    path = Path./ + serviceName ++ Path./ ++ remainingUrl)
 
-              // Scheme://authority/path?query#fragment ( see 3.1 of http://tools.ietf.org/html/rfc3986)
-              val newAuthority = Authority(Host(address.getHostName), address.getPort)
-              val newUri = request.uri.copy(
-                scheme = "http",
-                authority = newAuthority,
-                path = Path./ + serviceName ++ Path./ ++ remainingUrl)
+                  val forwardingRequest =
+                    request.copy(uri = newUri) ~>
+                      addHeader(HeaderKeys.EntryId, user.userId.toString)
 
-              val forwardingRequest =
-                new RequestBuilder(request.method)(newUri, user) ~> addHeader(HeaderKeys.EntryId, user.userId.toString)
+                  logger.info(s"Forwarding on request: $forwardingRequest")
+                  onComplete(httpRef.ask(forwardingRequest).mapTo[HttpResponse]) {
+                    case Failure(ex) =>
+                      val msg = s"Failed when making request: ${request.uri.toString}"
+                      logger.error(msg, ex)
+                      complete(StatusCodes.InternalServerError -> s"$msg - ${ex.getMessage}")
 
-              logger.info(s"Forwarding on request: $forwardingRequest")
-              onComplete(httpRef.ask(forwardingRequest).mapTo[HttpResponse]) {
-                case Failure(ex) =>
-                  val msg = s"Failed when making request: ${request.uri.toString}"
-                  logger.error(msg, ex)
-                  complete(StatusCodes.InternalServerError -> s"$msg - ${ex.getMessage}")
-
-                case Success(response) =>
-                  logger.info(s"Had a response: $response")
-                  complete(response.entity.asString)
-              }
+                    case Success(response) =>
+                      logger.info(s"Had a response: $response")
+                      complete(response.status -> response.entity.asString)
+                  }
+                }
             }
           }
         }
@@ -215,16 +223,30 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
   }
 
   val staticRoutes =
-    pathEndOrSingleSlash { getFromResource("html/index.html") } ~
-    pathPrefix("login") { getFromResource("html/login.html") }  ~
-    pathPrefix("main") { getFromResource("html/main.html") }  ~
-    pathPrefix("css") { getFromResourceDirectory("css") } ~
-    pathPrefix("js") { getFromResourceDirectory("js") }
+    pathEndOrSingleSlash {
+      getFromResource("html/login.html")
+    } ~
+      pathPrefix("login") {
+        getFromResource("html/login.html")
+      } ~
+      pathPrefix("main") {
+        getFromResource("html/main.html")
+      } ~
+      pathPrefix("html") {
+        getFromResourceDirectory("html")
+      } ~
+      pathPrefix("css") {
+        getFromResourceDirectory("css")
+      } ~
+      pathPrefix("js") {
+        getFromResourceDirectory("js")
+      }
 
   /** The routes defined by this service */
-  val routes = pathPrefix(FrontEndHttpService.serviceName) {
-    newUser ~ login ~ logout ~ staticRoutes ~ getGeneralResponse
-  }
+  val routes = //staticRoutes ~
+    pathPrefix(FrontEndHttpService.serviceName) {
+      newUser ~ login ~ logout ~ getGeneralResponse
+    }
 
   private def getServiceAddress(serviceName: String)(responseHandler: InetSocketAddress => Route): Route = {
     onComplete(ConsulWrapper.getAddressAsync(serviceName)) {
@@ -252,10 +274,6 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
   private def onFail(msg: String, ex: Throwable): Route = {
     logger.error(msg, ex)
     complete(StatusCodes.InternalServerError -> s"$msg: ${ex.getMessage}")
-  }
-
-  private def makeCookie(sessionId: String): HttpCookie = {
-    HttpCookie("sessionId", content = sessionId)
   }
 }
 

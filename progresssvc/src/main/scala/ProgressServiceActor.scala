@@ -5,7 +5,7 @@ import akka.actor._
 import akka.io.IO
 import akka.io.Tcp.Bound
 import com.typesafe.scalalogging.StrictLogging
-import frontend.{FrontEndHttpService, FileSessionPersister}
+import frontend.{FileSessionPersister, FrontEndHttpService}
 import naming.{FileNamePersister, NamingHttpService}
 import progress.{FileProgressPersister, ProgressHttpService}
 import spray.can.Http
@@ -70,7 +70,7 @@ class ProgressServiceActor extends HttpServiceActor with ActorLogging {
     "A simple service based around the progress of a pregnancy")
 
   // This ensures that CORS is only permitted for known hosts
-  val validOrigins = Set("petstore.swagger.io")
+  val validOrigins = Set("petstore.swagger.io", "localhost")
   val route = CorsWrapper.allowOrigins(validOrigins) {
     progressService.routes ~
       healthService.routes ~

@@ -12,6 +12,8 @@ bin/
 .settings/
 model/
 *tmp/
+*node_modules/
+*typings/
 
 # sbt specific
 .cache

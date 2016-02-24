@@ -1,5 +1,5 @@
 /// <reference path="../references.ts" />
-module Controller {
+module entities {
     'use strict';
 
     export interface NewUserRequest {
@@ -15,6 +15,19 @@ module Controller {
         rememberUser: boolean
     }
 
+    export interface User {
+        userId: number
+        displayName: string
+        email: string
+        friends: Friend[]
+    }
+
+    export interface Friend {
+        userId: number
+        displayName: string
+        email: string
+    }
+
     export interface LocalDate {
         year: number
         month: number
@@ -25,5 +38,15 @@ module Controller {
         dueDate: LocalDate
         daysPassed: number
         daysRemaining: number
+    }
+
+    export interface NamingEntry {
+        gender: string
+        name: string
+        suggestedBy: string
+    }
+
+    export interface NamingEntries {
+        entries: NamingEntry[]
     }
 }

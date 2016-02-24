@@ -4,4 +4,5 @@ case class UserEntry(
   userId: Int,
   displayName: String,
   email: String,
-  passwordHash: String)
+  passwordHash: String,
+  friends: Seq[Int])

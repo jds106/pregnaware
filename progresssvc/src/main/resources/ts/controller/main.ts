@@ -1,130 +1,42 @@
 /// <reference path="../references.ts" />
 
-module Controller {
+module controller {
     'use strict';
 
-    import WebRoot = Utils.WebRoot;
-    import ProgressModel = Controller.ProgressModel;
-    import LocalDate = Controller.LocalDate;
-
-    class EnhancedProgressModel implements ProgressModel {
-        public daysPassed: number;
-        public daysRemaining: number;
-        public dueDate: LocalDate;
-
-        public get WeeksPassed() { return Math.floor(this.daysPassed / 7); }
-        public get WeeksRemaining() { return Math.floor(this.daysRemaining / 7); }
-
-        constructor(model: ProgressModel) {
-            this.daysPassed = model.daysPassed;
-            this.daysRemaining = model.daysRemaining;
-            this.dueDate = model.dueDate;
-        }
-
-        public get FormattedDueDate() {
-            // Format the due date - handling the zero-index months
-            var asMomentDate = moment()
-                .year(this.dueDate.year).month(this.dueDate.month - 1).date(this.dueDate.day);
-            return asMomentDate.format("LL");
-        }
-    }
+    import User = entities.User;
 
     export class MainController {
-        private $http:angular.IHttpService;
-        private $cookies:angular.cookies.ICookiesService;
         private $window:angular.IWindowService;
-        private $scope:angular.IScope;
+        private frontend: service.FrontEndSvc;
+        private usermgmt: service.UserManagementSvc;
 
-        private names;
+        private user: User;
 
-        private progressModel: EnhancedProgressModel;
+        constructor(
+            $window:angular.IWindowService,
+            frontend: service.FrontEndSvc,
+            usermgmt: service.UserManagementSvc) {
 
-        constructor($http:angular.IHttpService,
-                    $cookies:angular.cookies.ICookiesService,
-                    $window:angular.IWindowService,
-                    $scope:angular.IScope) {
-
-            this.$http = $http;
-            this.$cookies = $cookies;
             this.$window = $window;
-            this.$scope = $scope;
+            this.frontend = frontend;
+            this.usermgmt = usermgmt;
 
-            this.NamesAction();
-            this.DueDateAction();
+            this.usermgmt.userChangedEvent(user => {
+                this.user = user;
+            });
         }
 
-        private get SessionId() {
-            return this.$cookies.get(WebRoot.SessionIdKey);
+        public get User() {
+            return this.user;
         }
 
-        private NamesAction() {
-            this.$http.get(WebRoot.Url('/FrontEndSvc/NamingSvc/names', this.SessionId))
-
+        public LogoutAction() {
+            this.frontend.logout()
                 .error((error) => {
-                    console.error('Names Error', error);
-                })
-
-                .success((result) => {
-                    this.names = result
-                });
-        }
-
-        private DueDateAction() {
-            this.$http.get(WebRoot.Url('/FrontEndSvc/ProgressSvc/progress', this.SessionId))
-
-                .error((error) => {
-                    console.error('Progress Error', error);
-                })
-
-                .success((response) => {
-                    this.progressModel = new EnhancedProgressModel(<ProgressModel>JSON.parse(response));
-                });
-        }
-
-        public get Names() {
-            return this.names;
-        }
-
-        public get Progress() {
-            return this.progressModel;
-        }
-
-        // Due date selection logic
-        private dueDatePickerOpen:boolean = false;
-        public get DueDatePickerOpen() { return this.dueDatePickerOpen; }
-        public set DueDatePickerOpen(isOpen:boolean) { this.dueDatePickerOpen = isOpen; }
-
-        private dueDate:number = Date.now();
-        public get DueDate() { return this.dueDate; }
-        public set DueDate(newDate:number) { this.dueDate = newDate; }
-
-        public UpdateDueDate() {
-            var parsedDueDate = moment(this.dueDate);
-            var asLocalDate : LocalDate = {
-                year: parsedDueDate.year(),
-                month: parsedDueDate.month() + 1,   // The months are zero-indexed
-                day: parsedDueDate.date()
-            };
-
-            console.log("Setting due date to: " + asLocalDate);
-            this.$http.put(WebRoot.Url('/FrontEndSvc/ProgressSvc/progress', this.SessionId), asLocalDate)
-                .error((error) => {
-                    console.error('Could not put due date', error);
+                    console.error("Unable to log out: " + error)
                 })
                 .success((response) => {
-                    console.log('Successfully set due date', response);
-                    this.progressModel = new EnhancedProgressModel(<ProgressModel>JSON.parse(response));
-                });
-        }
-
-        public ChangeDueDate() {
-            this.$http.delete(WebRoot.Url('/FrontEndSvc/ProgressSvc/progress', this.SessionId))
-                .error((error) => {
-                    console.error('Could not put due date', error);
-                })
-                .success((response) => {
-                    console.log('Successfully reset due date', response);
-                    this.progressModel = null;
+                    this.$window.location.pathname = '/login';
                 });
         }
     }

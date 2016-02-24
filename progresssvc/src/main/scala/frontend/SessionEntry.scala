@@ -1,7 +1,5 @@
 package frontend
 
-import java.time.LocalDate
-
 /** A holder for the user session */
 case class SessionEntry(userId: Int, sessionId: String)
 

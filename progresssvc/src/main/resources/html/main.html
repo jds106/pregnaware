@@ -20,114 +20,66 @@
     - navbar-fixed-top helps to make the menu bar fixed at the top of the page even if we are scrolling
   -->
 
-  <div class="container rounded-section">
+  <nav class="navbar-wrapper navbar-default navbar-fixed-top navbar-background" role="navigation">
+    <div class="container">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <h1>Graviditate</h1>
+      </div>
+
+
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse navbar-right">
+        <!-- Log out -->
+        <ul class="nav navbar-nav">
+          <li><a class="navbar-link" href="#" ng-click="main.LogoutAction()">Logout {{main.User.displayName}}</a></li>
+        </ul>
+
+        <!-- Friends -->
+        <ul class="nav navbar-nav">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+              <span class="glyphicon glyphicon-user"></span><span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href>Me</a></li>
+              <li class="divider"></li>
+              <li class="dropdown-header">No friends have added you yet...</li>
+            </ul>
+          </li>
+        </ul>
+
+        <!-- Admin -->
+        <ul class="nav navbar-nav">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+              <span class="glyphicon glyphicon-th-list"></span><span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href ng-click="main.ChangeDueDate()">Set due date</a></li>
+              <li class="divider"></li>
+              <li><a href>Share with friend</a></li>
+              <li class="divider"></li>
+              <li><a href="#">Account settings</a></li>
+            </ul>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </nav>
+
+  <div class="container">
     <div class="row">
-      <h1 class="text-center">Graviditate</h1>
     </div>
   </div>
 
-  <div class="container rounded-section">
-    <div class="row">
-      <div class="col-md-12">
-        <h2>Progress</h2>
-      </div>
-    </div>
-    <div ng-show="main.Progress">
-      <div class="row">
-        <div class="col-md-12">
-          <uib-progressbar animate="false" type="success" value="main.Progress.daysPassed" max="280"></uib-progressbar>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-4">
-          <p>Elapsed: {{main.Progress.daysPassed}} days / {{main.Progress.WeeksPassed}} weeks</p>
-        </div>
-        <div class="col-md-4">
-          <p class="text-center">Remaining: {{main.Progress.daysRemaining}} days / {{main.Progress.WeeksRemaining}} weeks</p>
-        </div>
-        <div class="col-md-4">
-          <p class="pull-right">Due: {{main.Progress.FormattedDueDate}}
-            <button type="button" class="btn btn-primary btn-xs" ng-click="main.ChangeDueDate()">Change</button>
-          </p>
-        </div>
-      </div>
-    </div>
-    <div class="row" ng-hide="main.Progress">
-      <div class="col-md-12">
-        <due-date-missing></due-date-missing>
-      </div>
-    </div>
-  </div>
+  <pregnancy-progress></pregnancy-progress>
 
-  <div class="container rounded-section">
-    <div class="row">
-      <div class="col-md-12">
-        <h2>Names</h2>
-      </div>
-    </div>
-    <div class="row">
-      <div class="col-md-6">
-        <h3 class="text-center">Girl</h3>
-        <table class="table table-striped">
-          <thead>
-          <tr>
-            <th class="text-center">Name</th>
-            <th class="text-center">Suggested by</th>
-            <th class="text-center">Remove</th>
-          </tr>
-          </thead>
-          <tbody>
-          <tr>
-            <td class="text-center">Helen</td>
-            <td class="text-center">
-              <small><em>James</em></small>
-            </td>
-            <td class="text-center">
-              <small><span class="glyphicon glyphicon-remove"></span></small>
-            </td>
-          </tr>
-          <tr>
-            <td class="text-center">Jane</td>
-            <td class="text-center">
-              <small><em>James</em></small>
-            </td>
-            <td class="text-center">
-              <small><span class="glyphicon glyphicon-remove"></span></small>
-            </td>
-          </tr>
-          <tr>
-            <td class="text-center">Angela</td>
-            <td class="text-center">
-              <small>Helen</small>
-            </td>
-            <td class="text-center">
-              <small><span class="glyphicon glyphicon-remove"></span></small>
-            </td>
-          </tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="col-md-6">
-        <h3 class="text-center">Boy</h3>
-        <table class="table">
-          <tr>
-            <td>Zak</td>
-            <td>
-              <small>James</small>
-            </td>
-            <td class="text-center"><span class="glyphicon glyphicon-remove text-center"></span></td>
-          </tr>
-          <tr>
-            <td>Arnold</td>
-            <td>
-              <small>James</small>
-            </td>
-            <td><span class="glyphicon glyphicon-remove"></span></td>
-          </tr>
-        </table>
-      </div>
-    </div>
-  </div>
+  <baby-names></baby-names>
 
   <hr>
 

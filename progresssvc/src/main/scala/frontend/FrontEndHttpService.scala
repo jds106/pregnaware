@@ -1,26 +1,15 @@
 package frontend
 
-import java.io.{File, FileWriter}
-import java.net.InetSocketAddress
-
-import akka.actor.ActorRef
 import akka.pattern.ask
-import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
-import org.json4s.jackson.Serialization.{read, write}
-import org.mindrot.jbcrypt.BCrypt
+import frontend.services.UserManagementHttpService
 import spray.client.pipelining._
 import spray.http.Uri.{Authority, Host, Path}
 import spray.http._
 import spray.routing._
-import user.UserEntry
+import utils.HeaderKeys
 import utils.Json4sSupport._
-import utils.{ConsulWrapper, HeaderKeys}
 
-import scala.annotation.tailrec
-import scala.concurrent.ExecutionContext
-import scala.concurrent.duration._
-import scala.io.Source
 import scala.util.{Failure, Success}
 
 object FrontEndHttpService {
@@ -28,10 +17,7 @@ object FrontEndHttpService {
 }
 
 /** Support user login */
-trait FrontEndHttpService extends HttpService with SessionPersister with StrictLogging {
-
-  /** The name of the User Service */
-  def userServiceName: String
+trait FrontEndHttpService extends HttpService with FrontEndFuncs with StrictLogging {
 
   /** The name of the Progress Service */
   def progressServiceName: String
@@ -39,142 +25,40 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
   /** The name of the Naming Service */
   def namingServiceName: String
 
-  /** The HTTP connection */
-  implicit def httpRef: ActorRef
+  /** The session manager */
+  def sessionManager: SessionManager
 
-  /** The HTTP context */
-  implicit def ex: ExecutionContext
+  /** Delegate user funcitons to the user management service */
+  private val userMgmtSvc =
+    new UserManagementHttpService(sessionManager, userServiceName, actorRefFactory, this.ex, this.httpRef)
 
-  private implicit val timeout: Timeout = 5.seconds
+  /** The routes defined by this service */
+  val routes = //staticRoutes ~
+    pathPrefix(FrontEndHttpService.serviceName) {
+      userMgmtSvc.routes ~ getGeneralResponse
+    }
 
-  // The password hashing salt
-  val salt = BCrypt.gensalt()
-
-  // Load in the current user sessions
-  private val sessions = new scala.collection.mutable.HashMap[String, SessionEntry]()
-  loadSessions.foreach(s => sessions.put(s.sessionId, s))
-
-  val newUser = put {
-    path("newUser") {
-      requestInstance { ri =>
-        logger.info(s"Found new user requets: $ri")
-        entity(as[NewUser]) { user =>
-          getService(userServiceName) { userUrl =>
-            sendRequest(Get(s"$userUrl/findUser/${user.email}")) { response =>
-              logger.info(s"Received response to findUser: $response")
-
-              if (response.status.isSuccess) {
-                // The user was found - cannot create a new user with this e-mail address
-                logger.info(s"User already exists")
-                complete(StatusCodes.Conflict -> s"User ${user.email} already exists")
-
-              } else {
-                // The user was not found - create it
-                val newUserEntry =
-                  UserEntry(-1, user.displayName, user.email, BCrypt.hashpw(user.password, salt))
-
-                sendRequest(Put(s"$userUrl/user", newUserEntry)) { response =>
-                  val persistedUserEntry = response ~> unmarshal[UserEntry]
-                  val session = SessionEntry(persistedUserEntry.userId, java.util.UUID.randomUUID().toString)
-
-                  saveSession(session)
-                  sessions.put(session.sessionId, session)
-                  complete(StatusCodes.OK -> session.sessionId)
-                }
-              }
-            }
-          }
-        }
+  private def staticRoutes : Route =
+    pathEndOrSingleSlash {
+      getFromResource("html/login.html")
+    } ~
+      pathPrefix("login") {
+        getFromResource("html/login.html")
+      } ~
+      pathPrefix("main") {
+        getFromResource("html/main.html")
+      } ~
+      pathPrefix("html") {
+        getFromResourceDirectory("html")
+      } ~
+      pathPrefix("css") {
+        getFromResourceDirectory("css")
+      } ~
+      pathPrefix("js") {
+        getFromResourceDirectory("js")
       }
-    }
-  }
 
-  val login = post {
-    path("login") {
-      logRequestResponse("Login", akka.event.Logging.ErrorLevel) {
-        entity(as[ReturningUser]) { user =>
-          getService(userServiceName) { userUrl =>
-            sendRequest(Get(s"$userUrl/findUser/${user.email}")) { response =>
-              if (response.status.isFailure) {
-                complete(StatusCodes.Unauthorized -> s"Unknown user: ${user.email}")
-
-              } else {
-                val userEntry = response ~> unmarshal[UserEntry]
-                if (!BCrypt.checkpw(user.password, userEntry.passwordHash)) {
-                  complete(StatusCodes.Unauthorized -> s"Invalid password for user: ${user.email}")
-
-                } else {
-
-                  val session = sessions.values.find(_.userId == userEntry.userId) match {
-                    case Some(s) =>
-                      s
-
-                    case None =>
-                      val newSession = SessionEntry(userEntry.userId, java.util.UUID.randomUUID().toString)
-
-                      saveSession(newSession)
-                      sessions.put(newSession.sessionId, newSession)
-                      newSession
-                  }
-
-                  complete(StatusCodes.OK -> session.sessionId)
-                }
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-
-  val logout = post {
-    path("logout") {
-      parameters('sessionId.as[String]) { sessionId =>
-        sessions.get(sessionId) match {
-          case None =>
-            logger.warn(s"Unknown user attempted logout: s${sessionId}")
-            complete(StatusCodes.OK)
-
-          case Some(session) =>
-            logger.info(s"User logged out: ${session.userId} / ${session.sessionId}")
-            sessions.remove(session.sessionId)
-            deleteSession(session)
-            complete(StatusCodes.OK)
-        }
-      }
-    }
-  }
-
-  /** Strips the "part" from the path (and any leading slashes) */
-  @tailrec
-  private def removePath(path: Uri.Path, part: String): Uri.Path = {
-    path match {
-      case Path.Slash(tail) =>
-        removePath(tail, part)
-      case Path.Segment(head, tail) if head == part =>
-        removePath(tail, part)
-      case p =>
-        p
-    }
-  }
-
-  private def fetchUser(userHandler: UserEntry => Route): Route =
-    parameters('sessionId.as[String]) { sessionId =>
-      logger.info(s"Found session id: $sessionId")
-      sessions.get(sessionId) match {
-        case None =>
-          complete(StatusCodes.Unauthorized -> "User not logged in")
-
-        case Some(session) =>
-          getService(userServiceName) { userUrl =>
-            sendRequest(Get(s"$userUrl/user/${session.userId}")) { response =>
-              userHandler(response ~> unmarshal[UserEntry])
-            }
-          }
-      }
-    }
-
-  val getGeneralResponse = (get | put | post | delete) {
+  private def getGeneralResponse : Route = (get | put | post | delete) {
     logRequestResponse("GeneralRequest", akka.event.Logging.ErrorLevel) {
       pathPrefix(Segment) { serviceName =>
         val serviceNames = Seq(userServiceName, progressServiceName, namingServiceName)
@@ -187,7 +71,7 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
               val remainingUrl = removePath(removePath(request.uri.path, FrontEndHttpService.serviceName), serviceName)
 
               logger.info(s"Routing to service $serviceName with remaining url: $remainingUrl")
-              fetchUser { user =>
+              userMgmtSvc.fetchUser { user =>
                 logger.info(s"Routing user ${user.userId} / ${user.email} to $serviceName")
 
                 getServiceAddress(serviceName) { address =>
@@ -212,7 +96,7 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
 
                     case Success(response) =>
                       logger.info(s"Had a response: $response")
-                      complete(response.status -> response.entity.asString)
+                      complete(HttpResponse(entity = response.entity))
                   }
                 }
             }
@@ -221,103 +105,5 @@ trait FrontEndHttpService extends HttpService with SessionPersister with StrictL
       }
     }
   }
-
-  val staticRoutes =
-    pathEndOrSingleSlash {
-      getFromResource("html/login.html")
-    } ~
-      pathPrefix("login") {
-        getFromResource("html/login.html")
-      } ~
-      pathPrefix("main") {
-        getFromResource("html/main.html")
-      } ~
-      pathPrefix("html") {
-        getFromResourceDirectory("html")
-      } ~
-      pathPrefix("css") {
-        getFromResourceDirectory("css")
-      } ~
-      pathPrefix("js") {
-        getFromResourceDirectory("js")
-      }
-
-  /** The routes defined by this service */
-  val routes = //staticRoutes ~
-    pathPrefix(FrontEndHttpService.serviceName) {
-      newUser ~ login ~ logout ~ getGeneralResponse
-    }
-
-  private def getServiceAddress(serviceName: String)(responseHandler: InetSocketAddress => Route): Route = {
-    onComplete(ConsulWrapper.getAddressAsync(serviceName)) {
-      case Failure(ex) => onFail("Failed on user service address request", ex)
-      case Success(address) => responseHandler(address)
-    }
-  }
-
-  private def getService(serviceName: String)(responseHandler: String => Route): Route = {
-    getServiceAddress(serviceName) { address =>
-      responseHandler(s"http://${address.getHostName}:${address.getPort}/$serviceName")
-    }
-  }
-
-  private def sendRequest(request: HttpRequest)(responseHandler: HttpResponse => Route): Route = {
-    onComplete(httpRef.ask(request).mapTo[HttpResponse]) {
-      case Failure(ex) =>
-        onFail(s"Failed when making request: ${request.uri.toString}", ex)
-
-      case Success(response) =>
-        responseHandler(response)
-    }
-  }
-
-  private def onFail(msg: String, ex: Throwable): Route = {
-    logger.error(msg, ex)
-    complete(StatusCodes.InternalServerError -> s"$msg: ${ex.getMessage}")
-  }
 }
 
-trait SessionPersister {
-  /** Load all of the sessions into memory */
-  def loadSessions: Seq[SessionEntry]
-
-  /** Persist changes */
-  def saveSession(session: SessionEntry): Unit
-
-  /** Delete a user session */
-  def deleteSession(session: SessionEntry): Unit
-}
-
-trait FileSessionPersister extends SessionPersister {
-
-  /** The file root to store the naming suggestions */
-  def root: File
-
-  /** Load all of the names into memory */
-  def loadSessions: Seq[SessionEntry] = {
-    val userIdRegex = "^[0-9]+\\.json$"
-    val userFiles = root.listFiles().filter(_.isFile).filter(f => f.getName.matches(userIdRegex))
-
-    userFiles
-      .map(f => Source.fromFile(f).mkString)
-      .map(s => read[SessionEntry](s))
-  }
-
-  /** Persist changes */
-  def saveSession(session: SessionEntry): Unit = {
-    val file = new File(root, s"${session.userId}.json")
-    val writer = new FileWriter(file)
-    try {
-      writer.write(write(session))
-    } finally {
-      writer.close()
-    }
-  }
-
-  /** Delete a user session */
-  def deleteSession(session: SessionEntry): Unit = {
-    val file = new File(root, s"${session.userId}.json")
-    if (file.exists())
-      file.delete()
-  }
-}

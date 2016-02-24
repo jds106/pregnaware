@@ -1,18 +1,35 @@
 /// <reference path="references.ts" />
+
 module App {
     // Register the app with Angular
     var app = angular.module('graviditate', ['ngCookies', 'ngAnimate', 'ui.bootstrap']);
 
-    // Render if due date available
-    app.directive('dueDateSet', function() {
-        return { restrict: 'E', replace: true, templateUrl: 'html/snippets/DueDateSet.html' }
+    // The Pregnancy Progress control
+    app.directive('pregnancyProgress', () : angular.IDirective => {
+        return {
+            restrict: 'E',
+            replace: true,
+            templateUrl: 'html/snippets/pregnancyprogress.html',
+            controller: controller.PregnancyProgressController,
+            controllerAs: 'ctrl'
+        };
     });
 
-    // Render if due date missing
-    app.directive('dueDateMissing', function() {
-        return { restrict: 'E', replace: true, templateUrl: 'html/snippets/DueDateMissing.html' }
+    // The Baby Names control
+    app.directive('babyNames', () : angular.IDirective => {
+        return {
+            restrict: 'E',
+            replace: true,
+            templateUrl: 'html/snippets/babynames.html',
+            controller: controller.BabyNamesController,
+            controllerAs: 'ctrl'
+        };
     });
 
-    app.controller('LoginCtrl', Controller.LoginController);
-    app.controller('MainCtrl', Controller.MainController);
+    // Register the services
+    app.service('frontend', service.FrontEndSvc);
+    app.service('usermgmt', service.UserManagementSvc);
+
+    app.controller('LoginCtrl', controller.LoginController);
+    app.controller('MainCtrl', controller.MainController);
 }

@@ -1,0 +1,63 @@
+<div class="container">
+  <!-- The controller is "ctrl" -->
+
+  <div class="panel panel-success">
+    <div class="panel-heading">
+      <h3 class="panel-title">Progress</h3>
+    </div>
+    <div class="panel-body">
+      <!-- When the due date is known -->
+      <div ng-show="progress">
+        <div class="row">
+          <div class="col-md-12">
+            <uib-progressbar animate="false" type="success" value="progress.daysPassed"
+                             max="280"></uib-progressbar>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-md-4">
+            <p>Elapsed: {{progress.daysPassed}} days ({{progress.WeeksPassed}} weeks)</p>
+          </div>
+          <div class="col-md-4">
+            <p class="text-center">Remaining: {{progress.daysRemaining}} days
+              ({{ctrl.Progress.WeeksRemaining}}
+              weeks)</p>
+          </div>
+          <div class="col-md-4">
+            <p class="pull-right">Due: {{progress.FormattedDueDate}}</p>
+          </div>
+        </div>
+      </div> <!-- End known due date -->
+
+      <!-- When the due date is missing -->
+      <div class="row" ng-hide="progress">
+        <div class="col-md-12">
+
+          <form class="form-inline text-center">
+            <div class="form-group">
+              <label class="control-label" for="dueDatePicker">Select due date: </label>
+              <div class="input-group">
+                <input
+                    readonly
+                    type="text"
+                    id="dueDatePicker"
+                    class="form-control"
+                    uib-datepicker-popup="dd MMMM yyyy"
+                    ng-model="main.DueDate"
+                    is-open="main.DueDatePickerOpen"
+                    ng-required="true"/>
+                  <span class="input-group-btn">
+                    <button type="button" class="btn btn-default" ng-click="ctrl.DueDatePickerOpen=true">
+                      <i class="glyphicon glyphicon-calendar"></i>
+                    </button>
+                    <button type="button" class="btn btn-default" ng-click="ctrl.UpdateDueDate()">Update</button>
+                  </span>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div> <!-- End missing due date -->
+
+    </div>
+  </div>
+</div>

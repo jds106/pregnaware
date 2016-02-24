@@ -1,9 +1,10 @@
 /// <reference path="../references.ts" />
 
-module Controller {
+module controller {
+    import CookieKeys = utils.CookieKeys;
+    import LoginRequest = entities.LoginRequest;
+    import NewUserRequest = entities.NewUserRequest;
     'use strict';
-
-    import WebRoot = Utils.WebRoot;
 
     export class LoginController {
         // Current user information populated in login.html
@@ -19,22 +20,20 @@ module Controller {
             password: ""
         };
 
-        private $http : angular.IHttpService;
         private $cookies: angular.cookies.ICookiesService;
         private $window: angular.IWindowService;
-
-        private static EmailKey: string = "email";
+        private frontend: service.FrontEndSvc;
 
         constructor(
-            $http: angular.IHttpService,
             $cookies: angular.cookies.ICookiesService,
-            $window: angular.IWindowService) {
+            $window: angular.IWindowService,
+            frontend: service.FrontEndSvc) {
 
-            this.$http = $http;
             this.$cookies = $cookies;
             this.$window = $window;
+            this.frontend = frontend;
 
-            var email = $cookies.get(LoginController.EmailKey);
+            var email = $cookies.get(CookieKeys.EmailKey);
 
             if (email) {
                 this.loginRequest.email = email;
@@ -42,30 +41,26 @@ module Controller {
         }
 
         public loginAction() {
-            this.$http.post(WebRoot.Url('/FrontEndSvc/login'), this.loginRequest)
-
+            this.frontend.login(this.loginRequest)
                 .error((error) => {
                     console.error('Login Error', error);
                 })
-
                 .success((sessionId: string) => {
                     console.error('Login sucess', sessionId);
-                    this.$cookies.put(LoginController.EmailKey, this.loginRequest.email);
-                    this.$cookies.put(WebRoot.SessionIdKey, sessionId);
+                    this.$cookies.put(CookieKeys.EmailKey, this.loginRequest.email);
+                    this.$cookies.put(CookieKeys.SessionIdKey, sessionId);
                     this.$window.location.pathname = '/main'
                 });
         }
 
         public newUserAction() {
-            this.$http.put(WebRoot.Url('/FrontEndSvc/newUser'), this.newUserRequest)
-
+            this.frontend.newUser(this.newUserRequest)
                 .error((error) => {
                     console.error('New User Error', error);
                 })
-
                 .success((sessionId: string) => {
-                    this.$cookies.put(LoginController.EmailKey, this.newUserRequest.email);
-                    this.$cookies.put(WebRoot.SessionIdKey, sessionId);
+                    this.$cookies.put(CookieKeys.EmailKey, this.newUserRequest.email);
+                    this.$cookies.put(CookieKeys.SessionIdKey, sessionId);
                     this.$window.location.pathname = '/main'
                 });
         }

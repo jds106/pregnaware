@@ -20,15 +20,13 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
   private val userMap = new scala.collection.mutable.HashMap[Int, UserEntry]()
   loadUsers.foreach(u => userMap.put(u.userId, u))
 
-  val getUsers : Route = get {
-    path("users") {
-      complete {
-        userMap.values
-      }
+  /** The routes defined by this service */
+  val routes =
+    pathPrefix(UserHttpService.serviceName) {
+      getUser ~ findUser ~ putUser
     }
-  }
 
-  val getUser : Route = get {
+  def getUser : Route = get {
     path("user" / IntNumber) { userId =>
       userMap.get(userId) match {
         case None => complete(StatusCodes.NotFound)
@@ -37,7 +35,7 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
     }
   }
 
-  val findUser : Route = get {
+  def findUser : Route = get {
     path("findUser" / Segment) { email =>
       userMap.values.find(_.email.equalsIgnoreCase(email)) match {
         case None =>
@@ -48,7 +46,7 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
     }
   }
 
-  val putUser : Route = put {
+  def putUser : Route = put {
     path("user") {
       entity(as[UserEntry]) { entry =>
 
@@ -57,14 +55,7 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
             complete(StatusCodes.Conflict -> "User already exists")
 
           case None =>
-            val nextUserId =
-              if (userMap.isEmpty) {
-                1
-              } else {
-                userMap.values.map(_.userId).max + 1
-              }
-
-            val persistedEntry = entry.copy(userId = nextUserId)
+            val persistedEntry = entry.copy(userId = nextId(u => u.userId, userMap.values))
             userMap.put(persistedEntry.userId, persistedEntry)
             saveUser(persistedEntry)
             complete(persistedEntry)
@@ -73,11 +64,44 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
     }
   }
 
-  /** The routes defined by this service */
-  val routes =
-    pathPrefix(UserHttpService.serviceName) {
-      getUsers ~ getUser ~ findUser ~ putUser
+  def putFriend : Route = put {
+    path("friend") {
+      entity(as[LinkUsers]) { userLink =>
+        userMap.get(userLink.userId) match {
+          case None =>
+            complete(StatusCodes.NotFound -> s"Could not find user for id ${userLink.userId}")
+
+          case Some(user) =>
+            val userWithFriend = user.copy(friends = userLink.friendUserId +: user.friends)
+            saveUser(userWithFriend)
+            complete(StatusCodes.OK)
+        }
+      }
     }
+  }
+
+  def deleteFriend : Route = delete {
+    path("friend") {
+      entity(as[LinkUsers]) { userLink =>
+        userMap.get(userLink.userId) match {
+          case None =>
+            complete(StatusCodes.NotFound -> s"Could not find user for id ${userLink.userId}")
+
+          case Some(user) =>
+            val userWithFriend = user.copy(friends = user.friends.filter(_ != userLink.friendUserId))
+            saveUser(userWithFriend)
+            complete(StatusCodes.OK)
+        }
+      }
+    }
+  }
+
+  private def nextId(selector: UserEntry => Int, users: Iterable[UserEntry]) = {
+    users match {
+      case Nil => 1
+      case list => list.map(selector).max + 1
+    }
+  }
 }
 
 trait UserPersister {

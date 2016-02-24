@@ -5,7 +5,7 @@ import akka.actor._
 import akka.io.IO
 import akka.io.Tcp.Bound
 import com.typesafe.scalalogging.StrictLogging
-import frontend.{FileSessionPersister, FrontEndHttpService}
+import frontend.{SessionManager, FileSessionPersister, FrontEndHttpService}
 import naming.{FileNamePersister, NamingHttpService}
 import progress.{FileProgressPersister, ProgressHttpService}
 import spray.can.Http
@@ -44,18 +44,22 @@ class ProgressServiceActor extends HttpServiceActor with ActorLogging {
     def actorRefFactory = context
   }
 
-  val frontEndService = new FrontEndHttpService with FileSessionPersister {
-    def root = fileRoots(FrontEndHttpService.serviceName)
+  val frontEndService = new FrontEndHttpService {
     def userServiceName: String = UserHttpService.serviceName
     def namingServiceName: String = NamingHttpService.serviceName
     def progressServiceName: String = ProgressHttpService.serviceName
+
+    def sessionManager: SessionManager = new SessionManager with FileSessionPersister
+    {
+      def root = fileRoots(FrontEndHttpService.serviceName)
+    }
 
     def actorRefFactory = context
 
     // Provide access to the IO layer
     import context.system
-    def httpRef = IO(Http)
-    def ex = context.dispatcher
+    implicit def httpRef = IO(Http)
+    implicit def ex = context.dispatcher
   }
 
   val healthService = new HealthHttpService {

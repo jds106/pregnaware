@@ -33,7 +33,7 @@ trait FrontEndHttpService extends HttpService with FrontEndFuncs with StrictLogg
     sessionManager, userServiceName, actorRefFactory, this.ex, this.httpRef)
 
   /** The routes defined by this service */
-  val routes = //staticRoutes ~
+  val routes = staticRoutes ~
     pathPrefix(FrontEndHttpService.serviceName) {
       userMgmtSvc.routes ~ getGeneralResponse
     }

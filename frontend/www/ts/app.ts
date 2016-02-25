@@ -9,7 +9,7 @@ module App {
         return {
             restrict: 'E',
             replace: true,
-            templateUrl: 'html/snippets/navbar.html',
+            templateUrl: '/html/snippets/navbar.html',
             controller: controller.NavBarController,
             controllerAs: 'ctrl',
             scope: {
@@ -23,7 +23,7 @@ module App {
         return {
             restrict: 'E',
             replace: true,
-            templateUrl: 'html/snippets/footer.html'
+            templateUrl: '/html/snippets/footer.html'
         };
     });
 
@@ -32,7 +32,7 @@ module App {
         return {
             restrict: 'E',
             replace: true,
-            templateUrl: 'html/snippets/pregnancyprogress.html',
+            templateUrl: '/html/snippets/pregnancyprogress.html',
             controller: controller.PregnancyProgressController,
             controllerAs: 'ctrl',
             scope: {
@@ -46,7 +46,7 @@ module App {
         return {
             restrict: 'E',
             replace: true,
-            templateUrl: 'html/snippets/babynames.html',
+            templateUrl: '/html/snippets/babynames.html',
             controller: controller.BabyNamesController,
             controllerAs: 'ctrl',
             scope: {

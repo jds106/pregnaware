@@ -12,6 +12,7 @@ bin/
 .settings/
 model/
 *tmp/
+*log/
 *node_modules/
 *typings/
 

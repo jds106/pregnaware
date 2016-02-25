@@ -10,14 +10,13 @@ module service {
     import CookieKeys = utils.CookieKeys;
 
     class FrontEndUrl {
-        private static devUrlRoot = 'http://localhost:8601';
-        private static prodUrlRoot = '';
+        //private static urlRoot = 'http://localhost:8601';
 
         public static getUrl(path: string, sessionId: string = null, userId: number = null) {
             var sessionPart = sessionId ? "sessionId=" + sessionId : "";
             var userIdPart = userId ? "userId=" + userId : "";
-            return FrontEndUrl.devUrlRoot
-                + "/FrontEndSvc/" + path + (sessionId ? "?" + sessionPart : "")
+            //return FrontEndUrl.urlRoot
+            return "/FrontEndSvc/" + path + (sessionId ? "?" + sessionPart : "")
                 + (userId ? "&" + userIdPart : "");
         }
     }

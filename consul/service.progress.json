@@ -1,0 +1,44 @@
+{
+    "services": [
+        {
+            "name": "FrontEndSvc", 
+            "address": "127.0.0.1",
+            "port": 8601,
+            "tags": ["graviditate"],
+            "check": {
+                "HTTP": "http://localhost:8601/health",
+                "Interval": "10s"
+            }            
+        },
+        {
+            "name": "ProgressSvc", 
+            "address": "127.0.0.1",
+            "port": 8601,
+            "tags": ["graviditate"],
+            "check": {
+                "HTTP": "http://localhost:8601/health",
+                "Interval": "10s"
+            }
+        },
+        {
+            "name": "NamingSvc", 
+            "address": "127.0.0.1",
+            "port": 8601,
+            "tags": ["graviditate"],
+            "check": {
+                "HTTP": "http://localhost:8601/health",
+                "Interval": "10s"
+            }
+        },
+        {
+            "name": "UserSvc", 
+            "address": "127.0.0.1",
+            "port": 8601,
+            "tags": ["graviditate"],
+            "check": {
+                "HTTP": "http://localhost:8601/health",
+                "Interval": "10s"
+            }
+        }        
+    ]
+}

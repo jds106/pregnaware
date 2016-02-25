@@ -33,39 +33,10 @@ trait FrontEndHttpService extends HttpService with FrontEndFuncs with StrictLogg
     sessionManager, userServiceName, actorRefFactory, this.ex, this.httpRef)
 
   /** The routes defined by this service */
-  val routes = staticRoutes ~
+  val routes =
     pathPrefix(FrontEndHttpService.serviceName) {
       userMgmtSvc.routes ~ getGeneralResponse
     }
-
-  private def staticRoutes : Route =
-    pathEndOrSingleSlash {
-      getFromResource("html/login.html")
-    } ~
-      pathPrefix("login") {
-        getFromResource("html/login.html")
-      } ~
-      pathPrefix("main") {
-        getFromResource("html/main.html")
-      } ~
-      pathPrefix("share") {
-        getFromResource("html/share.html")
-      } ~
-      pathPrefix("account") {
-        getFromResource("html/account.html")
-      } ~
-      pathPrefix("newfriend") {
-        getFromResource("html/newfriend.html")
-      } ~
-      pathPrefix("html") {
-        getFromResourceDirectory("html")
-      } ~
-      pathPrefix("css") {
-        getFromResourceDirectory("css")
-      } ~
-      pathPrefix("js") {
-        getFromResourceDirectory("js")
-      }
 
   private def getGeneralResponse : Route = (get | put | post | delete) {
     logRequestResponse("GeneralRequest", akka.event.Logging.ErrorLevel) {

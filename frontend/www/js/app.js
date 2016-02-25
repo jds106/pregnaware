@@ -28,12 +28,9 @@ var service;
             if (userId === void 0) { userId = null; }
             var sessionPart = sessionId ? "sessionId=" + sessionId : "";
             var userIdPart = userId ? "userId=" + userId : "";
-            return FrontEndUrl.devUrlRoot
-                + "/FrontEndSvc/" + path + (sessionId ? "?" + sessionPart : "")
+            return "/FrontEndSvc/" + path + (sessionId ? "?" + sessionPart : "")
                 + (userId ? "&" + userIdPart : "");
         };
-        FrontEndUrl.devUrlRoot = 'http://localhost:8601';
-        FrontEndUrl.prodUrlRoot = '';
         return FrontEndUrl;
     })();
     var FrontEndSvc = (function () {
@@ -616,7 +613,7 @@ var App;
         return {
             restrict: 'E',
             replace: true,
-            templateUrl: 'html/snippets/navbar.html',
+            templateUrl: '/html/snippets/navbar.html',
             controller: controller.NavBarController,
             controllerAs: 'ctrl',
             scope: {
@@ -629,7 +626,7 @@ var App;
         return {
             restrict: 'E',
             replace: true,
-            templateUrl: 'html/snippets/footer.html'
+            templateUrl: '/html/snippets/footer.html'
         };
     });
     // The Pregnancy Progress control
@@ -637,7 +634,7 @@ var App;
         return {
             restrict: 'E',
             replace: true,
-            templateUrl: 'html/snippets/pregnancyprogress.html',
+            templateUrl: '/html/snippets/pregnancyprogress.html',
             controller: controller.PregnancyProgressController,
             controllerAs: 'ctrl',
             scope: {
@@ -650,7 +647,7 @@ var App;
         return {
             restrict: 'E',
             replace: true,
-            templateUrl: 'html/snippets/babynames.html',
+            templateUrl: '/html/snippets/babynames.html',
             controller: controller.BabyNamesController,
             controllerAs: 'ctrl',
             scope: {

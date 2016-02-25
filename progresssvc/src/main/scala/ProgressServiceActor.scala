@@ -18,7 +18,8 @@ import scala.reflect.runtime.universe._
 class ProgressServiceActor extends HttpServiceActor with ActorLogging {
   override def actorRefFactory : ActorContext = context
 
-  val fileRoot = new File("/Users/james/Programming/scala/graviditate/tmp")
+  //val fileRoot = new File("/Users/james/Programming/scala/graviditate/tmp")
+  val fileRoot = new File("/home/ubuntu/dist/data/pregnaware")
   val fileRoots = Map[String, File](
     NamingHttpService.serviceName -> new File(fileRoot, NamingHttpService.serviceName),
     UserHttpService.serviceName -> new File(fileRoot, UserHttpService.serviceName),

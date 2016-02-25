@@ -29,9 +29,9 @@ trait NamingHttpService extends HttpService with NamePersister with StrictLoggin
   // Load in previous naming suggestions
   private val names = new EntryHashMap()
   loadNames.foreach { case (userId, entries) =>
-      val entryList = new EntryList
-      entries.foreach(e => entryList += e)
-      names.put(userId, entryList)
+    val entryList = new EntryList
+    entries.foreach(e => entryList += e)
+    names.put(userId, entryList)
   }
 
   private def getEntries(userId: Int) = {
@@ -47,7 +47,7 @@ trait NamingHttpService extends HttpService with NamePersister with StrictLoggin
   }
 
   /** Returns the current list of known names */
-  def getNames : Route = get {
+  def getNames: Route = get {
     path("names") {
       userIdFromHeader { userId =>
         complete(StatusCodes.OK -> NamingEntries(names.getOrElse(userId, Seq.empty[NamingEntry])))
@@ -56,57 +56,39 @@ trait NamingHttpService extends HttpService with NamePersister with StrictLoggin
   }
 
   /** Adds a new name to the list */
-  def putName : Route = put {
+  def putName: Route = put {
     path("name") {
       userIdFromHeader { userId =>
         entity(as[NamingEntry]) { entry =>
           val currentEntries = getEntries(userId)
-
-          currentEntries += entry
+          val nameId = if (currentEntries.isEmpty) 1 else currentEntries.map(_.nameId).max + 1
+          val persistedEntry = entry.copy(nameId = nameId)
+          currentEntries += persistedEntry
           saveNames(userId, currentEntries)
-          complete(StatusCodes.OK)
+          complete(StatusCodes.OK -> persistedEntry)
         }
       }
     }
   }
 
-  /** Bulk-adds names - replaces existing names */
-  def putNames : Route = put {
-    path("names") {
+  def deleteName: Route = delete {
+    path("name" / IntNumber) { nameId =>
       userIdFromHeader { userId =>
-        entity(as[NamingEntries]) { entries =>
+        names.get(userId) match {
+          case None =>
+            logger.error(s"Could not find any entries for user $userId")
+            complete(StatusCodes.BadRequest)
 
-          val currentEntries = getEntries(userId)
-          currentEntries.clear()
-          entries.entries.foreach(e => currentEntries += e)
-
-          saveNames(userId, currentEntries)
-          complete(StatusCodes.OK)
+          case Some(currentEntries) =>
+            currentEntries.find(_.nameId == nameId).foreach(e => currentEntries -= e)
+            saveNames(userId, currentEntries)
+            complete(StatusCodes.OK)
         }
       }
     }
   }
 
-  def deleteName : Route = delete {
-    path("name") {
-      userIdFromHeader { userId =>
-        entity(as[NamingEntry]) { entry =>
-          names.get(userId) match {
-            case None =>
-              logger.error(s"Could not find any entries for user $userId")
-              complete(StatusCodes.BadRequest)
-
-            case Some(currentEntries) =>
-              currentEntries.find(_ == entry).foreach(e => currentEntries -= e)
-              saveNames(userId, currentEntries)
-              complete(StatusCodes.OK)
-          }
-        }
-      }
-    }
-  }
-
-  private def userIdFromHeader(handler: Int => Route) : Route = {
+  private def userIdFromHeader(handler: Int => Route): Route = {
     headerValueByName(HeaderKeys.EntryId)(s => handler(s.toInt))
   }
 }
@@ -116,13 +98,13 @@ trait NamePersister {
   def loadNames: Map[Int, Seq[NamingEntry]]
 
   /** Persist changes */
-  def saveNames(userId: Int, entryList: Seq[NamingEntry]) : Unit
+  def saveNames(userId: Int, entryList: Seq[NamingEntry]): Unit
 }
 
 trait FileNamePersister extends NamePersister {
 
   /** The file root to store the naming suggestions */
-  def root : File
+  def root: File
 
   /** Load all of the names into memory */
   def loadNames: Map[Int, Seq[NamingEntry]] = {
@@ -130,14 +112,14 @@ trait FileNamePersister extends NamePersister {
     val userFiles = root.listFiles().filter(_.isFile).filter(f => f.getName.matches(userIdRegex))
 
     userFiles
-      .map{ f => (f.getName.replace(".json", "").toInt, Source.fromFile(f).mkString) }
-      .map{ case (userId, s) => (userId, read[NamingEntries](s)) }
-      .map{ case (userId, nm) => userId -> nm.entries }
+      .map { f => (f.getName.replace(".json", "").toInt, Source.fromFile(f).mkString) }
+      .map { case (userId, s) => (userId, read[NamingEntries](s)) }
+      .map { case (userId, nm) => userId -> nm.entries }
       .toMap
   }
 
   /** Persist changes */
-  def saveNames(userId: Int, entryList: Seq[NamingEntry]) : Unit = {
+  def saveNames(userId: Int, entryList: Seq[NamingEntry]): Unit = {
     val entries = NamingEntries(entryList)
 
     val file = new File(root, s"$userId.json")

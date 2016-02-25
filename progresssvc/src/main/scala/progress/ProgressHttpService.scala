@@ -41,17 +41,15 @@ trait ProgressHttpService extends HttpService with ProgressPersister with Strict
     new ApiResponse(code = 200, message = "Progress information", response = classOf[ProgressModel])
   ))
   def getProgress: Route =
-    logRequestResponse("ProgressRequest", akka.event.Logging.ErrorLevel) {
-      get {
-        path("progress") {
-          headerValueByName(HeaderKeys.EntryId) { entryId =>
-            dueDateMap.get(entryId.toInt) match {
-              case None =>
-                complete(StatusCodes.NotFound -> s"No due date found for user $entryId")
+    get {
+      path("progress") {
+        headerValueByName(HeaderKeys.EntryId) { entryId =>
+          dueDateMap.get(entryId.toInt) match {
+            case None =>
+              complete(StatusCodes.NotFound -> s"No due date found for user $entryId")
 
-              case Some(dueDate) =>
-                complete(calcModel(dueDate))
-            }
+            case Some(dueDate) =>
+              complete(calcModel(dueDate))
           }
         }
       }
@@ -89,7 +87,7 @@ trait ProgressHttpService extends HttpService with ProgressPersister with Strict
     headerValueByName(HeaderKeys.EntryId)(s => handler(s.toInt))
   }
 
-  private def calcModel(dueDate: LocalDate) : ProgressModel = {
+  private def calcModel(dueDate: LocalDate): ProgressModel = {
     val conceptionDate = dueDate.minusDays(gestationPeriod)
     val passed = ChronoUnit.DAYS.between(conceptionDate, LocalDate.now)
     val remaining = ChronoUnit.DAYS.between(LocalDate.now, dueDate)
@@ -140,7 +138,8 @@ trait FileProgressPersister extends ProgressPersister {
   /** Delete the due date */
   def deleteDueDate(userId: Int): Unit = {
     val file = new File(root, s"$userId.json")
-    if (file.exists())
+    if (file.exists()) {
       file.delete()
+    }
   }
 }

@@ -22,6 +22,12 @@ module entities {
         friends: Friend[]
     }
 
+    export interface EditUserRequest {
+        displayName: string
+        email: string
+        password: string
+    }
+
     export interface Friend {
         userId: number
         displayName: string
@@ -41,9 +47,10 @@ module entities {
     }
 
     export interface NamingEntry {
+        nameId: number
         gender: string
         name: string
-        suggestedBy: string
+        suggestedByUserId: number
     }
 
     export interface NamingEntries {

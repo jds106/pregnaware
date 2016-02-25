@@ -6,9 +6,11 @@ import akka.actor.ActorRef
 import akka.pattern.ask
 import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
+import spray.client.pipelining._
 import spray.http.Uri.Path
 import spray.http.{StatusCodes, Uri, _}
 import spray.routing._
+import user.UserEntry
 import utils.ConsulWrapper
 import utils.Json4sSupport._
 
@@ -76,5 +78,46 @@ trait FrontEndFuncs extends HttpService with StrictLogging {
   protected final def onFail(msg: String, ex: Throwable): Route = {
     logger.error(msg, ex)
     complete(StatusCodes.InternalServerError -> s"$msg: ${ex.getMessage}")
+  }
+
+  /** Fetches the user entry for the specified userId parameter (which must be either the session user or a friend) */
+  def fetchUser(userHandler: UserEntry => Route): Route = {
+    parameter('sessionId.as[String]) { sessionId =>
+      parameter('userId.as[Option[Int]]) { requestedUserIdOpt =>
+        fetchSessionUser { sessionUser =>
+          val requestedUserId = requestedUserIdOpt.getOrElse(sessionUser.userId)
+
+          if (sessionUser.userId == requestedUserId) {
+            userHandler(sessionUser)
+
+          } else if (sessionUser.friends.contains(requestedUserId)) {
+            getService(userServiceName) { userUrl =>
+              sendRequest(Get(s"$userUrl/user/$requestedUserId")) { friendResponse =>
+                userHandler(friendResponse ~> unmarshal[UserEntry])
+              }
+            }
+          } else {
+            complete(StatusCodes.Forbidden -> s"User ${sessionUser.userId} not allowed to access user $requestedUserId")
+          }
+        }
+      }
+    }
+  }
+
+  /** Fetches the user entry for the specified session */
+  def fetchSessionUser(userHandler: UserEntry => Route): Route = {
+    parameter('sessionId.as[String]) { sessionId =>
+      sessionManager.getSession(sessionId) match {
+        case None =>
+          complete(StatusCodes.Unauthorized -> "User not logged in")
+
+        case Some(session) =>
+          getService(userServiceName) { userUrl =>
+            sendRequest(Get(s"$userUrl/user/${session.userId}")) { response =>
+              userHandler(response ~> unmarshal[UserEntry])
+            }
+          }
+      }
+    }
   }
 }

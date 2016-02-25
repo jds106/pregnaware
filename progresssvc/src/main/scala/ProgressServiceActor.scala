@@ -44,15 +44,18 @@ class ProgressServiceActor extends HttpServiceActor with ActorLogging {
     def actorRefFactory = context
   }
 
+  // This handles current user sessions
+  val currentSessionManager = new SessionManager with FileSessionPersister
+  {
+    def root = fileRoots(FrontEndHttpService.serviceName)
+  }
+
   val frontEndService = new FrontEndHttpService {
     def userServiceName: String = UserHttpService.serviceName
     def namingServiceName: String = NamingHttpService.serviceName
     def progressServiceName: String = ProgressHttpService.serviceName
 
-    def sessionManager: SessionManager = new SessionManager with FileSessionPersister
-    {
-      def root = fileRoots(FrontEndHttpService.serviceName)
-    }
+    def sessionManager: SessionManager = currentSessionManager
 
     def actorRefFactory = context
 

@@ -46,7 +46,6 @@ module controller {
                     console.error('Login Error', error);
                 })
                 .success((sessionId: string) => {
-                    console.error('Login sucess', sessionId);
                     this.$cookies.put(CookieKeys.EmailKey, this.loginRequest.email);
                     this.$cookies.put(CookieKeys.SessionIdKey, sessionId);
                     this.$window.location.pathname = '/main'

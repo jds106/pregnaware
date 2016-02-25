@@ -4,12 +4,12 @@ import akka.actor.{ActorRef, ActorRefFactory}
 import akka.pattern.ask
 import com.typesafe.scalalogging.StrictLogging
 import frontend._
-import frontend.entities.{AddFriendRequest, AddFriendResponse, FriendViewModel, UserViewModel}
+import frontend.entities._
 import org.mindrot.jbcrypt.BCrypt
 import spray.client.pipelining._
 import spray.http._
 import spray.routing._
-import user.{LinkUsers, UserEntry}
+import user.{ModifiedUser, LinkUsers, UserEntry}
 import utils.Json4sSupport._
 
 import scala.concurrent.{Await, ExecutionContext}
@@ -29,7 +29,7 @@ case class UserManagementHttpService(
   private val salt = BCrypt.gensalt()
 
   /** The routes this service provides */
-  val routes: Route = login ~ logout ~ putUser ~ getUser ~ addFriend
+  val routes: Route = login ~ logout ~ putUser ~ getUser ~ editUser ~ addFriend ~ createFriend
 
   /** Adds a new user */
   def putUser: Route = put {
@@ -61,37 +61,69 @@ case class UserManagementHttpService(
     }
   }
 
+  def editUser: Route = put {
+    path("editUser") {
+      entity(as[EditUserRequest]) { userEdit =>
+        fetchSessionUser { sessionUser =>
+          val displayName = userEdit.displayName.getOrElse(sessionUser.displayName).trim
+          val email = userEdit.email.getOrElse(sessionUser.email).trim
+          val passwordHash = userEdit.password match {
+            case None => sessionUser.passwordHash
+            case Some(p) => BCrypt.hashpw(p, salt)
+          }
+
+          val modifiedUser = ModifiedUser(sessionUser.userId, displayName, email, passwordHash)
+          getService(userServiceName) { userUrl =>
+            sendRequest(Put(s"$userUrl/editUser", modifiedUser)) { response =>
+              val persistedUserEntry = response ~> unmarshal[UserEntry]
+              complete(StatusCodes.OK -> persistedUserEntry)
+            }
+          }
+        }
+      }
+    }
+  }
+
   /** Adds this user to the friend list of another user so they can see this user's progress */
   def addFriend: Route = put {
     path("friend") {
-      fetchUser { user =>
-        entity(as[AddFriendRequest]) { friendRequest =>
+      fetchSessionUser { user =>
+        entity(as[UserEntry]) { userFriend =>
           getService(userServiceName) { userUrl =>
-            sendRequest(Get(s"$userUrl/findUser/${friendRequest.email}")) { response =>
+            val userLink = LinkUsers(userFriend.userId, user.userId)
+            sendRequest(Put(s"$userUrl/friend", userLink)) { response =>
+              complete(HttpResponse(status = response.status, entity = response.entity))
+            }
+          }
+        }
+      }
+    }
+  }
+
+  /** Creates a new user with the current user added as a friend */
+  def createFriend: Route = put {
+    path("createFriend") {
+      fetchSessionUser { user =>
+        entity(as[AddFriendRequest]) { addFriendRequest =>
+          getService(userServiceName) { userUrl =>
+            sendRequest(Get(s"$userUrl/findUser/${addFriendRequest.email}")) { response =>
 
               if (response.status.isSuccess) {
-                val userFriend = response ~> unmarshal[UserEntry]
-                val userLink = LinkUsers(userFriend.userId, user.userId)
-                sendRequest(Put(s"$userUrl/friend", userLink)) { response =>
-                  complete(StatusCodes.OK -> AddFriendResponse(userFriend.email))
-                }
+                // The user was found - cannot create a new user with this e-mail address
+                complete(StatusCodes.Conflict -> s"User ${addFriendRequest.email} already exists")
+
               } else {
-                val tmpUUID = java.util.UUID.randomUUID().toString
-                val tmpPassword = java.util.Base64.getUrlEncoder.encodeToString(tmpUUID.getBytes)
+                // The user was not found - create it
+                val tmpPassword = java.util.UUID.randomUUID().toString
+                val tmpPasswordHash = BCrypt.hashpw(tmpPassword, salt)
 
-                val userFriend =
-                  UserEntry(-1, "", friendRequest.email, BCrypt.hashpw(tmpPassword, salt), Seq.empty[Int])
+                val newUserEntry = UserEntry(
+                  -1, s"Friend of ${user.displayName}", addFriendRequest.email, tmpPasswordHash, Seq(user.userId))
 
-                // Add the new user
-                sendRequest(Put(s"$userUrl/user", userFriend)) { response =>
-                  val persistedUserFriend = response ~> unmarshal[UserEntry]
-
-                  // Add this user to the new user's list of friends
-                  val userLink = LinkUsers(persistedUserFriend.userId, user.userId)
-                  sendRequest(Put(s"$userUrl/friend", userLink)) { response =>
-                    val session = sessionManager.getSession(persistedUserFriend.userId)
-                    complete(StatusCodes.OK -> AddFriendResponse(userFriend.email, Some(session.sessionId)))
-                  }
+                sendRequest(Put(s"$userUrl/user", newUserEntry)) { response =>
+                  val persistedUserEntry = response ~> unmarshal[UserEntry]
+                  val session = sessionManager.getSession(persistedUserEntry.userId)
+                  complete(StatusCodes.OK -> session.sessionId)
                 }
               }
             }
@@ -159,37 +191,6 @@ case class UserManagementHttpService(
           }
 
           complete(StatusCodes.OK -> UserViewModel(user.userId, user.displayName, user.email, friendModels))
-        }
-      }
-    }
-  }
-
-  /** Fetches the user entry for the specified session */
-  def fetchUser(userHandler: UserEntry => Route): Route = {
-    parameter('sessionId.as[String]) { sessionId =>
-      parameter('userId.as[Option[Int]]) { requestedUserIdOpt =>
-        sessionManager.getSession(sessionId) match {
-          case None =>
-            complete(StatusCodes.Unauthorized -> "User not logged in")
-
-          case Some(session) =>
-            getService(userServiceName) { userUrl =>
-              sendRequest(Get(s"$userUrl/user/${session.userId}")) { response =>
-                val user = response ~> unmarshal[UserEntry]
-                val requestedUserId = requestedUserIdOpt.getOrElse(user.userId)
-
-                if (user.userId == requestedUserId) {
-                  userHandler(user)
-
-                } else if (user.friends.contains(requestedUserId)) {
-                  sendRequest(Get(s"$userUrl/user/$requestedUserId")) { friendResponse =>
-                    userHandler(friendResponse ~> unmarshal[UserEntry])
-                  }
-                } else {
-                  complete(StatusCodes.Forbidden -> s"User ${user.userId} not allowed to access user $requestedUserId")
-                }
-              }
-            }
         }
       }
     }

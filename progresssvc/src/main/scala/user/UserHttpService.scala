@@ -23,7 +23,7 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
   /** The routes defined by this service */
   val routes =
     pathPrefix(UserHttpService.serviceName) {
-      getUser ~ findUser ~ putUser
+      getUser ~ findUser ~ putUser ~ editUser ~ putFriend ~ deleteFriend
     }
 
   def getUser : Route = get {
@@ -55,10 +55,33 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
             complete(StatusCodes.Conflict -> "User already exists")
 
           case None =>
-            val persistedEntry = entry.copy(userId = nextId(u => u.userId, userMap.values))
+            val persistedEntry = entry.copy(userId = nextId(u => u.userId, userMap.values.toSeq))
             userMap.put(persistedEntry.userId, persistedEntry)
             saveUser(persistedEntry)
             complete(persistedEntry)
+        }
+      }
+    }
+  }
+
+  def editUser : Route = put {
+    path("editUser") {
+      entity(as[ModifiedUser]) { modifiedUser =>
+      userMap.get(modifiedUser.userId) match {
+          case None =>
+            complete(StatusCodes.NotFound)
+
+          case Some(u) =>
+            assert(
+              modifiedUser.userId == u.userId,
+              s"Cannot change the user id of the modified user: $modifiedUser.userId != ${u.userId}")
+
+            val newUser = UserEntry(
+              u.userId, modifiedUser.displayName, modifiedUser.email, modifiedUser.passwordHash, u.friends)
+
+            userMap.put(u.userId, newUser)
+            saveUser(newUser)
+            complete(newUser)
         }
       }
     }
@@ -73,6 +96,7 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
 
           case Some(user) =>
             val userWithFriend = user.copy(friends = userLink.friendUserId +: user.friends)
+            userMap.put(userWithFriend.userId, userWithFriend)
             saveUser(userWithFriend)
             complete(StatusCodes.OK)
         }
@@ -89,6 +113,7 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
 
           case Some(user) =>
             val userWithFriend = user.copy(friends = user.friends.filter(_ != userLink.friendUserId))
+            userMap.put(userWithFriend.userId, userWithFriend)
             saveUser(userWithFriend)
             complete(StatusCodes.OK)
         }

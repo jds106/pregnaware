@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Graviditate</title>
+  <title>Pregnaware</title>
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="stylesheet" href="http://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css">
   <link rel="stylesheet" media="screen" href="css/main.css">
@@ -12,89 +12,10 @@
 
 <div ng-controller="MainCtrl as main" ng-cloak>
 
-  <!--
-    Taken from
-      http://www.sitepoint.com/understanding-twitter-bootstrap-3/
-    - navbar-wrapper is the wrapper to the menu items
-    - navbar-default gives the background color to the menu and also applies a border to it
-    - navbar-fixed-top helps to make the menu bar fixed at the top of the page even if we are scrolling
-  -->
-
-  <nav class="navbar-wrapper navbar-default navbar-fixed-top navbar-background" role="navigation">
-    <div class="container">
-      <!-- Brand and toggle get grouped for better mobile display -->
-      <div class="navbar-header">
-        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
-          <span class="sr-only">Toggle navigation</span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-          <span class="icon-bar"></span>
-        </button>
-        <h1>Graviditate</h1>
-      </div>
-
-
-      <!-- Collect the nav links, forms, and other content for toggling -->
-      <div class="collapse navbar-collapse navbar-right">
-        <!-- Log out -->
-        <ul class="nav navbar-nav">
-          <li><a class="navbar-link" href="#" ng-click="main.LogoutAction()">Logout {{main.User.displayName}}</a></li>
-        </ul>
-
-        <!-- Friends -->
-        <ul class="nav navbar-nav">
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-              <span class="glyphicon glyphicon-user"></span><span class="caret"></span></a>
-            <ul class="dropdown-menu">
-              <li><a href>Me</a></li>
-              <li class="divider"></li>
-              <li class="dropdown-header">No friends have added you yet...</li>
-            </ul>
-          </li>
-        </ul>
-
-        <!-- Admin -->
-        <ul class="nav navbar-nav">
-          <li class="dropdown">
-            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
-              <span class="glyphicon glyphicon-th-list"></span><span class="caret"></span></a>
-            <ul class="dropdown-menu">
-              <li><a href ng-click="main.ChangeDueDate()">Set due date</a></li>
-              <li class="divider"></li>
-              <li><a href>Share with friend</a></li>
-              <li class="divider"></li>
-              <li><a href="#">Account settings</a></li>
-            </ul>
-          </li>
-        </ul>
-      </div>
-    </div>
-  </nav>
-
-  <div class="container">
-    <div class="row">
-    </div>
-  </div>
-
+  <nav-bar></nav-bar>
   <pregnancy-progress></pregnancy-progress>
-
   <baby-names></baby-names>
-
-  <hr>
-
-  <footer>
-    <div class="container">
-      <div class="row">
-        <div class="col-md-4"></div>
-        <div class="col-md-4">
-        </div>
-        <div class="col-md-4">
-          <p class="text-right">Graviditate &copy; 2016</p>
-        </div>
-      </div>
-    </div>
-  </footer>
+  <common-footer></common-footer>
 </div>
 
 <!-- JQuery -->

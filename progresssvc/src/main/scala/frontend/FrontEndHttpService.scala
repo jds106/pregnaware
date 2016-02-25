@@ -29,8 +29,8 @@ trait FrontEndHttpService extends HttpService with FrontEndFuncs with StrictLogg
   def sessionManager: SessionManager
 
   /** Delegate user funcitons to the user management service */
-  private val userMgmtSvc =
-    new UserManagementHttpService(sessionManager, userServiceName, actorRefFactory, this.ex, this.httpRef)
+  private val userMgmtSvc = new UserManagementHttpService(
+    sessionManager, userServiceName, actorRefFactory, this.ex, this.httpRef)
 
   /** The routes defined by this service */
   val routes = //staticRoutes ~
@@ -47,6 +47,15 @@ trait FrontEndHttpService extends HttpService with FrontEndFuncs with StrictLogg
       } ~
       pathPrefix("main") {
         getFromResource("html/main.html")
+      } ~
+      pathPrefix("share") {
+        getFromResource("html/share.html")
+      } ~
+      pathPrefix("account") {
+        getFromResource("html/account.html")
+      } ~
+      pathPrefix("newfriend") {
+        getFromResource("html/newfriend.html")
       } ~
       pathPrefix("html") {
         getFromResourceDirectory("html")
@@ -71,7 +80,7 @@ trait FrontEndHttpService extends HttpService with FrontEndFuncs with StrictLogg
               val remainingUrl = removePath(removePath(request.uri.path, FrontEndHttpService.serviceName), serviceName)
 
               logger.info(s"Routing to service $serviceName with remaining url: $remainingUrl")
-              userMgmtSvc.fetchUser { user =>
+              fetchUser { user =>
                 logger.info(s"Routing user ${user.userId} / ${user.email} to $serviceName")
 
                 getServiceAddress(serviceName) { address =>
@@ -96,7 +105,7 @@ trait FrontEndHttpService extends HttpService with FrontEndFuncs with StrictLogg
 
                     case Success(response) =>
                       logger.info(s"Had a response: $response")
-                      complete(HttpResponse(entity = response.entity))
+                      complete(HttpResponse(status = response.status, entity = response.entity))
                   }
                 }
             }

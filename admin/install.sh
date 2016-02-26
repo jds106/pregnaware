@@ -36,6 +36,16 @@ else
     ./update_nginx.sh
 fi
 
+# Install unzip
+if [ $(command -v unzip) ]; then
+    echo "Unzip istalled"
+else
+    echo "####################"
+    echo "# Installing Unzip #"
+    echo "####################"
+    sudo apt-get install unzip
+fi
+
 # Install Consul
 if [ -e $ROOT/bin/consul ]; then 
     echo "Consul installed"; 

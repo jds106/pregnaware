@@ -6,16 +6,16 @@ BUILD_DIR=~/build
 DIST_DIR=~/dist
 
 # Build
-cd $DIST_DIR/pregnaware/progresssvc
+cd $BUILD_DIR/pregnaware/progresssvc
 sbt assembly
 JAR_FILE=`ls target/scala-2.11/*.jar`
 cp $JAR_FILE $DIST_DIR/bin/
 echo "Copied new JAR file: $JAR_FILE"
 
 # Update web files
-cd ~/dist
-cp -r ~/build/pregnaware/frontend/www ~/dist/
-cd ~/dist/www/js
+cd $DIST_DIR
+cp -r $BUILD_DIR/pregnaware/frontend/www $DIST_DIR/
+cd $$DIST_DIR/www/js
 npm install
 echo "Updated website"
 

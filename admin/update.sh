@@ -2,7 +2,7 @@
 
 # Updates the codebase and puts the files in the right place
 
-BUILD_DIR=~/build
+BUILD_DIR=~/build/pregnaware
 DIST_DIR=~/dist
 DIST_DIR_VERSION=$DIST_DIR/v1
 
@@ -15,7 +15,7 @@ if [ ! -e $DIST_DIR_VERSION/scripts ]; then
 fi
 
 # Build
-cd $BUILD_DIR/pregnaware/progresssvc
+cd $BUILD_DIR/progresssvc
 sbt assembly
 JAR_FILE=`ls target/scala-2.11/*.jar`
 cp $JAR_FILE $DIST_DIR_VERSION/lib/
@@ -23,11 +23,11 @@ echo "Copied new JAR file: $JAR_FILE"
 
 # Update web files
 cd $DIST_DIR_VERSION
-cp -r $BUILD_DIR/pregnaware/scripts/* $DIST_DIR_VERSION/scripts/
+cp -r $BUILD_DIR/scripts/* $DIST_DIR_VERSION/scripts/
 echo "Scripts updated"
 
 # Update the script files
-cp -r $BUILD_DIR/pregnaware/frontend/www $DIST_DIR_VERSION/
+cp -r $BUILD_DIR/frontend/www $DIST_DIR_VERSION/
 
 # Update the Consul config
 if [ ! -e $DIST_DIR/etc/consul ]; then

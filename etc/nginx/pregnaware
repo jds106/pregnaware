@@ -38,8 +38,8 @@ server {
 
     ssl on;
 
-    ssl_certificate //home/ubuntu/bin/cacert.pem
-    ssl_certificate_key //home/ubuntu/bin/privkey.pem
+    ssl_certificate //home/ubuntu/bin/cacert.pem;
+    ssl_certificate_key //home/ubuntu/bin/privkey.pem;
 
     # Redirect the root website to the login page
     location / {

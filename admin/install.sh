@@ -2,6 +2,12 @@
 
 # Installs all required software for a new server
 
+echo
+echo "##############################"
+echo "# Installing Pregnaware apps #"
+echo "##############################"
+echo
+
 ROOT=~/dist
 echo Using root: $ROOT
 
@@ -117,7 +123,7 @@ else
 fi
 
 echo
-echo "##############################"
-echo "# Pregnaware files installed #"
-echo "##############################"
+echo "#############################"
+echo "# Pregnaware apps installed #"
+echo "#############################"
 echo

@@ -87,7 +87,7 @@ else
         rm $ZIP_FILE
         mkdir $ROOT/bin/consului
         mv index.html $ROOT/bin/
-        mv static ROOT/bin/
+        mv static $ROOT/bin/
     )
     rm -rf $TMP_DIR
 fi

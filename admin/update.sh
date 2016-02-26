@@ -9,6 +9,10 @@ if [ ! -e $DIST_DIR/lib ]; then
     mkdir -p $DIST_DIR/lib
 fi
 
+if [ ! -e $DIST_DIR/scripts ]; then
+    mkdir -p $DIST_DIR/scripts
+fi
+
 # Build
 cd $BUILD_DIR/pregnaware/progresssvc
 sbt assembly

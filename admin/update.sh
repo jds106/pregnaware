@@ -34,7 +34,7 @@ if [ ! -e $DIST_DIR/etc/consul ]; then
     mkdir -p $DIST_DIR/etc/consul
 fi
 
-cp -r $BUILD_DIR/etc/consul $DIST_DIR/etc/consul
+cp -r $BUILD_DIR/etc/consul $DIST_DIR/etc/
 
 echo
 echo "######################"

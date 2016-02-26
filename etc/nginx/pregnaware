@@ -34,6 +34,12 @@
 #       https://www.digitalocean.com/community/tutorials/how-to-secure-nginx-with-let-s-encrypt-on-ubuntu-14-04
 #
 # Don't forget to enable HTTPS on the server!
+#
+# You also need to renew every 60-90 days with this command:
+#   cd /opt/letsencrypt
+#   ./letsencrypt-auto certonly -a webroot --agree-tos --renew-by-default --webroot-path=/home/ubuntu/dist/latest/www -d pregnaware.co.uk -d www.pregnaware.co.uk
+# 
+# Currently this is done every week by a cron job
 
 server {
     listen 80;

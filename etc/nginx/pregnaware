@@ -14,7 +14,7 @@ server {
 
     # Handle resource requests (this implicitly sets the root for the site)
     location ~ /(css|html|js)  {
-        root /home/ubuntu/dist/www;
+        root /home/ubuntu/dist/latest/www;
     }
 
     # Convenience redirects

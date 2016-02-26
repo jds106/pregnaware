@@ -15,6 +15,7 @@ if [ ! -e "$ROOT" ]; then
     echo Creating root directory: $ROOT
     mkdir -p $ROOT
     mkdir -p $ROOT/bin
+    mkdir -p $ROOT/log
     mkdir -p $ROOT/v1
     ln -s v1 latest
 fi

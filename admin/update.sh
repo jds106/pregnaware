@@ -15,7 +15,7 @@ echo "Copied new JAR file: $JAR_FILE"
 # Update web files
 cd $DIST_DIR
 cp -r $BUILD_DIR/pregnaware/frontend/www $DIST_DIR/
-cd $$DIST_DIR/www/js
+cd $DIST_DIR/www/js
 npm install
 echo "Updated website"
 

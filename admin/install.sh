@@ -86,8 +86,8 @@ else
         unzip $ZIP_FILE
         rm $ZIP_FILE
         mkdir $ROOT/bin/consului
-        mv index.html $ROOT/bin/
-        mv static $ROOT/bin/
+        mv index.html $ROOT/bin/consului/
+        mv static $ROOT/bin/consului/
     )
     rm -rf $TMP_DIR
 fi

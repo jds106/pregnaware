@@ -80,11 +80,12 @@ else
     TMP_DIR='date +%Y%m%d%H%M%S'
     mkdir $TMP_DIR
     (
+        cd $TMP_DIR
         wget https://releases.hashicorp.com/consul/0.6.3/consul_0.6.3_web_ui.zip
         ZIP_FILE=`ls -1 *.zip`
         unzip $ZIP_FILE
         rm $ZIP_FILE
-        mkdir $ROOT/bin/consulgui
+        mkdir $ROOT/bin/consului
         mv index.html $ROOT/bin/
         mv static ROOT/bin/
     )

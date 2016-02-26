@@ -91,3 +91,19 @@ else
     )
     rm -rf $TMP_DIR
 fi
+
+# Install NPM
+if [ $(command -v npm) ]; then 
+    echo "NPM installed"; 
+else 
+    echo "##################"
+    echo "# Installing NPM #"
+    echo "##################"
+    sudo apt-get install npm
+fi
+
+echo
+echo "##############################"
+echo "# Pregnaware files installed #"
+echo "##############################"
+echo

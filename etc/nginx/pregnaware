@@ -1,34 +1,34 @@
 # These are the default settings for the website
 # Save in /etc/nginx/sites-enabled
-server {
-
-    listen 80 default_server;
-    listen [::]:80 default_server ipv6only=on;
-
-    server_name "";
-
-    # Redirect the root website to the login page
-    location / {
-         index /html/login.html;
-    }
-
-    # Handle resource requests (this implicitly sets the root for the site)
-    location ~ /(css|html|js)  {
-        root /home/ubuntu/dist/latest/www;
-    }
-
-    # Convenience redirects
-    location /login     { rewrite ^.* /html/login.html; }
-    location /main      { rewrite ^.* /html/main.html; }
-    location /share     { rewrite ^.* /html/share.html; }
-    location /account   { rewrite ^.* /html/account.html; }
-    location /newfriend { rewrite ^.* /html/newfriend.html; }
-
-    # Forward all REST requests to the Front End Service
-    location /FrontEndSvc {
-        proxy_pass http://localhost:8601;
-    }
-}
+#server {
+#
+#    listen 80 default_server;
+#    listen [::]:80 default_server ipv6only=on;
+#
+#    server_name "";
+#
+#    # Redirect the root website to the login page
+#    location / {
+#         index /html/login.html;
+#    }
+#
+#    # Handle resource requests (this implicitly sets the root for the site)
+#    location ~ /(css|html|js)  {
+#        root /home/ubuntu/dist/latest/www;
+#    }
+#
+#    # Convenience redirects
+#    location /login     { rewrite ^.* /html/login.html; }
+#    location /main      { rewrite ^.* /html/main.html; }
+#    location /share     { rewrite ^.* /html/share.html; }
+#    location /account   { rewrite ^.* /html/account.html; }
+#    location /newfriend { rewrite ^.* /html/newfriend.html; }
+#
+#    # Forward all REST requests to the Front End Service
+#    location /FrontEndSvc {
+#        proxy_pass http://localhost:8601;
+#    }
+#}
 
 server {
     listen 443 default_server;

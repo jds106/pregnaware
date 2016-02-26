@@ -5,7 +5,7 @@
 ROOT=/home/ubuntu/dist
 echo Using root: $ROOT
 
-if [ -ne $ROOT ]; then
+if [ ! -n "$ROOT" ]; then
     echo Creating root directory: $ROOT
     mkdir -p $ROOT
     mkdir -p $ROOT/bin

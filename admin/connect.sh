@@ -1,0 +1,1 @@
+ssh -i ../security/Pregnaware.pem ubuntu@ec2-52-19-64-110.eu-west-1.compute.amazonaws.com

@@ -31,3 +31,6 @@ project/plugins/project/
 .scala_dependencies
 .worksheet
 .idea
+
+# Do not check in the security directory
+security/

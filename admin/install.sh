@@ -32,7 +32,7 @@ else
     echo "####################"
     echo "# Installing NGINX #"
     echo "####################"
-    sudo apt-get nginx
+    sudo apt-get install nginx
     ./update_nginx.sh
 fi
 

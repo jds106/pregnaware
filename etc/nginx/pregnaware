@@ -80,6 +80,7 @@ server {
 
     # Support for LetsEncrypt auto-renewal
     location ~ /.well-known {
-                allow all;
+        root /home/ubuntu/dist/latest/www;
+        allow all;
     }
 }

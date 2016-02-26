@@ -2,13 +2,27 @@
 
 # Installs all required software for a new server
 
-ROOT=/home/ubuntu/dist
+ROOT=~/dist
 echo Using root: $ROOT
 
 if [ ! -e "$ROOT" ]; then
     echo Creating root directory: $ROOT
     mkdir -p $ROOT
     mkdir -p $ROOT/bin
+fi
+
+# Install the right version of Java
+JAVA_VERSION=`java -version 2>&1 | grep version | grep 1.8`
+if [ "$JAVA_VERSION"] then;
+    echo "Java on correct version: $JAVA_VERSION"
+else
+    # Taken from http://stackoverflow.com/questions/30177455/moving-from-jdk-1-7-to-jdk-1-8-on-ubuntu
+    echo "###################"
+    echo "# Installing JAVA #"
+    echo "###################"
+    sudo add-apt-repository ppa:webupd8team/java
+    sudo apt-get update
+    sudo apt-get install oracle-java8-installer
 fi
 
 # Install SBT

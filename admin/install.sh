@@ -13,7 +13,7 @@ fi
 
 # Install the right version of Java
 JAVA_VERSION=`java -version 2>&1 | grep version | grep 1.8`
-if [ "$JAVA_VERSION"] then;
+if [ "$JAVA_VERSION"]; then
     echo "Java on correct version: $JAVA_VERSION"
 else
     # Taken from http://stackoverflow.com/questions/30177455/moving-from-jdk-1-7-to-jdk-1-8-on-ubuntu

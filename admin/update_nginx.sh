@@ -12,3 +12,9 @@ sudo cp ../etc/nginx/pregnaware /etc/nginx/sites-enabled/
 
 echo "Reloading configuration"
 sudo nginx -s reload
+
+echo
+echo "Config reloaded - logs available at:"
+echo "      /var/log/nginx/access.log"
+echo "      /var/log/nginx/error.log"
+echo

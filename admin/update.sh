@@ -18,7 +18,7 @@ echo "Copied new JAR file: $JAR_FILE"
 
 # Update web files
 cd $DIST_DIR
-cp -r $BUILD_DIR/pregnaware/bin/* $DIST_DIR/bin/
+cp -r $BUILD_DIR/pregnaware/scripts/* $DIST_DIR/scripts/
 echo "Scripts updated"
 
 # Update the script files

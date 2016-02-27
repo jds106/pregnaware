@@ -125,6 +125,10 @@ else
     sudo apt-get install npm
 fi
 
+if [ -z "$DB_PREGNAWARE_PWD" ]; then
+    echo "You need to set the DB_PREGNAWARE_PWD environment variable";
+fi
+
 echo
 echo "#############################"
 echo "# Pregnaware apps installed #"

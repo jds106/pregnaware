@@ -47,6 +47,11 @@ libraryDependencies ++= Seq (
   // -- Swagger --
   ,"com.gettyimages" %% "spray-swagger" % swagger
 
+  // -- Database --
+  ,"mysql" % "mysql-connector-java" % "5.1.36"
+  ,"com.typesafe.play" %% "play-slick" % "1.1.1"
+  ,"com.typesafe.slick" %% "slick-codegen" % "3.1.0"
+
   // -- config --
   ,"com.typesafe" % "config" % "1.2.1"
 

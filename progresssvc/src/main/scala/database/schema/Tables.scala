@@ -22,13 +22,13 @@ trait Tables {
    *  @param id Database column Id SqlType(INT), PrimaryKey
    *  @param userid Database column UserId SqlType(INT)
    *  @param name Database column Name SqlType(VARCHAR), Length(45,true)
-   *  @param isboy Database column IsBoy SqlType(VARCHAR), Length(45,true)
+   *  @param isboy Database column IsBoy SqlType(BIT)
    *  @param suggestedby Database column SuggestedBy SqlType(INT) */
-  case class BabynameRow(id: Int, userid: Int, name: String, isboy: String, suggestedby: Int)
+  case class BabynameRow(id: Int, userid: Int, name: String, isboy: Boolean, suggestedby: Int)
   /** GetResult implicit for fetching BabynameRow objects using plain SQL queries */
-  implicit def GetResultBabynameRow(implicit e0: GR[Int], e1: GR[String]): GR[BabynameRow] = GR{
+  implicit def GetResultBabynameRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Boolean]): GR[BabynameRow] = GR{
     prs => import prs._
-    BabynameRow.tupled((<<[Int], <<[Int], <<[String], <<[String], <<[Int]))
+    BabynameRow.tupled((<<[Int], <<[Int], <<[String], <<[Boolean], <<[Int]))
   }
   /** Table description of table BabyName. Objects of this class serve as prototypes for rows in queries. */
   class Babyname(_tableTag: Tag) extends Table[BabynameRow](_tableTag, "BabyName") {
@@ -42,8 +42,8 @@ trait Tables {
     val userid: Rep[Int] = column[Int]("UserId")
     /** Database column Name SqlType(VARCHAR), Length(45,true) */
     val name: Rep[String] = column[String]("Name", O.Length(45,varying=true))
-    /** Database column IsBoy SqlType(VARCHAR), Length(45,true) */
-    val isboy: Rep[String] = column[String]("IsBoy", O.Length(45,varying=true))
+    /** Database column IsBoy SqlType(BIT) */
+    val isboy: Rep[Boolean] = column[Boolean]("IsBoy")
     /** Database column SuggestedBy SqlType(INT) */
     val suggestedby: Rep[Int] = column[Int]("SuggestedBy")
 

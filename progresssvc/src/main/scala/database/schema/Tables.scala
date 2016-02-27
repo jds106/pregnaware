@@ -20,23 +20,26 @@ trait Tables {
 
   /** Entity class storing rows of table Babyname
    *  @param id Database column Id SqlType(INT), PrimaryKey
+   *  @param userid Database column UserId SqlType(INT)
    *  @param name Database column Name SqlType(VARCHAR), Length(45,true)
    *  @param isboy Database column IsBoy SqlType(VARCHAR), Length(45,true)
    *  @param suggestedby Database column SuggestedBy SqlType(INT) */
-  case class BabynameRow(id: Int, name: String, isboy: String, suggestedby: Int)
+  case class BabynameRow(id: Int, userid: Int, name: String, isboy: String, suggestedby: Int)
   /** GetResult implicit for fetching BabynameRow objects using plain SQL queries */
   implicit def GetResultBabynameRow(implicit e0: GR[Int], e1: GR[String]): GR[BabynameRow] = GR{
     prs => import prs._
-    BabynameRow.tupled((<<[Int], <<[String], <<[String], <<[Int]))
+    BabynameRow.tupled((<<[Int], <<[Int], <<[String], <<[String], <<[Int]))
   }
   /** Table description of table BabyName. Objects of this class serve as prototypes for rows in queries. */
   class Babyname(_tableTag: Tag) extends Table[BabynameRow](_tableTag, "BabyName") {
-    def * = (id, name, isboy, suggestedby) <> (BabynameRow.tupled, BabynameRow.unapply)
+    def * = (id, userid, name, isboy, suggestedby) <> (BabynameRow.tupled, BabynameRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(name), Rep.Some(isboy), Rep.Some(suggestedby)).shaped.<>({r=>import r._; _1.map(_=> BabynameRow.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(userid), Rep.Some(name), Rep.Some(isboy), Rep.Some(suggestedby)).shaped.<>({r=>import r._; _1.map(_=> BabynameRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column Id SqlType(INT), PrimaryKey */
     val id: Rep[Int] = column[Int]("Id", O.PrimaryKey)
+    /** Database column UserId SqlType(INT) */
+    val userid: Rep[Int] = column[Int]("UserId")
     /** Database column Name SqlType(VARCHAR), Length(45,true) */
     val name: Rep[String] = column[String]("Name", O.Length(45,varying=true))
     /** Database column IsBoy SqlType(VARCHAR), Length(45,true) */
@@ -45,7 +48,9 @@ trait Tables {
     val suggestedby: Rep[Int] = column[Int]("SuggestedBy")
 
     /** Foreign key referencing User (database name BabyName_User_SuggestedBy) */
-    lazy val userFk = foreignKey("BabyName_User_SuggestedBy", suggestedby, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+    lazy val userFk1 = foreignKey("BabyName_User_SuggestedBy", suggestedby, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+    /** Foreign key referencing User (database name BabyName_User_UserId) */
+    lazy val userFk2 = foreignKey("BabyName_User_UserId", userid, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   }
   /** Collection-like TableQuery object for table Babyname */
   lazy val Babyname = new TableQuery(tag => new Babyname(tag))

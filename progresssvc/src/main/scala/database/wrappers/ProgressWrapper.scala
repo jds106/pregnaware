@@ -15,23 +15,35 @@ trait ProgressWrapper {
   implicit def executionContext: ExecutionContext
 
   /** Gets an existing due date */
-  def getDueDate(userId: Int) : Future[Option[ProgressRow]] = {
+  def getDueDate(userId: Int) : Future[Option[LocalDate]] = {
     connection { db =>
-      db.run(Progress.filter(_.userid === userId).result.headOption)
+      db.run(Progress.filter(_.userid === userId).map(_.duedate).result.headOption).map {
+        case None => None
+        case Some(d) => Some(d.toLocalDate)
+      }
     }
   }
 
   /** Sets a due date (either adding a due date, or replacing an existing one) */
-  def setDueDate(userId: Int, dueDate: LocalDate) : Future[ProgressRow] = {
+  def setDueDate(userId: Int, dueDate: LocalDate) : Future[Boolean] = {
     connection { db =>
       getDueDate(userId).flatMap {
         case Some(progressRow) =>
-          Future.successful(progressRow)
+          val query = Progress.filter(_.userid === userId).map(_.duedate)
+          val action = query.update(Date.valueOf(dueDate))
+          db.run(action).map {
+            case 0 => false
+            case 1 => true
+            case n => throw new Exception(s"Modified $n due dates for user: $userId")
+          }
 
         case None =>
-          val insertQuery = Progress returning Progress
-          val action = insertQuery += ProgressRow(userId, Date.valueOf(dueDate))
-          db.run(action)
+          val action = Progress += ProgressRow(userId, Date.valueOf(dueDate))
+          db.run(action).map {
+            case 0 => false
+            case 1 => true
+            case n => throw new Exception(s"Added $n due dates for user: $userId")
+          }
       }
     }
   }
@@ -42,7 +54,7 @@ trait ProgressWrapper {
       db.run(Progress.filter(_.userid === userId).delete).map {
         case 0 => false
         case 1 => true
-        case _ => throw new Exception(s"Removed multiple due dates for user: $userId")
+        case n => throw new Exception(s"Removed $n due dates for user: $userId")
       }
     }
   }

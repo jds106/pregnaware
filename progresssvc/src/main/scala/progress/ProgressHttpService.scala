@@ -1,18 +1,17 @@
 package progress
 
-import java.io.{File, FileWriter}
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
+import akka.actor.ActorRefFactory
 import com.typesafe.scalalogging.StrictLogging
 import com.wordnik.swagger.annotations._
-import org.json4s.jackson.Serialization._
 import spray.http.StatusCodes
 import spray.routing.{HttpService, Route}
-import utils.{HeaderKeys, Json4sSupport}
+import utils.CustomDirectives
+import utils.Json4sSupport._
 
-import scala.collection.mutable
-import scala.io.Source
+import scala.concurrent.ExecutionContext
 
 object ProgressHttpService {
   val serviceName = "ProgressSvc"
@@ -20,13 +19,13 @@ object ProgressHttpService {
 
 /** Controller for the due date */
 @Api(value = "/progress", description = "Pregnancy-progress related end-points", produces = "application/json")
-trait ProgressHttpService extends HttpService with ProgressPersister with StrictLogging {
+case class ProgressHttpService(
+  persistence: ProgressPersistence,
+  ar: ActorRefFactory,
+  ec: ExecutionContext) extends HttpService with CustomDirectives with StrictLogging {
 
-  import Json4sSupport._
-
-  // Read in the due dates
-  private val dueDateMap = new mutable.HashMap[Int, LocalDate]()
-  loadDueDates foreach { case (userId, dueDate) => dueDateMap.put(userId, dueDate) }
+  implicit def actorRefFactory: ActorRefFactory = ar
+  implicit def executionContext : ExecutionContext = ec
 
   // Human gestation period
   private val gestationPeriod = 280
@@ -42,28 +41,25 @@ trait ProgressHttpService extends HttpService with ProgressPersister with Strict
   ))
   def getProgress: Route =
     get {
-      path("progress") {
-        headerValueByName(HeaderKeys.EntryId) { entryId =>
-          dueDateMap.get(entryId.toInt) match {
-            case None =>
-              complete(StatusCodes.NotFound -> s"No due date found for user $entryId")
+      path("progress" / IntNumber) { userId =>
+        completeWithFailure("getProgress", persistence.getDueDate(userId)) {
+          case None =>
+            complete(StatusCodes.NotFound -> s"No due date found for user $userId")
 
-            case Some(dueDate) =>
-              complete(calcModel(dueDate))
-          }
+          case Some(dueDate) =>
+            complete(calcModel(dueDate))
         }
       }
     }
 
   def putProgress: Route =
     put {
-      path("progress") {
-        userIdFromHeader { userId =>
-          requestInstance { r =>
-            entity(as[LocalDate]) { dueDate =>
-              dueDateMap.put(userId, dueDate)
-              saveDueDate(userId, dueDate)
-              complete(calcModel(dueDate))
+      path("progress" / IntNumber) { userId =>
+        requestInstance { r =>
+          entity(as[LocalDate]) { dueDate =>
+            completeWithFailure("putProgress", persistence.setDueDate(userId, dueDate)) {
+              case false => complete(StatusCodes.BadRequest -> s"Could not set due date $dueDate on user $userId")
+              case true => complete(calcModel(dueDate))
             }
           }
         }
@@ -72,74 +68,18 @@ trait ProgressHttpService extends HttpService with ProgressPersister with Strict
 
   def deleteProgress: Route =
     delete {
-      path("progress") {
-        userIdFromHeader { userId =>
-          requestInstance { r =>
-            dueDateMap.remove(userId)
-            deleteDueDate(userId)
-            complete(StatusCodes.OK -> "Due date removed")
-          }
+      path("progress" / IntNumber) { userId =>
+        completeWithFailure("deleteProgress", persistence.deleteDueDate(userId)) {
+          case false => complete(StatusCodes.BadRequest -> s"Could not delete due date for user $userId")
+          case true => complete(StatusCodes.OK)
         }
       }
     }
-
-  private def userIdFromHeader(handler: Int => Route): Route = {
-    headerValueByName(HeaderKeys.EntryId)(s => handler(s.toInt))
-  }
 
   private def calcModel(dueDate: LocalDate): ProgressModel = {
     val conceptionDate = dueDate.minusDays(gestationPeriod)
     val passed = ChronoUnit.DAYS.between(conceptionDate, LocalDate.now)
     val remaining = ChronoUnit.DAYS.between(LocalDate.now, dueDate)
     ProgressModel(dueDate, passed, remaining)
-  }
-}
-
-trait ProgressPersister {
-  /** Load all of the names into memory */
-  def loadDueDates: Map[Int, LocalDate]
-
-  /** Persist changes */
-  def saveDueDate(userId: Int, dueDate: LocalDate): Unit
-
-  /** Delete the due date */
-  def deleteDueDate(userId: Int): Unit
-}
-
-trait FileProgressPersister extends ProgressPersister {
-
-  import utils.Json4sSupport._
-
-  /** The file root to store the naming suggestions */
-  def root: File
-
-  /** Load all of the names into memory */
-  def loadDueDates: Map[Int, LocalDate] = {
-    val userIdRegex = "^[0-9]+\\.json$"
-    val userFiles = root.listFiles().filter(_.isFile).filter(f => f.getName.matches(userIdRegex))
-
-    userFiles
-      .map { f => (f.getName.replace(".json", "").toInt, Source.fromFile(f).mkString) }
-      .map { case (userId, s) => userId -> read[LocalDate](s) }
-      .toMap
-  }
-
-  /** Persist changes */
-  def saveDueDate(userId: Int, dueDate: LocalDate): Unit = {
-    val file = new File(root, s"$userId.json")
-    val writer = new FileWriter(file)
-    try {
-      writer.write(write(dueDate))
-    } finally {
-      writer.close()
-    }
-  }
-
-  /** Delete the due date */
-  def deleteDueDate(userId: Int): Unit = {
-    val file = new File(root, s"$userId.json")
-    if (file.exists()) {
-      file.delete()
-    }
   }
 }

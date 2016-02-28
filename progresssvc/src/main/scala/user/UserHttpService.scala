@@ -1,24 +1,27 @@
 package user
 
-import java.io.{File, FileWriter}
-
+import akka.actor.ActorRefFactory
 import com.typesafe.scalalogging.StrictLogging
-import org.json4s.jackson.Serialization.{read, write}
 import spray.http.StatusCodes
 import spray.routing.{HttpService, Route}
+import user.entities._
+import utils.CustomDirectives
 import utils.Json4sSupport._
 
-import scala.io.Source
+import scala.concurrent.ExecutionContext
 
 object UserHttpService {
   val serviceName = "UserSvc"
 }
 
 /** Support user creation */
-trait UserHttpService extends HttpService with UserPersister with StrictLogging {
+case class UserHttpService(
+  persistence: UserPersistence,
+  ar: ActorRefFactory,
+  ec: ExecutionContext) extends HttpService with CustomDirectives with StrictLogging {
 
-  private val userMap = new scala.collection.mutable.HashMap[Int, UserEntry]()
-  loadUsers.foreach(u => userMap.put(u.userId, u))
+  implicit def actorRefFactory: ActorRefFactory = ar
+  implicit def executionContext : ExecutionContext = ec
 
   /** The routes defined by this service */
   val routes =
@@ -28,7 +31,7 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
 
   def getUser : Route = get {
     path("user" / IntNumber) { userId =>
-      userMap.get(userId) match {
+      completeWithFailure("getUser", persistence.getUser(userId)) {
         case None => complete(StatusCodes.NotFound)
         case Some(u) => complete(u)
       }
@@ -37,28 +40,24 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
 
   def findUser : Route = get {
     path("findUser" / Segment) { email =>
-      userMap.values.find(_.email.equalsIgnoreCase(email)) match {
-        case None =>
-          complete(StatusCodes.NotFound)
-        case Some(user) =>
-          complete(user)
+      completeWithFailure("findUser", persistence.getUser(email)) {
+        case None => complete(StatusCodes.NotFound)
+        case Some(u) => complete(u)
       }
     }
   }
 
   def putUser : Route = put {
     path("user") {
-      entity(as[UserEntry]) { entry =>
-
-        userMap.values.find(_.email.equalsIgnoreCase(entry.email)) match {
-          case Some(user) =>
-            complete(StatusCodes.Conflict -> "User already exists")
+      entity(as[AddUserRequest]) { entry =>
+        completeWithFailure("putUser[find]", persistence.getUser(entry.email)) {
+          case Some(user) => complete(StatusCodes.Conflict -> "User already exists")
 
           case None =>
-            val persistedEntry = entry.copy(userId = nextId(u => u.userId, userMap.values.toSeq))
-            userMap.put(persistedEntry.userId, persistedEntry)
-            saveUser(persistedEntry)
-            complete(persistedEntry)
+            val addUserFut = persistence.addUser(entry.displayName, entry.email, entry.passwordHash)
+            completeWithFailure("putUser[Add]", addUserFut) { user =>
+              complete(user)
+            }
         }
       }
     }
@@ -66,22 +65,13 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
 
   def editUser : Route = put {
     path("editUser") {
-      entity(as[ModifiedUser]) { modifiedUser =>
-      userMap.get(modifiedUser.userId) match {
-          case None =>
-            complete(StatusCodes.NotFound)
+      entity(as[ModifyUserRequest]) { request =>
+        val updateUserFut = persistence.updateUser(
+          request.userId, request.displayName, request.email, request.passwordHash)
 
-          case Some(u) =>
-            assert(
-              modifiedUser.userId == u.userId,
-              s"Cannot change the user id of the modified user: $modifiedUser.userId != ${u.userId}")
-
-            val newUser = UserEntry(
-              u.userId, modifiedUser.displayName, modifiedUser.email, modifiedUser.passwordHash, u.friends)
-
-            userMap.put(u.userId, newUser)
-            saveUser(newUser)
-            complete(newUser)
+        completeWithFailure("editUser", updateUserFut) {
+          case false => complete(StatusCodes.NotFound)
+          case true => complete(StatusCodes.OK)
         }
       }
     }
@@ -89,77 +79,22 @@ trait UserHttpService extends HttpService with UserPersister with StrictLogging 
 
   def putFriend : Route = put {
     path("friend") {
-      entity(as[LinkUsers]) { userLink =>
-        userMap.get(userLink.userId) match {
-          case None =>
-            complete(StatusCodes.NotFound -> s"Could not find user for id ${userLink.userId}")
-
-          case Some(user) =>
-            val userWithFriend = user.copy(friends = userLink.friendUserId +: user.friends)
-            userMap.put(userWithFriend.userId, userWithFriend)
-            saveUser(userWithFriend)
-            complete(StatusCodes.OK)
-        }
+      entity(as[AddFriendRequest]) { request =>
+        val addFriendFut = persistence.addFriend(request.userId, request.friendId)
+        completeWithFailure("putFriend", addFriendFut)(f => complete(f))
       }
     }
   }
 
   def deleteFriend : Route = delete {
     path("friend") {
-      entity(as[LinkUsers]) { userLink =>
-        userMap.get(userLink.userId) match {
-          case None =>
-            complete(StatusCodes.NotFound -> s"Could not find user for id ${userLink.userId}")
-
-          case Some(user) =>
-            val userWithFriend = user.copy(friends = user.friends.filter(_ != userLink.friendUserId))
-            userMap.put(userWithFriend.userId, userWithFriend)
-            saveUser(userWithFriend)
-            complete(StatusCodes.OK)
+      entity(as[DeleteFriendRequest]) { request =>
+        val deleteFriendFut = persistence.deleteFriend(request.userId, request.friendId)
+        completeWithFailure("deleteFriend", deleteFriendFut){
+          case false => complete(StatusCodes.NotFound)
+          case true => complete(StatusCodes.OK)
         }
       }
-    }
-  }
-
-  private def nextId(selector: UserEntry => Int, users: Iterable[UserEntry]) = {
-    users match {
-      case Nil => 1
-      case list => list.map(selector).max + 1
-    }
-  }
-}
-
-trait UserPersister {
-  /** Load all of the names into memory */
-  def loadUsers: Seq[UserEntry]
-
-  /** Persist changes */
-  def saveUser(entry: UserEntry) : Unit
-}
-
-trait FileUserPersister extends UserPersister {
-
-  /** The file root to store the naming suggestions */
-  def root : File
-
-  /** Load all of the names into memory */
-  def loadUsers: Seq[UserEntry] = {
-    val userIdRegex = "^[0-9]+\\.json$"
-    val userFiles = root.listFiles().filter(_.isFile).filter(f => f.getName.matches(userIdRegex))
-
-    userFiles
-      .map{ f => (f.getName.replace(".json", "").toInt, Source.fromFile(f).mkString) }
-      .map{ case (userId, s) => read[UserEntry](s) }
-  }
-
-  /** Persist changes */
-  def saveUser(entry: UserEntry) : Unit = {
-    val file = new File(root, s"${entry.userId}.json")
-    val writer = new FileWriter(file)
-    try {
-      writer.write(write(entry))
-    } finally {
-      writer.close()
     }
   }
 }

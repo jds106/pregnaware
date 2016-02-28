@@ -1,8 +1,9 @@
-package user
+package user.entities
 
-case class UserEntry(
+case class WrappedUser(
   userId: Int,
   displayName: String,
   email: String,
   passwordHash: String,
-  friends: Seq[Int])
+  friends: Seq[WrappedFriend])
+

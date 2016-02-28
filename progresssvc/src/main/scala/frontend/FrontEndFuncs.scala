@@ -10,7 +10,6 @@ import spray.client.pipelining._
 import spray.http.Uri.Path
 import spray.http.{StatusCodes, Uri, _}
 import spray.routing._
-import user.UserEntry
 import utils.ConsulWrapper
 import utils.Json4sSupport._
 
@@ -22,7 +21,7 @@ import scala.util.{Failure, Success}
 /**
   * Created by james on 22/02/2016.
   */
-trait FrontEndFuncs extends HttpService with StrictLogging {
+trait FrontEndFuncs extends Directives with StrictLogging {
 
   /** The session manager */
   def sessionManager: SessionManager

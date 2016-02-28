@@ -1,5 +1,8 @@
 package frontend.entities
 
+/** Add a user */
+case class AddUserRequest(displayName: String, email: String, password: String)
+
 /** The user view model */
 case class UserViewModel(userId: Int, displayName: String, email: String, friends: Seq[FriendViewModel])
 

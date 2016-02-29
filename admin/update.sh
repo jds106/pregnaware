@@ -15,7 +15,7 @@ if [ ! -e $DIST_DIR_VERSION/scripts ]; then
 fi
 
 # Build
-cd $BUILD_DIR/progresssvc
+cd $BUILD_DIR/service
 sbt assembly
 JAR_FILE=`ls target/scala-2.11/*.jar`
 cp $JAR_FILE $DIST_DIR_VERSION/lib/

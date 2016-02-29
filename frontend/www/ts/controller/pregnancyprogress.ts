@@ -4,14 +4,17 @@ module controller {
     import FrontEndSvc = service.FrontEndSvc;
     'use strict';
 
-    import ProgressModel = entities.ProgressModel;
-    import User = entities.User;
+    import WrappedUser = entities.WrappedUser;
+    import WrappedFriend = entities.WrappedFriend;
     import LocalDate = entities.LocalDate;
+    import Moment = moment.Moment;
 
-    class EnhancedProgressModel implements ProgressModel {
-        public daysPassed:number;
-        public daysRemaining:number;
-        public dueDate:LocalDate;
+    class EnhancedProgressModel {
+        public dueDate:Moment;
+        public daysPassed: number;
+        public daysRemaining: number;
+
+        private gestationPeriod : moment.Duration = moment.duration({days: 280});
 
         public get weeksPassed() {
             return Math.floor(this.daysPassed / 7);
@@ -21,24 +24,26 @@ module controller {
             return Math.floor(this.daysRemaining / 7);
         }
 
-        constructor(model:ProgressModel) {
-            this.daysPassed = model.daysPassed;
-            this.daysRemaining = model.daysRemaining;
-            this.dueDate = model.dueDate;
+        constructor(dueDate: LocalDate) {
+            // Note handling of zero-index months
+            this.dueDate = moment().year(dueDate.year).month(dueDate.month - 1).date(dueDate.day);
+
+            var conceptionDate = this.dueDate.subtract(this.gestationPeriod);
+            var today = moment();
+
+            this.daysPassed = today.diff(conceptionDate, 'days');
+            this.daysRemaining = this.dueDate.diff(conceptionDate, 'days');
         }
 
         public get formattedDueDate() {
-            // Format the due date - handling the zero-index months
-            var asMomentDate = moment()
-                .year(this.dueDate.year).month(this.dueDate.month - 1).date(this.dueDate.day);
-            return asMomentDate.format("LL");
+            return this.dueDate.format("LL");
         }
     }
 
     /** Extend the scope with the progress model */
     interface PregnancyProgressScope extends angular.IScope {
         progress: EnhancedProgressModel;
-        viewedUser: User;
+        viewedUser: string;
         canEdit: boolean;
 
         dueDatePickerOpen: boolean;
@@ -50,7 +55,8 @@ module controller {
         private frontend:service.FrontEndSvc;
         private usermgmt:service.UserManagementSvc;
 
-        private user: User;
+        private user: WrappedUser;
+        private selectedFriend: WrappedFriend;
 
         constructor($scope: PregnancyProgressScope, frontend:service.FrontEndSvc, usermgmt:service.UserManagementSvc) {
             this.$scope = $scope;
@@ -60,21 +66,22 @@ module controller {
             this.$scope.dueDatePickerOpen = false;
             this.$scope.dueDate = Date.now();
 
-            this.usermgmt.userSetEvent(user => {
+            this.usermgmt.userSetEvent((user: WrappedUser) => {
                 this.user = user;
             });
 
-            this.usermgmt.viewedUserChangedEvent(user => {
-                this.$scope.viewedUser = user;
+            this.usermgmt.friendSelectedEvent((friend: WrappedFriend) => {
+                if (friend == null) {
+                    this.$scope.viewedUser = this.user.displayName;
+                    this.$scope.canEdit = true;
+                    this.$scope.progress = new EnhancedProgressModel(this.user.dueDate);
+                } else {
+                    this.$scope.viewedUser = friend.displayName;
+                    this.$scope.canEdit = false;
+                    this.$scope.progress = new EnhancedProgressModel(friend.dueDate);
+                }
 
-                // Can only edit when the logged-in user is the same as the viewed user
-                this.$scope.canEdit = this.user.userId == user.userId;
-
-                this.frontend.getDueDate(user.userId)
-                    .error(error => this.$scope.progress = null)
-                    .success((response:ProgressModel) => {
-                        this.$scope.progress = new EnhancedProgressModel(response);
-                    });
+                this.selectedFriend = friend;
             });
         }
 
@@ -86,15 +93,15 @@ module controller {
                 day: parsedDueDate.date()
             };
 
-            this.frontend.putDueDate(asLocalDate, this.user.userId)
+            this.frontend.putDueDate(asLocalDate)
                 .error(error => console.error('Could not put due date', error))
-                .success((response:ProgressModel) => {
+                .success((response:LocalDate) => {
                     this.$scope.progress = new EnhancedProgressModel(response);
                 });
         }
 
         public ChangeDueDate() {
-            this.frontend.deleteDueDate(this.user.userId)
+            this.frontend.deleteDueDate()
                 .error(error => console.error('Could not put due date', error))
                 .success((response) => {
                     this.$scope.progress = null;

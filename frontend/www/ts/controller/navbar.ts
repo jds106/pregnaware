@@ -3,7 +3,7 @@
 module controller {
     'use strict';
 
-    import User = entities.User;
+    import WrappedUser = entities.WrappedUser;
     import CookieKeys = utils.CookieKeys;
 
     export class NavBarController {
@@ -12,7 +12,7 @@ module controller {
         private frontend: service.FrontEndSvc;
         private usermgmt: service.UserManagementSvc;
 
-        private user: User;
+        private user: WrappedUser;
 
         constructor(
             $cookies: angular.cookies.ICookiesService,

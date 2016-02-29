@@ -3,7 +3,7 @@
 module controller {
     import CookieKeys = utils.CookieKeys;
     import LoginRequest = entities.LoginRequest;
-    import NewUserRequest = entities.NewUserRequest;
+    import AddUserRequest = entities.AddUserRequest;
     'use strict';
 
     export class LoginController {
@@ -14,7 +14,7 @@ module controller {
             rememberUser: false
         };
 
-        public newUserRequest : NewUserRequest = {
+        public newUserRequest : AddUserRequest = {
             displayName: "",
             email: "",
             password: ""

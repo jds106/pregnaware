@@ -2,7 +2,7 @@
 
 module controller {
     'use strict';
-    import User = entities.User;
+    import WrappedUser = entities.WrappedUser;
     import EditUserRequest = entities.EditUserRequest;
 
     interface AccountScope extends angular.IScope {
@@ -22,7 +22,7 @@ module controller {
         private frontend: service.FrontEndSvc;
         private usermgmt: service.UserManagementSvc;
 
-        private user: User;
+        private user: WrappedUser;
 
         constructor(
             $scope: AccountScope,
@@ -70,7 +70,7 @@ module controller {
 
             this.frontend.editUser(editUserRequest)
                 .error(error => console.error("Failed to edit user", error))
-                .success((updatedUser: User) => {
+                .success((updatedUser: WrappedUser) => {
                     this.usermgmt.User = updatedUser;
                     this.$window.location.pathname = "/main";
                 });

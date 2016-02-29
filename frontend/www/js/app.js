@@ -55,7 +55,7 @@ var service;
         };
         /* ---- User ---- */
         FrontEndSvc.prototype.getUser = function () {
-            return this.$http.get(FrontEndUrl.getUrl('user'));
+            return this.$http.get(FrontEndUrl.getUrl('user', this.getSessionId()));
         };
         FrontEndSvc.prototype.newUser = function (addUserRequest) {
             return this.$http.post(FrontEndUrl.getUrl('user'), addUserRequest);
@@ -67,7 +67,7 @@ var service;
             return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), { email: friendEmail });
         };
         FrontEndSvc.prototype.deleteFriend = function (friendEmail) {
-            return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), { email: friendEmail });
+            return this.$http.delete(FrontEndUrl.getUrl('user/friend', this.getSessionId()));
         };
         /** Creates a link to the session created for the new friend */
         FrontEndSvc.prototype.getCreateFriendLink = function (urlRoot, sessionId) {
@@ -75,6 +75,7 @@ var service;
         };
         /* ---- Progress ---- */
         FrontEndSvc.prototype.putDueDate = function (dueDate) {
+            console.log("Putting due date: ", dueDate);
             return this.$http.put(FrontEndUrl.getUrl('progress', this.getSessionId()), dueDate);
         };
         FrontEndSvc.prototype.deleteDueDate = function () {
@@ -212,6 +213,10 @@ var controller;
             this.usermgmt = usermgmt;
             this.usermgmt.userSetEvent(function (user) {
                 _this.user = user;
+                _this.$scope.viewedUser = _this.user.displayName;
+                _this.$scope.canEdit = true;
+                _this.$scope.boysNames = _this.user.babyNames.filter(function (n) { return n.isBoy; });
+                _this.$scope.girlsNames = _this.user.babyNames.filter(function (n) { return !n.isBoy; });
             });
             this.usermgmt.friendSelectedEvent(function (friend) {
                 var babyNames;
@@ -276,10 +281,10 @@ var controller;
             this.gestationPeriod = moment.duration({ days: 280 });
             // Note handling of zero-index months
             this.dueDate = moment().year(dueDate.year).month(dueDate.month - 1).date(dueDate.day);
-            var conceptionDate = this.dueDate.subtract(this.gestationPeriod);
+            var conceptionDate = this.dueDate.clone().subtract(this.gestationPeriod);
             var today = moment();
             this.daysPassed = today.diff(conceptionDate, 'days');
-            this.daysRemaining = this.dueDate.diff(conceptionDate, 'days');
+            this.daysRemaining = this.dueDate.diff(today, 'days');
         }
         Object.defineProperty(EnhancedProgressModel.prototype, "weeksPassed", {
             get: function () {
@@ -314,6 +319,9 @@ var controller;
             this.$scope.dueDate = Date.now();
             this.usermgmt.userSetEvent(function (user) {
                 _this.user = user;
+                _this.$scope.viewedUser = _this.user.displayName;
+                _this.$scope.canEdit = true;
+                _this.$scope.progress = new EnhancedProgressModel(_this.user.dueDate);
             });
             this.usermgmt.friendSelectedEvent(function (friend) {
                 if (friend == null) {

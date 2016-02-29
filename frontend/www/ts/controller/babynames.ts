@@ -36,6 +36,10 @@ module controller {
 
             this.usermgmt.userSetEvent(user => {
                 this.user = user;
+                this.$scope.viewedUser = this.user.displayName;
+                this.$scope.canEdit = true;
+                this.$scope.boysNames = this.user.babyNames.filter(n => n.isBoy);
+                this.$scope.girlsNames = this.user.babyNames.filter(n => !n.isBoy);
             });
 
             this.usermgmt.friendSelectedEvent((friend : WrappedFriend) => {

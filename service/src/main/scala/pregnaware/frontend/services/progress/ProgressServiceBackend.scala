@@ -5,18 +5,17 @@ import java.time.LocalDate
 import akka.actor.ActorContext
 import akka.util.Timeout
 import pregnaware.frontend.services.BackEndFuncs
-import pregnaware.progress.ProgressModel
+import pregnaware.utils.Json4sSupport._
 import spray.http.HttpMethods._
 import spray.httpx.ResponseTransformation._
-import pregnaware.utils.Json4sSupport._
 
 import scala.concurrent.{ExecutionContext, Future}
 
 /** Client to the UserHttpService */
 abstract class ProgressServiceBackend(progressServiceName: String) extends BackEndFuncs(progressServiceName) {
 
-  def putProgress(userId: Int, dueDate: LocalDate) : Future[ProgressModel] = {
-    send(PUT, s"progress/$userId", (b,u) => b(u, dueDate)).map(r => r ~> unmarshal[ProgressModel])
+  def putProgress(userId: Int, dueDate: LocalDate) : Future[LocalDate] = {
+    send(PUT, s"progress/$userId", (b,u) => b(u, dueDate)).map(r => r ~> unmarshal[LocalDate])
   }
 
   def deleteProgress(userId: Int) : Future[Unit] = {

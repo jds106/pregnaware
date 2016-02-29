@@ -1,13 +1,13 @@
 /// <reference path="../references.ts" />
 
 module controller {
-    import FrontEndSvc = service.FrontEndSvc;
     'use strict';
 
     import WrappedUser = entities.WrappedUser;
     import WrappedFriend = entities.WrappedFriend;
     import LocalDate = entities.LocalDate;
     import Moment = moment.Moment;
+    import FrontEndSvc = service.FrontEndSvc;
 
     class EnhancedProgressModel {
         public dueDate:Moment;
@@ -28,11 +28,11 @@ module controller {
             // Note handling of zero-index months
             this.dueDate = moment().year(dueDate.year).month(dueDate.month - 1).date(dueDate.day);
 
-            var conceptionDate = this.dueDate.subtract(this.gestationPeriod);
+            var conceptionDate = this.dueDate.clone().subtract(this.gestationPeriod);
             var today = moment();
 
             this.daysPassed = today.diff(conceptionDate, 'days');
-            this.daysRemaining = this.dueDate.diff(conceptionDate, 'days');
+            this.daysRemaining = this.dueDate.diff(today, 'days');
         }
 
         public get formattedDueDate() {
@@ -68,6 +68,9 @@ module controller {
 
             this.usermgmt.userSetEvent((user: WrappedUser) => {
                 this.user = user;
+                this.$scope.viewedUser = this.user.displayName;
+                this.$scope.canEdit = true;
+                this.$scope.progress = new EnhancedProgressModel(this.user.dueDate);
             });
 
             this.usermgmt.friendSelectedEvent((friend: WrappedFriend) => {

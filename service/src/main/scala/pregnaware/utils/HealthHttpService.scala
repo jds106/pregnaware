@@ -1,7 +1,8 @@
 package pregnaware.utils
 
+import java.time.LocalDate
+
 import com.wordnik.swagger.annotations._
-import pregnaware.progress.ProgressModel
 import spray.routing.{HttpService, Route}
 
 /** Controller for the due date */
@@ -22,7 +23,7 @@ trait HealthHttpService extends HttpService {
 
   @ApiOperation(value = "Health end-point", nickname = "getHealth", httpMethod = "GET")
   @ApiResponses(Array(
-    new ApiResponse(code = 200, message = "All systems operational", response = classOf[ProgressModel])
+    new ApiResponse(code = 200, message = "All systems operational", response = classOf[LocalDate])
   ))
   def getHealth: Route =
     path("health") {

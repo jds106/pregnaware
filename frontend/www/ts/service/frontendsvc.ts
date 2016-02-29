@@ -54,7 +54,7 @@ module service {
         /* ---- User ---- */
 
         public getUser() : angular.IHttpPromise<WrappedUser> {
-            return this.$http.get(FrontEndUrl.getUrl('user'));
+            return this.$http.get(FrontEndUrl.getUrl('user', this.getSessionId()));
         }
 
         public newUser(addUserRequest: AddUserRequest) : angular.IHttpPromise<string> {
@@ -70,7 +70,7 @@ module service {
         }
 
         public deleteFriend(friendEmail: String) : angular.IHttpPromise<any> {
-            return this.$http.delete(FrontEndUrl.getUrl('user/friend', this.getSessionId()), {email: friendEmail});
+            return this.$http.delete(FrontEndUrl.getUrl('user/friend', this.getSessionId()));
         }
 
         /** Creates a link to the session created for the new friend */
@@ -81,6 +81,7 @@ module service {
         /* ---- Progress ---- */
 
         public putDueDate(dueDate: LocalDate) : angular.IHttpPromise<LocalDate> {
+            console.log("Putting due date: ", dueDate);
             return this.$http.put(FrontEndUrl.getUrl('progress', this.getSessionId()), dueDate)
         }
 

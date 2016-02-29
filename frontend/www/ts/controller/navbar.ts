@@ -33,20 +33,14 @@ module controller {
         }
 
         public Logout() {
-            this.frontend.logout()
-                .error((error) => {
-                    console.error("Unable to log out: " + error)
-                })
-                .success((response) => {
-                    this.$cookies.remove(CookieKeys.SessionIdKey);
-                    this.$window.location.pathname = '/login';
-                });
+            this.$cookies.remove(CookieKeys.SessionIdKey);
+            this.$window.location.pathname = '/login';
         }
 
-        public ViewUser(userId: number = null) {
-            this.frontend.getUser(userId)
-                .error(error => console.error("Could not find user: " + userId))
-                .success((user: User) => this.usermgmt.ViewedUser = user);
-        }
+        //public ViewUser(userId: number = null) {
+        //    this.frontend.getUser(userId)
+        //        .error(error => console.error("Could not find user: " + userId))
+        //        .success((user: User) => this.usermgmt.ViewedUser = user);
+        //}
     }
 }

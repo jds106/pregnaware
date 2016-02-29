@@ -10,10 +10,10 @@ trait UserPersistence {
   def addUser(displayName: String, email: String, passwordHash: String): Future[WrappedUser]
 
   /** Modify an existing user */
-  def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[Boolean]
+  def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[Unit]
 
   /** Remove an existing user */
-  def deleteUser(userId : Int): Future[Boolean]
+  def deleteUser(userId : Int): Future[Unit]
 
   /** Get a user (plus friends) by e-mail */
   def getUser(email: String): Future[Option[WrappedUser]]
@@ -25,5 +25,5 @@ trait UserPersistence {
   def addFriend(userId: Int, friendId: Int) : Future[WrappedFriend]
 
   /** Delete a friend linkage */
-  def deleteFriend(userId: Int, friendId: Int) : Future[Boolean]
+  def deleteFriend(userId: Int, friendId: Int) : Future[Unit]
 }

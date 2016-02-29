@@ -3,7 +3,8 @@ package progress
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
 
-import akka.actor.ActorRefFactory
+import akka.actor.{ActorContext, ActorRefFactory}
+import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
 import com.wordnik.swagger.annotations._
 import spray.http.StatusCodes
@@ -15,17 +16,26 @@ import scala.concurrent.ExecutionContext
 
 object ProgressHttpService {
   val serviceName = "ProgressSvc"
+
+  def apply(persistence: ProgressPersistence)
+    (implicit ac: ActorContext, ec: ExecutionContext, to: Timeout) : ProgressHttpService = {
+
+    new ProgressHttpService(persistence) {
+      // Needed for ExecutionWrapper
+      implicit override final def context: ActorContext = ac
+      implicit override final def executor: ExecutionContext = ec
+      implicit override final def timeout: Timeout = to
+
+      // Needed for HttpService
+      implicit override final def actorRefFactory: ActorRefFactory = ac
+    }
+  }
 }
 
 /** Controller for the due date */
 @Api(value = "/progress", description = "Pregnancy-progress related end-points", produces = "application/json")
-case class ProgressHttpService(
-  persistence: ProgressPersistence,
-  ar: ActorRefFactory,
-  ec: ExecutionContext) extends HttpService with CustomDirectives with StrictLogging {
-
-  implicit def actorRefFactory: ActorRefFactory = ar
-  implicit def executionContext : ExecutionContext = ec
+abstract class ProgressHttpService(persistence: ProgressPersistence)
+  extends HttpService with CustomDirectives with StrictLogging {
 
   // Human gestation period
   private val gestationPeriod = 280
@@ -57,9 +67,8 @@ case class ProgressHttpService(
       path("progress" / IntNumber) { userId =>
         requestInstance { r =>
           entity(as[LocalDate]) { dueDate =>
-            completeWithFailure("putProgress", persistence.setDueDate(userId, dueDate)) {
-              case false => complete(StatusCodes.BadRequest -> s"Could not set due date $dueDate on user $userId")
-              case true => complete(calcModel(dueDate))
+            completeWithFailure("putProgress", persistence.setDueDate(userId, dueDate)) { responseDueDate =>
+              complete(calcModel(responseDueDate))
             }
           }
         }
@@ -69,10 +78,7 @@ case class ProgressHttpService(
   def deleteProgress: Route =
     delete {
       path("progress" / IntNumber) { userId =>
-        completeWithFailure("deleteProgress", persistence.deleteDueDate(userId)) {
-          case false => complete(StatusCodes.BadRequest -> s"Could not delete due date for user $userId")
-          case true => complete(StatusCodes.OK)
-        }
+        completeWithFailure("deleteProgress", persistence.deleteDueDate(userId))
       }
     }
 

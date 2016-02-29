@@ -1,70 +1,38 @@
-import java.io.File
-
 import akka.actor.ActorDSL._
 import akka.actor._
 import akka.io.IO
 import akka.io.Tcp.Bound
+import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
-import frontend.{SessionManager, FileSessionPersister, FrontEndHttpService}
-import naming.{FileNamePersister, NamingHttpService}
-import progress.{FileProgressPersister, ProgressHttpService}
+import database.DatabaseWrapper
+import frontend.FrontEndHttpService
+import frontend.services.naming.NamingServiceBackend
+import frontend.services.progress.ProgressServiceBackend
+import frontend.services.user.UserServiceBackend
+import naming.NamingHttpService
+import progress.ProgressHttpService
 import spray.can.Http
 import spray.routing._
-import user.{FileUserPersister, UserHttpService}
+import user.UserHttpService
 import utils._
 
+import scala.concurrent.ExecutionContext
+import scala.concurrent.duration._
 import scala.reflect.runtime.universe._
 
-class ProgressServiceActor extends HttpServiceActor with ActorLogging {
-  override def actorRefFactory : ActorContext = context
+abstract class ProgressServiceActor extends HttpServiceActor with ActorLogging with ExecutionWrapper {
 
-  //val fileRoot = new File("/Users/james/Programming/scala/graviditate/tmp")
-  val fileRoot = new File("/home/ubuntu/dist/data/pregnaware")
-  val fileRoots = Map[String, File](
-    NamingHttpService.serviceName -> new File(fileRoot, NamingHttpService.serviceName),
-    UserHttpService.serviceName -> new File(fileRoot, UserHttpService.serviceName),
-    FrontEndHttpService.serviceName -> new File(fileRoot, FrontEndHttpService.serviceName),
-    ProgressHttpService.serviceName -> new File(fileRoot, ProgressHttpService.serviceName)
-  )
+  private val databasePersistence = DatabaseWrapper(context.dispatcher)
 
-  // Ensure the file roots exists
-  fileRoots.values.filter(!_.exists()).foreach(_.mkdirs())
+  private val progressService = ProgressHttpService(databasePersistence)
+  private val namingService = NamingHttpService(databasePersistence)
+  private val userService = UserHttpService(databasePersistence)
 
-  val progressService = new ProgressHttpService with FileProgressPersister {
-    def root = fileRoots(ProgressHttpService.serviceName)
-    def actorRefFactory = context
-  }
-
-  val namingService = new NamingHttpService with FileNamePersister {
-    def root = fileRoots(NamingHttpService.serviceName)
-    def actorRefFactory = context
-  }
-
-  val userService = new UserHttpService with FileUserPersister {
-    def root = fileRoots(UserHttpService.serviceName)
-    def actorRefFactory = context
-  }
-
-  // This handles current user sessions
-  val currentSessionManager = new SessionManager with FileSessionPersister
-  {
-    def root = fileRoots(FrontEndHttpService.serviceName)
-  }
-
-  val frontEndService = new FrontEndHttpService {
-    def userServiceName: String = UserHttpService.serviceName
-    def namingServiceName: String = NamingHttpService.serviceName
-    def progressServiceName: String = ProgressHttpService.serviceName
-
-    def sessionManager: SessionManager = currentSessionManager
-
-    def actorRefFactory = context
-
-    // Provide access to the IO layer
-    import context.system
-    implicit def httpRef = IO(Http)
-    implicit def ex = context.dispatcher
-  }
+  val frontEndService = FrontEndHttpService(
+    databasePersistence,
+    UserServiceBackend(UserHttpService.serviceName),
+    ProgressServiceBackend(ProgressHttpService.serviceName),
+    NamingServiceBackend(NamingHttpService.serviceName))
 
   val healthService = new HealthHttpService {
     def actorRefFactory = context
@@ -89,26 +57,41 @@ class ProgressServiceActor extends HttpServiceActor with ActorLogging {
   }
 
   // Process incoming requests
-  def receive : Actor.Receive = runRoute(route)
+  def receive: Actor.Receive = runRoute(route)
 }
 
-object ProgressServiceActor extends App with StrictLogging {
-  implicit val system = ActorSystem()
-  val service = system.actorOf(Props[ProgressServiceActor])
+object ProgressServiceActor extends StrictLogging {
+  private val serviceName = "ProgressSvc"
 
-  // The IO Listener received Bind update messages from the spray.can.server.HttpListener
-  // We can then log simple HTTP connection status messages (or handle things like time-outs / unbinds)
-  val ioListener = actor("ioListener")(new Act with ActorLogging {
-    become {
-      case b @ Bound(connection) => log.info(s"Received message: $b")
-      case m => logger.error(s"Unexpected message: $m")
+  private implicit val system = ActorSystem()
+
+  private def props : Props = {
+    val actor = new ProgressServiceActor {
+      override def actorRefFactory: ActorContext = context
+      override implicit def executor: ExecutionContext = system.dispatcher
+      override implicit def timeout: Timeout = 10.seconds
     }
-  })
+    Props(actor)
+  }
 
-  val serviceName = "ProgressSvc"
-  val address = ConsulWrapper.getAddress(serviceName)(IO(Http), system.dispatcher)
-  logger.info(s"Starting service '$serviceName'. " +
-    s"Pid: ${SysUtils.pid}, host: ${address.getHostName}, port: ${address.getPort}")
+  def main(args: Array[String]) : Unit = {
+    implicit val executor: ExecutionContext = system.dispatcher
+    val service = system.actorOf(props)
 
-  IO(Http).tell(Http.Bind(service, address.getHostName, address.getPort), ioListener)
+    // The IO Listener received Bind update messages from the spray.can.server.HttpListener
+    // We can then log simple HTTP connection status messages (or handle things like time-outs / unbinds)
+    val ioListener = actor("ioListener")(new Act with ActorLogging {
+      become {
+        case b@Bound(connection) => log.info(s"Received message: $b")
+        case m => logger.error(s"Unexpected message: $m")
+      }
+    })
+
+    ConsulWrapper.getAddress(serviceName).map { address =>
+      logger.info(s"Starting service '$serviceName'. " +
+        s"Pid: ${SysUtils.pid}, host: ${address.getHostName}, port: ${address.getPort}")
+
+      IO(Http).tell(Http.Bind(service, address.getHostName, address.getPort), ioListener)
+    }
+  }
 }

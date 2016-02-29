@@ -2,7 +2,7 @@
 module entities {
     'use strict';
 
-    export interface NewUserRequest {
+    export interface AddUserRequest {
         displayName: string,
         email: string,
         password: string

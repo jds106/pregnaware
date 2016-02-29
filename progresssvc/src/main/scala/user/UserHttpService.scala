@@ -1,6 +1,7 @@
 package user
 
-import akka.actor.ActorRefFactory
+import akka.actor.{ActorContext, ActorRefFactory}
+import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
 import spray.http.StatusCodes
 import spray.routing.{HttpService, Route}
@@ -12,24 +13,35 @@ import scala.concurrent.ExecutionContext
 
 object UserHttpService {
   val serviceName = "UserSvc"
+
+  def apply(persistence: UserPersistence)
+    (implicit ac: ActorContext, ec: ExecutionContext, to: Timeout) : UserHttpService = {
+
+    new UserHttpService(persistence) {
+
+      // Needed for ExecutionWrapper
+      implicit override final def context: ActorContext = ac
+      implicit override final def executor: ExecutionContext = ec
+      implicit override final def timeout: Timeout = to
+
+      // Needed for HttpService
+      implicit override final def actorRefFactory: ActorRefFactory = ac
+    }
+  }
 }
 
 /** Support user creation */
-case class UserHttpService(
-  persistence: UserPersistence,
-  ar: ActorRefFactory,
-  ec: ExecutionContext) extends HttpService with CustomDirectives with StrictLogging {
-
-  implicit def actorRefFactory: ActorRefFactory = ar
-  implicit def executionContext : ExecutionContext = ec
+abstract class UserHttpService(persistence: UserPersistence)
+  extends HttpService with CustomDirectives with StrictLogging {
 
   /** The routes defined by this service */
   val routes =
     pathPrefix(UserHttpService.serviceName) {
-      getUser ~ findUser ~ putUser ~ editUser ~ putFriend ~ deleteFriend
+      getUser ~ findUser ~ postUser ~ putUser ~ putFriend ~ deleteFriend
     }
 
-  def getUser : Route = get {
+  /** userId -> WrappedUser */
+  def getUser: Route = get {
     path("user" / IntNumber) { userId =>
       completeWithFailure("getUser", persistence.getUser(userId)) {
         case None => complete(StatusCodes.NotFound)
@@ -38,7 +50,8 @@ case class UserHttpService(
     }
   }
 
-  def findUser : Route = get {
+  /** email -> WrappedUser */
+  def findUser: Route = get {
     path("findUser" / Segment) { email =>
       completeWithFailure("findUser", persistence.getUser(email)) {
         case None => complete(StatusCodes.NotFound)
@@ -47,15 +60,16 @@ case class UserHttpService(
     }
   }
 
-  def putUser : Route = put {
+  /** AddUserRequest -> WrappedUser */
+  def postUser: Route = put {
     path("user") {
       entity(as[AddUserRequest]) { entry =>
-        completeWithFailure("putUser[find]", persistence.getUser(entry.email)) {
+        completeWithFailure("postUser[find]", persistence.getUser(entry.email)) {
           case Some(user) => complete(StatusCodes.Conflict -> "User already exists")
 
           case None =>
             val addUserFut = persistence.addUser(entry.displayName, entry.email, entry.passwordHash)
-            completeWithFailure("putUser[Add]", addUserFut) { user =>
+            completeWithFailure("postUser[Add]", addUserFut) { user =>
               complete(user)
             }
         }
@@ -63,38 +77,33 @@ case class UserHttpService(
     }
   }
 
-  def editUser : Route = put {
-    path("editUser") {
-      entity(as[ModifyUserRequest]) { request =>
+  /** userId / EditUserRequest -> () */
+  def putUser: Route = put {
+    path("user" / IntNumber) { userId =>
+      entity(as[EditUserRequest]) { request =>
         val updateUserFut = persistence.updateUser(
-          request.userId, request.displayName, request.email, request.passwordHash)
+          userId, request.displayName, request.email, request.passwordHash)
 
-        completeWithFailure("editUser", updateUserFut) {
-          case false => complete(StatusCodes.NotFound)
-          case true => complete(StatusCodes.OK)
-        }
+        completeWithFailure("putUser", updateUserFut)
       }
     }
   }
 
-  def putFriend : Route = put {
-    path("friend") {
+  /** userId / AddFriendRequest -> WrappedFriend */
+  def putFriend: Route = put {
+    path("user" / IntNumber / "friend") { userId =>
       entity(as[AddFriendRequest]) { request =>
-        val addFriendFut = persistence.addFriend(request.userId, request.friendId)
+        val addFriendFut = persistence.addFriend(userId, request.friendId)
         completeWithFailure("putFriend", addFriendFut)(f => complete(f))
       }
     }
   }
 
-  def deleteFriend : Route = delete {
-    path("friend") {
-      entity(as[DeleteFriendRequest]) { request =>
-        val deleteFriendFut = persistence.deleteFriend(request.userId, request.friendId)
-        completeWithFailure("deleteFriend", deleteFriendFut){
-          case false => complete(StatusCodes.NotFound)
-          case true => complete(StatusCodes.OK)
-        }
-      }
+  /** userId / friendId -> () */
+  def deleteFriend: Route = delete {
+    path("user" / IntNumber / "friend" / IntNumber) { (userId, friendId) =>
+      val deleteFriendFut = persistence.deleteFriend(userId, friendId)
+      completeWithFailure("deleteFriend", deleteFriendFut)
     }
   }
 }

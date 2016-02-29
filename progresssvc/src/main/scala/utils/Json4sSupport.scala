@@ -5,5 +5,5 @@ import spray.httpx.Json4sJacksonSupport
 import utils.formats.LocalDateFormat
 
 object Json4sSupport extends Json4sJacksonSupport {
-  implicit def json4sJacksonFormats: Formats = DefaultFormats + new LocalDateFormat
+  implicit override def json4sJacksonFormats: Formats = DefaultFormats + new LocalDateFormat
 }

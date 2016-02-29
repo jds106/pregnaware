@@ -6,15 +6,13 @@ module service {
     import User = entities.User;
     import LocalDate = entities.LocalDate;
     import LoginRequest = entities.LoginRequest;
-    import NewUserRequest = entities.NewUserRequest;
+    import AddUserRequest = entities.AddUserRequest;
     import CookieKeys = utils.CookieKeys;
 
     class FrontEndUrl {
-        public static getUrl(path: string, sessionId: string = null, userId: number = null) {
+        public static getUrl(path: string, sessionId: string = null) {
             var sessionPart = sessionId ? "sessionId=" + sessionId : "";
-            var userIdPart = userId ? "userId=" + userId : "";
-            return "/FrontEndSvc/" + path + (sessionId ? "?" + sessionPart : "")
-                + (userId ? "&" + userIdPart : "");
+            return "/FrontEndSvc/" + path + (sessionId ? "?" + sessionPart : "");
         }
     }
 
@@ -37,34 +35,28 @@ module service {
             return this.$http.post(FrontEndUrl.getUrl('login'), loginRequest);
         }
 
-        public logout() {
-            return this.$http.post(FrontEndUrl.getUrl('logout', this.getSessionId()), {});
-        }
-
         /* ---- User ---- */
 
-        public newUser(newUserRequest: NewUserRequest) {
-            return this.$http.put(FrontEndUrl.getUrl('user'), newUserRequest);
+        public newUser(addUserRequest: AddUserRequest) {
+            return this.$http.post(FrontEndUrl.getUrl('user'), addUserRequest);
         }
 
-        public getUser(userId: number = null) {
-            return this.$http.get(FrontEndUrl.getUrl('user', this.getSessionId(), userId));
+        public getUser(userId: number = null) : angular.IPromise<User> {
+            return this.$http.get(FrontEndUrl.getUrl('user', this.getSessionId(), userId))
+                .error((errorMsg, errorCode) => )
+                .success((user: User, ))
         }
 
         public editUser(editUserRequest: EditUserRequest) {
-            return this.$http.put(FrontEndUrl.getUrl('editUser', this.getSessionId()), editUserRequest);
+            return this.$http.put(FrontEndUrl.getUrl('user', this.getSessionId()), editUserRequest);
         }
 
-        public findUser(email: string) {
-            return this.$http.get(FrontEndUrl.getUrl('UserSvc/findUser/' + email, this.getSessionId()));
+        public addFriend(friendEmail: String) {
+            return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), {email: friendEmail});
         }
 
-        public addFriend(friend: User) {
-            return this.$http.put(FrontEndUrl.getUrl('friend', this.getSessionId()), friend);
-        }
-
-        public createFriend(friendEmail: string) {
-            return this.$http.put(FrontEndUrl.getUrl('createFriend', this.getSessionId()), {email: friendEmail});
+        public deleteFriend(friendEmail: String) {
+            return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), {email: friendEmail});
         }
 
         /** Creates a link to the session created for the new friend */
@@ -74,26 +66,15 @@ module service {
 
         /* ---- Progress ---- */
 
-        public getDueDate(userId: number) {
-            return this.$http.get(FrontEndUrl.getUrl('ProgressSvc/progress', this.getSessionId(), userId));
-        }
-
-        public putDueDate(dueDate: LocalDate, userId: number) {
-            return this.$http.put(
-                FrontEndUrl.getUrl('ProgressSvc/progress', this.getSessionId(), userId),
-                dueDate)
+        public putDueDate(dueDate: LocalDate) {
+            return this.$http.put(FrontEndUrl.getUrl('progress', this.getSessionId()), dueDate)
         }
 
         public deleteDueDate(userId: number) {
-            return this.$http.delete(
-                FrontEndUrl.getUrl('ProgressSvc/progress', this.getSessionId(), userId));
+            return this.$http.delete(FrontEndUrl.getUrl('progress', this.getSessionId()));
         }
 
         /* ---- Names ---- */
-
-        public getNames(userId: number) {
-            return this.$http.get(FrontEndUrl.getUrl('NamingSvc/names', this.getSessionId(), userId));
-        }
 
         public putName(name: string, gender: string, userId: number) {
             return this.$http.put(

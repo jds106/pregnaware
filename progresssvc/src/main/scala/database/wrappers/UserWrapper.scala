@@ -1,7 +1,10 @@
 package database.wrappers
 
+import java.time.LocalDate
+
 import database.ConnectionManager._
 import database.schema.Tables._
+import naming.entities.WrappedBabyName
 import slick.driver.MySQLDriver.api._
 import user.UserPersistence
 import user.entities.{WrappedFriend, WrappedUser}
@@ -19,31 +22,36 @@ trait UserWrapper extends UserPersistence {
       val insertQuery = User returning User.map(_.id) into ((user, id) => user.copy(id = id))
       val action = insertQuery += UserRow(-1, displayName, email, passwordHash)
       db.run(action).map { user =>
-        WrappedUser(user.id, user.displayname, user.email, user.passwordhash, Seq.empty[WrappedFriend])
+        WrappedUser(
+          user.id,
+          user.displayname,
+          user.email,
+          None,
+          Seq.empty[WrappedBabyName],
+          user.passwordhash,
+          Seq.empty[WrappedFriend])
       }
     }
   }
 
   /** Modify an existing user */
-  def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[Boolean] = {
+  def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[Unit] = {
     connection { db =>
       val query = User.filter(_.id === userId).map(u => (u.displayname, u.email, u.passwordhash))
       val action = query.update((displayName, email, passwordHash))
       db.run(action).map {
-        case 0 => false
-        case 1 => true
+        case 1 => ()
         case n => throw new Exception(s"Modified $n users with $userId")
       }
     }
   }
 
   /** Remove an existing user */
-  def deleteUser(userId : Int): Future[Boolean] = {
+  def deleteUser(userId : Int): Future[Unit] = {
     connection { db =>
       val deletion = User.filter(_.id === userId)
       db.run(deletion.delete).map {
-        case 0 => false
-        case 1 => true
+        case 1 => ()
         case n => throw new Exception(s"Deleted $n users with id $userId")
       }
     }
@@ -97,25 +105,96 @@ trait UserWrapper extends UserPersistence {
 
       // Wrap up the FriendRow
       friendRowFut.flatMap { friendRow =>
-        getRawUser(friendId).map {
+        getRawUser(friendId).flatMap {
           case None => throw new Exception(s"Cannot find user for friend id $friendId")
-          case Some(friendUser) => WrappedFriend(friendRow.id, friendUser.displayname, friendUser.email)
+          case Some(friendUser) =>
+            val dueDateFut = getDueDate(friendUser.id)
+            val babyNamesFut = getWrappedBabyNames(friendUser.id)
+
+            for {
+              dueDate <- dueDateFut
+              babyNames <- babyNamesFut
+            } yield {
+              WrappedFriend(friendRow.id, friendUser.displayname, friendUser.email, dueDate, babyNames)
+            }
         }
       }
     }
   }
 
   /** Delete a friend linkage */
-  def deleteFriend(userId: Int, friendId: Int) : Future[Boolean] = {
+  def deleteFriend(userId: Int, friendId: Int) : Future[Unit] = {
     connection { db =>
       val existingFriendQuery = Friend.filter { f =>
         (f.userid1 === userId && f.userid2 === friendId) || (f.userid2 === userId && f.userid1 === friendId)
       }
 
       db.run(existingFriendQuery.delete).map {
-        case 0 => false
-        case 1 => true
+        case 1 => ()
         case n => throw new Exception(s"Deleted $n friend links. UserId: $userId, FriendId: $friendId")
+      }
+    }
+  }
+
+  private def getWrappedFriends(userId: Int) : Future[Seq[WrappedFriend]] = {
+    connection { db =>
+      val friendsQuery = (Friend join User)
+        .on((f, u) => u.id === f.userid1 || u.id == f.userid2)
+        .filter { case (f, u) => u.id === userId }
+        .map { case (f, _) =>  f }
+
+      db.run(friendsQuery.result) flatMap { friendRows =>
+        val friendIds = friendRows.map(row => if (row.userid1 == userId) row.userid2 else row.userid1)
+
+        val babyNamesQuery =
+          (Babyname join User).on(_.suggestedby === _.id)
+            .filter{ case (b, u) => b.userid inSet friendIds }
+
+        val dueDateQuery = Progress.filter(row => row.userid inSet friendIds)
+
+        val friendUsersQuery = User.filter(row => row.id inSet friendIds)
+
+        for {
+          babyNames <- db.run(babyNamesQuery.result)
+          dueDates <- db.run(dueDateQuery.result)
+          friendUsers <- db.run(friendUsersQuery.result)
+        } yield {
+          val dueDateByUser = dueDates.map(row => row.userid -> row.duedate.toLocalDate).toMap
+
+          val babyNamesByUser = babyNames.map {
+            case (babyNameRow, userRow) =>
+              WrappedBabyName(
+                babyNameRow.id, babyNameRow.userid, babyNameRow.suggestedby,
+                userRow.displayname, babyNameRow.name, babyNameRow.isboy)
+          }.groupBy(_.userId)
+
+          friendUsers.map { friend =>
+            val dueDate = dueDateByUser.get(friend.id)
+            val babyNames = babyNamesByUser(friend.id)
+            WrappedFriend(friend.id, friend.displayname, friend.email, dueDate, babyNames)
+          }
+        }
+      }
+    }
+  }
+
+  private def getWrappedBabyNames(userId: Int) : Future[Seq[WrappedBabyName]] = {
+    connection { db =>
+      val joinQuery = (Babyname join User).on(_.suggestedby === _.id).filter{ case (b, u) => b.userid === userId }
+
+      db.run(joinQuery.result).map { results =>
+        results.map {
+          case (b, u) => WrappedBabyName(b.id, b.userid, b.suggestedby, u.displayname, b.name, b.isboy)
+        }
+      }
+    }
+  }
+
+  private def getDueDate(userId: Int) : Future[Option[LocalDate]] = {
+    connection { db =>
+      db.run(Progress.filter(_.userid === userId).map(_.duedate).result.headOption) map {
+        case None => None
+        case Some(date) => Some(date.toLocalDate)
       }
     }
   }
@@ -127,15 +206,16 @@ trait UserWrapper extends UserPersistence {
           Future.successful(None)
 
         case Some(user) =>
-          val friendsQuery = (Friend join User)
-            .on((f, u) => u.id === f.userid1 || u.id == f.userid2)
-            .filter { case (f, u) => u.id === user.id }
-            .map { case (_, u) => u }
+          val friendsQuery = getWrappedFriends(user.id)
+          val babyNamesQuery = getWrappedBabyNames(user.id)
+          val dueDateQuery = getDueDate(user.id)
 
-          db.run(friendsQuery.result).map { friends =>
-            val wrappedFriends = friends.map(f => WrappedFriend(f.id, f.displayname, f.email))
-            val wrappedUser = WrappedUser(user.id, user.displayname, user.email, user.passwordhash, wrappedFriends)
-            Some(wrappedUser)
+          for {
+            dueDate <- dueDateQuery
+            babyNames <- babyNamesQuery
+            friends <- friendsQuery
+          } yield {
+            Some(WrappedUser(user.id, user.displayname, user.email, dueDate, babyNames, user.passwordhash, friends))
           }
       }
     }

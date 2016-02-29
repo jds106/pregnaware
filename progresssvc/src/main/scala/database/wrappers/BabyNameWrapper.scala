@@ -45,12 +45,11 @@ trait BabyNameWrapper extends NamingPersistence {
   }
 
   /** Delete a baby name */
-  def deleteName(userId: Int, babyNameId: Int) : Future[Boolean] = {
+  def deleteName(userId: Int, babyNameId: Int) : Future[Unit] = {
     connection { db =>
       val deletion = Babyname.filter(_.userid === userId).filter(_.id === babyNameId)
       db.run(deletion.delete).map {
-        case 0 => false
-        case 1 => true
+        case 1 => ()
         case n => throw new Exception(s"Deleted $n baby names with id $babyNameId")
       }
     }

@@ -1,3 +1,3 @@
 package naming.entities
 
-case class AddNameRequest(suggestedById: Int, name: String, isBoy: Boolean)
+case class AddNameRequest(suggestedByUserId: Int, name: String, isBoy: Boolean)

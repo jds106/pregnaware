@@ -1,27 +1,38 @@
 package naming
 
-import akka.actor.ActorRefFactory
+import akka.actor.{ActorContext, ActorRefFactory}
+import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
 import naming.entities.AddNameRequest
 import spray.http.StatusCodes
 import spray.routing.{HttpService, Route}
+import utils.CustomDirectives
 import utils.Json4sSupport._
-import utils.{CustomDirectives, HeaderKeys}
 
 import scala.concurrent.ExecutionContext
 
 object NamingHttpService {
   val serviceName = "NamingSvc"
+
+  def apply(persistence: NamingPersistence)
+    (implicit ac: ActorContext, ec: ExecutionContext, to: Timeout) : NamingHttpService = {
+
+    new NamingHttpService(persistence) {
+
+      // Needed for ExecutionWrapper
+      implicit override final def context: ActorContext = ac
+      implicit override final def executor: ExecutionContext = ec
+      implicit override final def timeout: Timeout = to
+
+      // Needed for HttpService
+      implicit override final def actorRefFactory: ActorRefFactory = ac
+    }
+  }
 }
 
 /** Support name suggestions and rankings */
-case class NamingHttpService(
-  persistence: NamingPersistence,
-  ar: ActorRefFactory,
-  ec: ExecutionContext) extends HttpService with CustomDirectives with StrictLogging {
-
-  implicit def actorRefFactory: ActorRefFactory = ar
-  implicit def executionContext : ExecutionContext = ec
+abstract class NamingHttpService(persistence: NamingPersistence)
+  extends HttpService with CustomDirectives with StrictLogging {
 
   /** The routes defined by this service */
   val routes = pathPrefix(NamingHttpService.serviceName) {
@@ -39,9 +50,9 @@ case class NamingHttpService(
 
   /** Adds a new name to the list */
   def putName: Route = put {
-    path("name" / IntNumber) { userId =>
+    path("names" / IntNumber) { userId =>
       entity(as[AddNameRequest]) { request =>
-        val addNameFut = persistence.addName(userId, request.suggestedById, request.name, request.isBoy)
+        val addNameFut = persistence.addName(userId, request.suggestedByUserId, request.name, request.isBoy)
         completeWithFailure("putName", addNameFut) { wrappedBabyName =>
           complete(StatusCodes.OK -> wrappedBabyName)
         }
@@ -50,11 +61,8 @@ case class NamingHttpService(
   }
 
   def deleteName: Route = delete {
-    path("name" / IntNumber / IntNumber) { (userId, babyNameId) =>
-      completeWithFailure("deleteName", persistence.deleteName(userId, babyNameId)) {
-        case false => complete(StatusCodes.NotFound -> s"No baby id $babyNameId for user $userId")
-        case true => complete(StatusCodes.OK)
-      }
+    path("names" / IntNumber / IntNumber) { (userId, babyNameId) =>
+      completeWithFailure("deleteName", persistence.deleteName(userId, babyNameId))
     }
   }
 }

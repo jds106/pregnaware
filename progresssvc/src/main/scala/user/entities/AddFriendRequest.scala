@@ -1,3 +1,3 @@
 package user.entities
 
-case class AddFriendRequest(userId: Int, friendId: Int)
+case class AddFriendRequest(friendId: Int)

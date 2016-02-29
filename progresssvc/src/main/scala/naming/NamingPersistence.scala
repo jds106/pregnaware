@@ -15,5 +15,5 @@ trait NamingPersistence {
   def addName(userId: Int, suggestedById: Int, name: String, isBoy: Boolean) : Future[WrappedBabyName]
 
   /** Delete a baby name */
-  def deleteName(userId: Int, babyNameId: Int) : Future[Boolean]
+  def deleteName(userId: Int, babyNameId: Int) : Future[Unit]
 }

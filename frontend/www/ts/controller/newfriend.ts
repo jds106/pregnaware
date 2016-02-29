@@ -35,6 +35,9 @@ module controller {
             this.frontend = frontend;
             this.usermgmt = usermgmt;
 
+            // Extract session from the URL parameter
+            broken
+
             this.$scope.password = "";
             this.$scope.confirmPassword = "";
             this.$scope.passwordMatch = false;

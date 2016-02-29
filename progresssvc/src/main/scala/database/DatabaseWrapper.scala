@@ -1,6 +1,7 @@
 package database
 
 import database.wrappers.{BabyNameWrapper, ProgressWrapper, SessionWrapper, UserWrapper}
+import frontend.SessionPersistence
 
 import scala.concurrent.ExecutionContext
 

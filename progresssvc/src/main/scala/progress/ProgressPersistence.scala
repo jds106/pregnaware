@@ -10,8 +10,8 @@ trait ProgressPersistence {
   def getDueDate(userId: Int) : Future[Option[LocalDate]]
 
   /** Sets a due date (either adding a due date, or replacing an existing one) */
-  def setDueDate(userId: Int, dueDate: LocalDate) : Future[Boolean]
+  def setDueDate(userId: Int, dueDate: LocalDate) : Future[LocalDate]
 
   /** Removes a due date */
-  def deleteDueDate(userId: Int) : Future[Boolean]
+  def deleteDueDate(userId: Int) : Future[Unit]
 }

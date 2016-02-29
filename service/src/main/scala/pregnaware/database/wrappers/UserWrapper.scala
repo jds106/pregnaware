@@ -112,7 +112,7 @@ trait UserWrapper extends UserPersistence {
               dueDate <- dueDateFut
               babyNames <- babyNamesFut
             } yield {
-              WrappedFriend(friendRow.id, friendUser.displayname, friendUser.email, dueDate, babyNames)
+              WrappedFriend(friendUser.id, friendUser.displayname, friendUser.email, dueDate, babyNames)
             }
         }
       }
@@ -136,7 +136,7 @@ trait UserWrapper extends UserPersistence {
   private def getWrappedFriends(userId: Int) : Future[Seq[WrappedFriend]] = {
     connection { db =>
       val friendsQuery = (Friend join User)
-        .on((f, u) => u.id === f.userid1 || u.id == f.userid2)
+        .on((f, u) => u.id === f.userid1 || u.id === f.userid2)
         .filter { case (f, u) => u.id === userId }
         .map { case (f, _) =>  f }
 
@@ -144,8 +144,7 @@ trait UserWrapper extends UserPersistence {
         val friendIds = friendRows.map(row => if (row.userid1 == userId) row.userid2 else row.userid1)
 
         val babyNamesQuery =
-          (Babyname join User).on(_.suggestedby === _.id)
-            .filter{ case (b, u) => b.userid inSet friendIds }
+          (Babyname join User).on(_.suggestedby === _.id).filter{ case (b, u) => b.userid inSet friendIds }
 
         val dueDateQuery = Progress.filter(row => row.userid inSet friendIds)
 
@@ -167,7 +166,7 @@ trait UserWrapper extends UserPersistence {
 
           friendUsers.map { friend =>
             val dueDate = dueDateByUser.get(friend.id)
-            val babyNames = babyNamesByUser(friend.id)
+            val babyNames = babyNamesByUser.getOrElse(friend.id, Seq.empty[WrappedBabyName])
             WrappedFriend(friend.id, friend.displayname, friend.email, dueDate, babyNames)
           }
         }

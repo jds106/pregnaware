@@ -19,7 +19,7 @@ trait Tables {
   def ddl = schema
 
   /** Entity class storing rows of table Babyname
-   *  @param id Database column Id SqlType(INT), PrimaryKey
+   *  @param id Database column Id SqlType(INT), AutoInc, PrimaryKey
    *  @param userid Database column UserId SqlType(INT)
    *  @param name Database column Name SqlType(VARCHAR), Length(45,true)
    *  @param isboy Database column IsBoy SqlType(BIT)
@@ -36,8 +36,8 @@ trait Tables {
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(id), Rep.Some(userid), Rep.Some(name), Rep.Some(isboy), Rep.Some(suggestedby)).shaped.<>({r=>import r._; _1.map(_=> BabynameRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
-    /** Database column Id SqlType(INT), PrimaryKey */
-    val id: Rep[Int] = column[Int]("Id", O.PrimaryKey)
+    /** Database column Id SqlType(INT), AutoInc, PrimaryKey */
+    val id: Rep[Int] = column[Int]("Id", O.AutoInc, O.PrimaryKey)
     /** Database column UserId SqlType(INT) */
     val userid: Rep[Int] = column[Int]("UserId")
     /** Database column Name SqlType(VARCHAR), Length(45,true) */
@@ -56,7 +56,7 @@ trait Tables {
   lazy val Babyname = new TableQuery(tag => new Babyname(tag))
 
   /** Entity class storing rows of table Friend
-   *  @param id Database column Id SqlType(INT), PrimaryKey
+   *  @param id Database column Id SqlType(INT), AutoInc, PrimaryKey
    *  @param userid1 Database column UserId1 SqlType(INT)
    *  @param userid2 Database column UserId2 SqlType(INT) */
   case class FriendRow(id: Int, userid1: Int, userid2: Int)
@@ -71,8 +71,8 @@ trait Tables {
     /** Maps whole row to an option. Useful for outer joins. */
     def ? = (Rep.Some(id), Rep.Some(userid1), Rep.Some(userid2)).shaped.<>({r=>import r._; _1.map(_=> FriendRow.tupled((_1.get, _2.get, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
-    /** Database column Id SqlType(INT), PrimaryKey */
-    val id: Rep[Int] = column[Int]("Id", O.PrimaryKey)
+    /** Database column Id SqlType(INT), AutoInc, PrimaryKey */
+    val id: Rep[Int] = column[Int]("Id", O.AutoInc, O.PrimaryKey)
     /** Database column UserId1 SqlType(INT) */
     val userid1: Rep[Int] = column[Int]("UserId1")
     /** Database column UserId2 SqlType(INT) */
@@ -163,6 +163,9 @@ trait Tables {
     val email: Rep[String] = column[String]("Email", O.Length(100,varying=true))
     /** Database column PasswordHash SqlType(VARCHAR), Length(200,true) */
     val passwordhash: Rep[String] = column[String]("PasswordHash", O.Length(200,varying=true))
+
+    /** Uniqueness Index over (email) (database name User_Email_Unique) */
+    val index1 = index("User_Email_Unique", email, unique=true)
   }
   /** Collection-like TableQuery object for table User */
   lazy val User = new TableQuery(tag => new User(tag))

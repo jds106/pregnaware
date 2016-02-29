@@ -4,6 +4,8 @@ import pregnaware.utils.AppConfig
 import slick.driver.MySQLDriver
 import slick.driver.MySQLDriver.api._
 
+import scala.concurrent.{ExecutionContext, Future}
+
 /** Wraps up a database connection */
 object ConnectionManager {
 
@@ -12,7 +14,7 @@ object ConnectionManager {
   private val password = AppConfig.getDatabasePassword
 
   /** Creates a database connection (loan pattern) */
-  def connection[T](f: MySQLDriver.backend.DatabaseDef => T): T = {
+  def connection[T](f: MySQLDriver.backend.DatabaseDef => Future[T])(implicit executor : ExecutionContext): Future[T] = {
 
     val db = Database.forURL(
       url = ConnectionManager.url,
@@ -20,10 +22,13 @@ object ConnectionManager {
       user = ConnectionManager.user,
       password = ConnectionManager.password)
 
-    try {
-      f(db)
-    } finally {
-      db.close()
-    }
+    // Schedule the task to run
+    val future = f(db)
+
+    // Once complete, close the database connection
+    future.onComplete{case t => db.close()}
+
+    // Return this future
+    future
   }
 }

@@ -70,7 +70,7 @@ module service {
         }
 
         public deleteFriend(friendEmail: String) : angular.IHttpPromise<any> {
-            return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), {email: friendEmail});
+            return this.$http.delete(FrontEndUrl.getUrl('user/friend', this.getSessionId()), {email: friendEmail});
         }
 
         /** Creates a link to the session created for the new friend */

@@ -1,7 +1,7 @@
 package pregnaware.database
 
 import akka.util.Timeout
-import pregnaware.database.wrappers.{BabyNameWrapper, ProgressWrapper, SessionWrapper, UserWrapper}
+import pregnaware.database.wrappers.{BabyNameWrapper, SessionWrapper, UserWrapper}
 
 import scala.concurrent.ExecutionContext
 
@@ -9,7 +9,6 @@ import scala.concurrent.ExecutionContext
 trait DatabaseWrapper
   extends SessionWrapper
   with UserWrapper
-  with ProgressWrapper
   with BabyNameWrapper
 
 object DatabaseWrapper {

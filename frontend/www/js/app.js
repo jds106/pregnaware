@@ -75,11 +75,10 @@ var service;
         };
         /* ---- Progress ---- */
         FrontEndSvc.prototype.putDueDate = function (dueDate) {
-            console.log("Putting due date: ", dueDate);
-            return this.$http.put(FrontEndUrl.getUrl('progress', this.getSessionId()), dueDate);
+            return this.$http.put(FrontEndUrl.getUrl('user/duedate', this.getSessionId()), dueDate);
         };
         FrontEndSvc.prototype.deleteDueDate = function () {
-            return this.$http.delete(FrontEndUrl.getUrl('progress', this.getSessionId()));
+            return this.$http.delete(FrontEndUrl.getUrl('user/duedate', this.getSessionId()));
         };
         /* ---- Names ---- */
         FrontEndSvc.prototype.putName = function (name, isBoy, suggestedForUserId) {

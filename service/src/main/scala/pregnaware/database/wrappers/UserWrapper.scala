@@ -1,15 +1,16 @@
 package pregnaware.database.wrappers
 
+import java.sql.Date
 import java.time.LocalDate
 
 import pregnaware.database.ConnectionManager._
 import pregnaware.database.schema.Tables._
 import pregnaware.naming.entities.WrappedBabyName
-import slick.driver.MySQLDriver.api._
 import pregnaware.user.UserPersistence
 import pregnaware.user.entities.{WrappedFriend, WrappedUser}
+import slick.driver.MySQLDriver.api._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait UserWrapper extends UserPersistence {
 
@@ -105,13 +106,8 @@ trait UserWrapper extends UserPersistence {
         getRawUser(friendId).flatMap {
           case None => throw new Exception(s"Cannot find user for friend id $friendId")
           case Some(friendUser) =>
-            val dueDateFut = getDueDate(friendUser.id)
-            val babyNamesFut = getWrappedBabyNames(friendUser.id)
-
-            for {
-              dueDate <- dueDateFut
-              babyNames <- babyNamesFut
-            } yield {
+            getWrappedBabyNames(friendUser.id) map { babyNames =>
+              val dueDate = friendUser.duedate.map(_.toLocalDate)
               WrappedFriend(friendUser.id, friendUser.displayname, friendUser.email, dueDate, babyNames)
             }
         }
@@ -133,6 +129,30 @@ trait UserWrapper extends UserPersistence {
     }
   }
 
+  /** Sets a due date (either adding a due date, or replacing an existing one) */
+  def setDueDate(userId: Int, dueDate: LocalDate) : Future[LocalDate] = {
+    connection { db =>
+      val query = User.filter(_.id === userId).map(_.duedate)
+      val action = query.update(Some(Date.valueOf(dueDate)))
+      db.run(action).map {
+        case 1 => dueDate
+        case n => throw new Exception(s"Set due date on $n users with $userId")
+      }
+    }
+  }
+
+  /** Removes a due date */
+  def deleteDueDate(userId: Int) : Future[Unit] = {
+    connection { db =>
+      val query = User.filter(_.id === userId).map(_.duedate)
+      val action = query.update(None)
+      db.run(action).map {
+        case 1 => ()
+        case n => throw new Exception(s"Deleted due date on $n users with $userId")
+      }
+    }
+  }
+
   private def getWrappedFriends(userId: Int) : Future[Seq[WrappedFriend]] = {
     connection { db =>
       val friendsQuery = (Friend join User)
@@ -146,16 +166,12 @@ trait UserWrapper extends UserPersistence {
         val babyNamesQuery =
           (Babyname join User).on(_.suggestedby === _.id).filter{ case (b, u) => b.userid inSet friendIds }
 
-        val dueDateQuery = Progress.filter(row => row.userid inSet friendIds)
-
         val friendUsersQuery = User.filter(row => row.id inSet friendIds)
 
         for {
           babyNames <- db.run(babyNamesQuery.result)
-          dueDates <- db.run(dueDateQuery.result)
           friendUsers <- db.run(friendUsersQuery.result)
         } yield {
-          val dueDateByUser = dueDates.map(row => row.userid -> row.duedate.toLocalDate).toMap
 
           val babyNamesByUser = babyNames.map {
             case (babyNameRow, userRow) =>
@@ -165,8 +181,9 @@ trait UserWrapper extends UserPersistence {
           }.groupBy(_.userId)
 
           friendUsers.map { friend =>
-            val dueDate = dueDateByUser.get(friend.id)
             val babyNames = babyNamesByUser.getOrElse(friend.id, Seq.empty[WrappedBabyName])
+            val dueDate = friend.duedate.map(_.toLocalDate)
+
             WrappedFriend(friend.id, friend.displayname, friend.email, dueDate, babyNames)
           }
         }
@@ -186,15 +203,6 @@ trait UserWrapper extends UserPersistence {
     }
   }
 
-  private def getDueDate(userId: Int) : Future[Option[LocalDate]] = {
-    connection { db =>
-      db.run(Progress.filter(_.userid === userId).map(_.duedate).result.headOption) map {
-        case None => None
-        case Some(date) => Some(date.toLocalDate)
-      }
-    }
-  }
-
   private def getWrappedUser(userOpt: Option[UserRow]): Future[Option[WrappedUser]] = {
     connection { db =>
       userOpt match {
@@ -204,13 +212,12 @@ trait UserWrapper extends UserPersistence {
         case Some(user) =>
           val friendsQuery = getWrappedFriends(user.id)
           val babyNamesQuery = getWrappedBabyNames(user.id)
-          val dueDateQuery = getDueDate(user.id)
 
           for {
-            dueDate <- dueDateQuery
             babyNames <- babyNamesQuery
             friends <- friendsQuery
           } yield {
+            val dueDate = user.duedate.map(_.toLocalDate)
             Some(WrappedUser(user.id, user.displayname, user.email, dueDate, babyNames, user.passwordhash, friends))
           }
       }

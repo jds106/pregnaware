@@ -4,7 +4,7 @@ import java.time.LocalDate
 
 import akka.util.Timeout
 import pregnaware.UnitSpec
-import pregnaware.database.wrappers.{BabyNameWrapper, ProgressWrapper, SessionWrapper, UserWrapper}
+import pregnaware.database.wrappers.{BabyNameWrapper, SessionWrapper, UserWrapper}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Await, ExecutionContext}
@@ -22,11 +22,6 @@ class DatabaseWrapperTest extends UnitSpec {
   }
 
   private val babyNameWrapper = new BabyNameWrapper {
-    override implicit def executor: ExecutionContext = self.executor
-    override implicit def timeout: Timeout = self.timeout
-  }
-
-  private val progressWrapper = new ProgressWrapper {
     override implicit def executor: ExecutionContext = self.executor
     override implicit def timeout: Timeout = self.timeout
   }
@@ -114,7 +109,7 @@ class DatabaseWrapperTest extends UnitSpec {
     user1.dueDate should not be defined
 
     val dueDate = LocalDate.of(2016, 7, 21)
-    val dueDateResponse = Await.result(progressWrapper.setDueDate(user1.userId, dueDate), timeout)
+    val dueDateResponse = Await.result(userWrapper.setDueDate(user1.userId, dueDate), timeout)
 
     dueDateResponse should be (dueDate)
 
@@ -124,7 +119,7 @@ class DatabaseWrapperTest extends UnitSpec {
     val user2PostDueDate = Await.result(userWrapper.getUser("TEST_EMAIL_2"), timeout).get
     user2PostDueDate.friends.head.dueDate should be (Some(dueDate))
 
-    Await.ready(progressWrapper.deleteDueDate(user1.userId), timeout)
+    Await.ready(userWrapper.deleteDueDate(user1.userId), timeout)
     val user1PostDueDateDeleted = Await.result(userWrapper.getUser("TEST_EMAIL_1"), timeout).get
     user1PostDueDateDeleted.dueDate should not be defined
   }

@@ -1,5 +1,7 @@
 package pregnaware.frontend.services.user
 
+import java.time.LocalDate
+
 import akka.actor.ActorContext
 import akka.util.Timeout
 import pregnaware.frontend.services.BackEndFuncs
@@ -43,6 +45,14 @@ abstract class UserServiceBackend(userServiceName: String) extends BackEndFuncs(
 
   def deleteFriend(userId: Int, friendId: Int) : Future[Unit] = {
     send(DELETE, s"user/$userId/friend/$friendId").map(_ => ())
+  }
+
+  def putDueDate(userId: Int, dueDate: LocalDate) : Future[LocalDate] = {
+    send(PUT, s"user/$userId/duedate", (b,u) => b(u, dueDate)).map(r => r ~> unmarshal[LocalDate])
+  }
+
+  def deleteDueDate(userId: Int) : Future[Unit] = {
+    send(DELETE, s"user/$userId/duedate").map(_ => ())
   }
 }
 

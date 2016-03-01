@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Array(Babyname.schema, Friend.schema, Progress.schema, Session.schema, User.schema, Userlayout.schema).reduceLeft(_ ++ _)
+  lazy val schema: profile.SchemaDescription = Babyname.schema ++ Friend.schema ++ Session.schema ++ User.schema ++ Userlayout.schema
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -86,32 +86,6 @@ trait Tables {
   /** Collection-like TableQuery object for table Friend */
   lazy val Friend = new TableQuery(tag => new Friend(tag))
 
-  /** Entity class storing rows of table Progress
-   *  @param userid Database column UserId SqlType(INT), PrimaryKey
-   *  @param duedate Database column DueDate SqlType(DATE) */
-  case class ProgressRow(userid: Int, duedate: java.sql.Date)
-  /** GetResult implicit for fetching ProgressRow objects using plain SQL queries */
-  implicit def GetResultProgressRow(implicit e0: GR[Int], e1: GR[java.sql.Date]): GR[ProgressRow] = GR{
-    prs => import prs._
-    ProgressRow.tupled((<<[Int], <<[java.sql.Date]))
-  }
-  /** Table description of table Progress. Objects of this class serve as prototypes for rows in queries. */
-  class Progress(_tableTag: Tag) extends Table[ProgressRow](_tableTag, "Progress") {
-    def * = (userid, duedate) <> (ProgressRow.tupled, ProgressRow.unapply)
-    /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(userid), Rep.Some(duedate)).shaped.<>({r=>import r._; _1.map(_=> ProgressRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
-
-    /** Database column UserId SqlType(INT), PrimaryKey */
-    val userid: Rep[Int] = column[Int]("UserId", O.PrimaryKey)
-    /** Database column DueDate SqlType(DATE) */
-    val duedate: Rep[java.sql.Date] = column[java.sql.Date]("DueDate")
-
-    /** Foreign key referencing User (database name Progress_User_UserId) */
-    lazy val userFk = foreignKey("Progress_User_UserId", userid, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
-  }
-  /** Collection-like TableQuery object for table Progress */
-  lazy val Progress = new TableQuery(tag => new Progress(tag))
-
   /** Entity class storing rows of table Session
    *  @param id Database column Id SqlType(VARCHAR), PrimaryKey, Length(150,true)
    *  @param userid Database column UserId SqlType(INT) */
@@ -142,18 +116,19 @@ trait Tables {
    *  @param id Database column Id SqlType(INT), AutoInc, PrimaryKey
    *  @param displayname Database column DisplayName SqlType(VARCHAR), Length(100,true)
    *  @param email Database column Email SqlType(VARCHAR), Length(100,true)
-   *  @param passwordhash Database column PasswordHash SqlType(VARCHAR), Length(200,true) */
-  case class UserRow(id: Int, displayname: String, email: String, passwordhash: String)
+   *  @param passwordhash Database column PasswordHash SqlType(VARCHAR), Length(200,true)
+   *  @param duedate Database column DueDate SqlType(DATE), Default(None) */
+  case class UserRow(id: Int, displayname: String, email: String, passwordhash: String, duedate: Option[java.sql.Date] = None)
   /** GetResult implicit for fetching UserRow objects using plain SQL queries */
-  implicit def GetResultUserRow(implicit e0: GR[Int], e1: GR[String]): GR[UserRow] = GR{
+  implicit def GetResultUserRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[java.sql.Date]]): GR[UserRow] = GR{
     prs => import prs._
-    UserRow.tupled((<<[Int], <<[String], <<[String], <<[String]))
+    UserRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[java.sql.Date]))
   }
   /** Table description of table User. Objects of this class serve as prototypes for rows in queries. */
   class User(_tableTag: Tag) extends Table[UserRow](_tableTag, "User") {
-    def * = (id, displayname, email, passwordhash) <> (UserRow.tupled, UserRow.unapply)
+    def * = (id, displayname, email, passwordhash, duedate) <> (UserRow.tupled, UserRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(displayname), Rep.Some(email), Rep.Some(passwordhash)).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(displayname), Rep.Some(email), Rep.Some(passwordhash), duedate).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column Id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("Id", O.AutoInc, O.PrimaryKey)
@@ -163,6 +138,8 @@ trait Tables {
     val email: Rep[String] = column[String]("Email", O.Length(100,varying=true))
     /** Database column PasswordHash SqlType(VARCHAR), Length(200,true) */
     val passwordhash: Rep[String] = column[String]("PasswordHash", O.Length(200,varying=true))
+    /** Database column DueDate SqlType(DATE), Default(None) */
+    val duedate: Rep[Option[java.sql.Date]] = column[Option[java.sql.Date]]("DueDate", O.Default(None))
 
     /** Uniqueness Index over (email) (database name User_Email_Unique) */
     val index1 = index("User_Email_Unique", email, unique=true)

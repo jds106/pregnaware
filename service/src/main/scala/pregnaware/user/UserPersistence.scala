@@ -1,5 +1,7 @@
 package pregnaware.user
 
+import java.time.LocalDate
+
 import pregnaware.user.entities.{WrappedFriend, WrappedUser}
 import pregnaware.utils.ExecutionWrapper
 
@@ -26,4 +28,10 @@ trait UserPersistence extends ExecutionWrapper {
 
   /** Delete a friend linkage */
   def deleteFriend(userId: Int, friendId: Int) : Future[Unit]
+
+  /** Sets a due date */
+  def setDueDate(userId: Int, dueDate: LocalDate) : Future[LocalDate]
+
+  /** Removes a due date */
+  def deleteDueDate(userId: Int) : Future[Unit]
 }

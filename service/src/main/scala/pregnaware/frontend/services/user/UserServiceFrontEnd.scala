@@ -1,5 +1,7 @@
 package pregnaware.frontend.services.user
 
+import java.time.LocalDate
+
 import pregnaware.frontend.FrontEndDirectives
 import pregnaware.frontend.entities.{AddFriendRequest, AddUserRequest, EditUserRequest, LoginRequest}
 import org.mindrot.jbcrypt.BCrypt
@@ -15,7 +17,10 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
   private val salt = BCrypt.gensalt()
 
   // The routes provided by this service
-  val userServiceRoutes: Route = login ~ getUser ~ postUser ~ putUser ~ putFriend ~ deleteFriend
+  val userServiceRoutes: Route =
+    login ~ getUser ~ postUser ~ putUser ~
+      putFriend ~ deleteFriend ~
+      putDueDate ~ deleteDueDate
 
   /** LoginRequest -> sessionId */
   def login: Route = post {
@@ -99,6 +104,28 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
     path("user" / "friend" / IntNumber) { friendId =>
       getUserId("deleteFriend") { userId =>
         completeFuture("deleteFriend", getUserService.deleteFriend(userId, friendId))
+      }
+    }
+  }
+
+  /** LocalDate -> LocalDate */
+  def putDueDate: Route = put {
+    path("user" / "duedate") {
+      getUserId("putDueDate") { userId =>
+        entity(as[LocalDate]) { dueDate =>
+          routeFuture("putDueDate", getUserService.putDueDate(userId, dueDate)) { model =>
+            complete(model)
+          }
+        }
+      }
+    }
+  }
+
+  /** () -> () */
+  def deleteDueDate: Route = delete {
+    path("user" / "duedate") {
+      getUserId("deleteDueDate") { userId =>
+        completeFuture("deleteDueDate", getUserService.deleteDueDate(userId))
       }
     }
   }

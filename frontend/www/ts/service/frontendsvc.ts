@@ -81,12 +81,11 @@ module service {
         /* ---- Progress ---- */
 
         public putDueDate(dueDate: LocalDate) : angular.IHttpPromise<LocalDate> {
-            console.log("Putting due date: ", dueDate);
-            return this.$http.put(FrontEndUrl.getUrl('progress', this.getSessionId()), dueDate)
+            return this.$http.put(FrontEndUrl.getUrl('user/duedate', this.getSessionId()), dueDate)
         }
 
         public deleteDueDate() : angular.IHttpPromise<any> {
-            return this.$http.delete(FrontEndUrl.getUrl('progress', this.getSessionId()));
+            return this.$http.delete(FrontEndUrl.getUrl('user/duedate', this.getSessionId()));
         }
 
         /* ---- Names ---- */

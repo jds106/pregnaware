@@ -1,3 +1,5 @@
+package pregnaware
+
 import akka.actor.ActorDSL._
 import akka.actor._
 import akka.io.IO
@@ -7,10 +9,8 @@ import com.typesafe.scalalogging.StrictLogging
 import pregnaware.database.DatabaseWrapper
 import pregnaware.frontend.FrontEndHttpService
 import pregnaware.frontend.services.naming.NamingServiceBackend
-import pregnaware.frontend.services.progress.ProgressServiceBackend
 import pregnaware.frontend.services.user.UserServiceBackend
 import pregnaware.naming.NamingHttpService
-import pregnaware.progress.ProgressHttpService
 import spray.can.Http
 import spray.routing._
 import pregnaware.user.UserHttpService
@@ -27,14 +27,12 @@ class ProgressServiceActor extends HttpServiceActor with ActorLogging with Execu
 
   private val databasePersistence = DatabaseWrapper.apply
 
-  private val progressService = ProgressHttpService(databasePersistence)
   private val namingService = NamingHttpService(databasePersistence)
   private val userService = UserHttpService(databasePersistence)
 
   val frontEndService = FrontEndHttpService(
     databasePersistence,
     UserServiceBackend(UserHttpService.serviceName),
-    ProgressServiceBackend(ProgressHttpService.serviceName),
     NamingServiceBackend(NamingHttpService.serviceName))
 
   val healthService = new HealthHttpService {
@@ -42,7 +40,7 @@ class ProgressServiceActor extends HttpServiceActor with ActorLogging with Execu
   }
 
   // Initialise the Swagger end-point for documentation */
-  val serviceTypes = Seq(typeOf[ProgressHttpService])
+  val serviceTypes = Seq(typeOf[NamingHttpService])
   val swaggerService = SwaggerServiceWrapper.swaggerService(
     context, serviceTypes,
     "Pregnancy Progress",
@@ -51,7 +49,6 @@ class ProgressServiceActor extends HttpServiceActor with ActorLogging with Execu
   // This ensures that CORS is only permitted for known hosts
   val validOrigins = Set("petstore.swagger.io", "localhost")
   val route = CorsWrapper.allowOrigins(validOrigins) {
-    progressService.routes ~
       healthService.routes ~
       namingService.routes ~
       userService.routes ~

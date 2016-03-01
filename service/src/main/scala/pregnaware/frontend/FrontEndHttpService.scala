@@ -4,7 +4,6 @@ import akka.actor.{ActorContext, ActorRefFactory}
 import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
 import pregnaware.frontend.services.naming.{NamingServiceBackend, NamingServiceFrontEnd}
-import pregnaware.frontend.services.progress.{ProgressServiceFrontEnd, ProgressServiceBackend}
 import pregnaware.frontend.services.user.{UserServiceBackend, UserServiceFrontEnd}
 import pregnaware.utils.ExecutionWrapper
 import spray.routing._
@@ -14,7 +13,6 @@ import scala.concurrent.ExecutionContext
 /** Support user login */
 abstract class FrontEndHttpService extends HttpService
   with UserServiceFrontEnd
-  with ProgressServiceFrontEnd
   with NamingServiceFrontEnd
   with ExecutionWrapper
   with StrictLogging {
@@ -22,7 +20,7 @@ abstract class FrontEndHttpService extends HttpService
   /** The routes defined by this service */
   val routes =
     pathPrefix(FrontEndHttpService.serviceName) {
-      userServiceRoutes ~ progressServiceRoutes ~ namingServiceRoutes
+      userServiceRoutes ~ namingServiceRoutes
     }
 }
 
@@ -30,8 +28,7 @@ object FrontEndHttpService {
   val serviceName = "FrontEndSvc"
 
   def apply(
-    persistence: SessionPersistence, userSvc: UserServiceBackend,
-    progressSvc: ProgressServiceBackend, namingSvc: NamingServiceBackend)
+    persistence: SessionPersistence, userSvc: UserServiceBackend, namingSvc: NamingServiceBackend)
     (implicit ac: ActorContext, ec: ExecutionContext, to: Timeout) : FrontEndHttpService = {
 
     new FrontEndHttpService {
@@ -46,7 +43,6 @@ object FrontEndHttpService {
 
       override def getSessionPersistence = persistence
       override def getUserService = userSvc
-      override def getProgressService = progressSvc
       override def getNamingService = namingSvc
     }
   }

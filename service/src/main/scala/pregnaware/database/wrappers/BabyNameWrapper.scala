@@ -20,7 +20,8 @@ trait BabyNameWrapper extends NamingPersistence {
 
       db.run(joinQuery.result).map { results =>
         results.map {
-          case (b, u) => WrappedBabyName(b.id, b.userid, b.suggestedby, u.displayname, b.name, b.isboy)
+          case (b, u) => WrappedBabyName(
+            b.id, b.userid, b.suggestedby, u.displayname, u.joindate.toLocalDate, b.name, b.isboy)
         }
       }
     }
@@ -38,7 +39,8 @@ trait BabyNameWrapper extends NamingPersistence {
           val action = insertQuery += BabynameRow(-1, userId, name, isBoy, suggestedById, Date.valueOf(LocalDate.now()))
 
           db.run(action).map { row =>
-            WrappedBabyName(row.id, row.userid, row.suggestedby, suggestedUser.displayname, row.name, row.isboy)
+            WrappedBabyName(
+              row.id, row.userid, row.suggestedby, suggestedUser.displayname, row.date.toLocalDate, row.name, row.isboy)
           }
       }
     }

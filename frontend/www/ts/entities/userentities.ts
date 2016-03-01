@@ -29,6 +29,7 @@ module entities {
         email: string
         dueDate: LocalDate
         joinedDate: LocalDate
+        lastAccessedTime: number,
         babyNames: WrappedBabyName[]
         friends: WrappedFriend[]
         friendRequestsSent: WrappedFriendToBe[]
@@ -40,6 +41,7 @@ module entities {
         userId: number
         suggestedBy: number
         suggestedByName: string
+        suggestedDate: LocalDate
         name: string
         isBoy: boolean
     }
@@ -50,12 +52,14 @@ module entities {
         email: string,
         dueDate: LocalDate
         babyNames: WrappedBabyName[]
+        friendDate: LocalDate
     }
 
     export interface WrappedFriendToBe {
         userId: number
         displayName: string
         email: string
+        requestDate: LocalDate
     }
 
     export interface LocalDate {

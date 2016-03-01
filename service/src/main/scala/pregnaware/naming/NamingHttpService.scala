@@ -5,7 +5,6 @@ import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
 import com.wordnik.swagger.annotations.{ApiResponse, ApiResponses, ApiOperation, Api}
 import pregnaware.naming.entities.{WrappedBabyName, AddNameRequest}
-import pregnaware.progress.ProgressModel
 import spray.routing.{HttpService, Route}
 import pregnaware.utils.Json4sSupport._
 import pregnaware.utils.{CustomDirectives, ResponseCodes}

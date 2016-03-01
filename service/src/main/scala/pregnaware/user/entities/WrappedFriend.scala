@@ -9,4 +9,5 @@ case class WrappedFriend(
   displayName: String,
   email: String,
   dueDate: Option[LocalDate],
-  babyNames: Seq[WrappedBabyName])
+  babyNames: Seq[WrappedBabyName],
+  friendDate: LocalDate)

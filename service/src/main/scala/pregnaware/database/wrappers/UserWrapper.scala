@@ -1,7 +1,7 @@
 package pregnaware.database.wrappers
 
 import java.sql.Date
-import java.time.LocalDate
+import java.time.{Instant, LocalDate}
 
 import pregnaware.database.ConnectionManager._
 import pregnaware.database.schema.Tables._
@@ -31,6 +31,7 @@ trait UserWrapper extends UserPersistence with DueDateWrapper with FriendWrapper
           user.email,
           None,
           joinedDate,
+          Instant.now,
           Seq.empty[WrappedBabyName],
           user.passwordhash,
           Seq.empty[WrappedFriend],

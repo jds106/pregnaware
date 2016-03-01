@@ -2,7 +2,7 @@ package pregnaware.user
 
 import java.time.LocalDate
 
-import pregnaware.user.entities.{WrappedFriend, WrappedUser}
+import pregnaware.user.entities.{WrappedFriendToBe, WrappedFriend, WrappedUser}
 import pregnaware.utils.ExecutionWrapper
 
 import scala.concurrent.Future
@@ -24,10 +24,16 @@ trait UserPersistence extends ExecutionWrapper {
   def getUser(userId: Int): Future[Option[WrappedUser]]
 
   /** Makes a new friend connection between the user and the friend */
-  def addFriend(userId: Int, friendId: Int) : Future[WrappedFriend]
+  def addFriend(userId: Int, friendId: Int) : Future[WrappedFriendToBe]
 
   /** Delete a friend linkage */
   def deleteFriend(userId: Int, friendId: Int) : Future[Unit]
+
+  /** Confirms a friendship */
+  def confirmFriend(userId: Int, friendId: Int) : Future[WrappedFriend]
+
+  /** Prevents a friendship */
+  def blockFriend(userId: Int, friendId: Int) : Future[Unit]
 
   /** Sets a due date */
   def setDueDate(userId: Int, dueDate: LocalDate) : Future[LocalDate]

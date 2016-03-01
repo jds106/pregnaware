@@ -1,5 +1,8 @@
 package pregnaware.database.wrappers
 
+import java.sql.Date
+import java.time.LocalDate
+
 import pregnaware.database.ConnectionManager._
 import pregnaware.database.schema.Tables._
 import pregnaware.naming.NamingPersistence
@@ -32,7 +35,7 @@ trait BabyNameWrapper extends NamingPersistence {
 
         case Some(suggestedUser) =>
           val insertQuery = Babyname returning Babyname.map(_.id) into ((user, id) => user.copy(id = id))
-          val action = insertQuery += BabynameRow(-1, userId, name, isBoy, suggestedById)
+          val action = insertQuery += BabynameRow(-1, userId, name, isBoy, suggestedById, Date.valueOf(LocalDate.now()))
 
           db.run(action).map { row =>
             WrappedBabyName(row.id, row.userid, row.suggestedby, suggestedUser.displayname, row.name, row.isboy)

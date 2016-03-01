@@ -1,5 +1,7 @@
 package pregnaware.database.wrappers
 
+import java.time.Instant
+
 import pregnaware.database.ConnectionManager._
 import pregnaware.database.schema.Tables._
 import pregnaware.frontend.SessionPersistence
@@ -27,7 +29,7 @@ trait SessionWrapper extends SessionPersistence {
 
         case None =>
           val sessionId = java.util.UUID.randomUUID().toString
-          val action = Session += SessionRow(sessionId, userId)
+          val action = Session += SessionRow(sessionId, userId, Instant.now().toEpochMilli)
           db.run(action).map(_ => sessionId)
       }
     }

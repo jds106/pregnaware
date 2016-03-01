@@ -10,8 +10,8 @@ module entities {
     }
 
     export interface AddUserRequest {
-        displayName: string,
-        email: string,
+        displayName: string
+        email: string
         password: string
     }
 
@@ -27,13 +27,16 @@ module entities {
         userId: number
         displayName: string
         email: string
-        dueDate: LocalDate,
-        babyNames: WrappedBabyName[],
+        dueDate: LocalDate
+        joinedDate: LocalDate
+        babyNames: WrappedBabyName[]
         friends: WrappedFriend[]
+        friendRequestsSent: WrappedFriendToBe[]
+        friendRequestsReceived: WrappedFriendToBe[]
     }
 
     export interface WrappedBabyName {
-        nameId: number,
+        nameId: number
         userId: number
         suggestedBy: number
         suggestedByName: string
@@ -45,8 +48,14 @@ module entities {
         userId: number
         displayName: string
         email: string,
-        dueDate: LocalDate,
+        dueDate: LocalDate
         babyNames: WrappedBabyName[]
+    }
+
+    export interface WrappedFriendToBe {
+        userId: number
+        displayName: string
+        email: string
     }
 
     export interface LocalDate {

@@ -9,7 +9,10 @@ case class WrappedUser(
   displayName: String,
   email: String,
   dueDate: Option[LocalDate],
+  joinedDate: LocalDate,
   babyNames: Seq[WrappedBabyName],
   passwordHash: String,
-  friends: Seq[WrappedFriend])
+  friends: Seq[WrappedFriend],
+  friendRequestsSent: Seq[WrappedFriendToBe],
+  friendRequestsReceived: Seq[WrappedFriendToBe])
 

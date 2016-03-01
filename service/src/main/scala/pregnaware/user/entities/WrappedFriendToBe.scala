@@ -1,8 +1,6 @@
 package pregnaware.user.entities
 
-/**
-  * Created by james on 01/03/2016.
-  */
-class WrappedFriendToBe {
-
-}
+case class WrappedFriendToBe(
+  userId: Int,
+  displayName: String,
+  email: String)

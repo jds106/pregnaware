@@ -23,18 +23,19 @@ trait Tables {
    *  @param userid Database column UserId SqlType(INT)
    *  @param name Database column Name SqlType(VARCHAR), Length(45,true)
    *  @param isboy Database column IsBoy SqlType(BIT)
-   *  @param suggestedby Database column SuggestedBy SqlType(INT) */
-  case class BabynameRow(id: Int, userid: Int, name: String, isboy: Boolean, suggestedby: Int)
+   *  @param suggestedby Database column SuggestedBy SqlType(INT)
+   *  @param date Database column Date SqlType(DATE) */
+  case class BabynameRow(id: Int, userid: Int, name: String, isboy: Boolean, suggestedby: Int, date: java.sql.Date)
   /** GetResult implicit for fetching BabynameRow objects using plain SQL queries */
-  implicit def GetResultBabynameRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Boolean]): GR[BabynameRow] = GR{
+  implicit def GetResultBabynameRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Boolean], e3: GR[java.sql.Date]): GR[BabynameRow] = GR{
     prs => import prs._
-    BabynameRow.tupled((<<[Int], <<[Int], <<[String], <<[Boolean], <<[Int]))
+    BabynameRow.tupled((<<[Int], <<[Int], <<[String], <<[Boolean], <<[Int], <<[java.sql.Date]))
   }
   /** Table description of table BabyName. Objects of this class serve as prototypes for rows in queries. */
   class Babyname(_tableTag: Tag) extends Table[BabynameRow](_tableTag, "BabyName") {
-    def * = (id, userid, name, isboy, suggestedby) <> (BabynameRow.tupled, BabynameRow.unapply)
+    def * = (id, userid, name, isboy, suggestedby, date) <> (BabynameRow.tupled, BabynameRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(userid), Rep.Some(name), Rep.Some(isboy), Rep.Some(suggestedby)).shaped.<>({r=>import r._; _1.map(_=> BabynameRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(userid), Rep.Some(name), Rep.Some(isboy), Rep.Some(suggestedby), Rep.Some(date)).shaped.<>({r=>import r._; _1.map(_=> BabynameRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column Id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("Id", O.AutoInc, O.PrimaryKey)
@@ -46,6 +47,8 @@ trait Tables {
     val isboy: Rep[Boolean] = column[Boolean]("IsBoy")
     /** Database column SuggestedBy SqlType(INT) */
     val suggestedby: Rep[Int] = column[Int]("SuggestedBy")
+    /** Database column Date SqlType(DATE) */
+    val date: Rep[java.sql.Date] = column[java.sql.Date]("Date")
 
     /** Foreign key referencing User (database name BabyName_User_SuggestedBy) */
     lazy val userFk1 = foreignKey("BabyName_User_SuggestedBy", suggestedby, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
@@ -57,54 +60,69 @@ trait Tables {
 
   /** Entity class storing rows of table Friend
    *  @param id Database column Id SqlType(INT), AutoInc, PrimaryKey
-   *  @param userid1 Database column UserId1 SqlType(INT)
-   *  @param userid2 Database column UserId2 SqlType(INT) */
-  case class FriendRow(id: Int, userid1: Int, userid2: Int)
+   *  @param user1id Database column User1Id SqlType(INT)
+   *  @param user2id Database column User2Id SqlType(INT)
+   *  @param user1confirmed Database column User1Confirmed SqlType(BIT)
+   *  @param user2confirmed Database column User2Confirmed SqlType(BIT)
+   *  @param isblocked Database column Blocked SqlType(BIT)
+   *  @param date Database column Date SqlType(DATE) */
+  case class FriendRow(id: Int, user1id: Int, user2id: Int, user1confirmed: Boolean, user2confirmed: Boolean, isblocked: Boolean, date: java.sql.Date)
   /** GetResult implicit for fetching FriendRow objects using plain SQL queries */
-  implicit def GetResultFriendRow(implicit e0: GR[Int]): GR[FriendRow] = GR{
+  implicit def GetResultFriendRow(implicit e0: GR[Int], e1: GR[Boolean], e2: GR[java.sql.Date]): GR[FriendRow] = GR{
     prs => import prs._
-    FriendRow.tupled((<<[Int], <<[Int], <<[Int]))
+    FriendRow.tupled((<<[Int], <<[Int], <<[Int], <<[Boolean], <<[Boolean], <<[Boolean], <<[java.sql.Date]))
   }
   /** Table description of table Friend. Objects of this class serve as prototypes for rows in queries. */
   class Friend(_tableTag: Tag) extends Table[FriendRow](_tableTag, "Friend") {
-    def * = (id, userid1, userid2) <> (FriendRow.tupled, FriendRow.unapply)
+    def * = (id, user1id, user2id, user1confirmed, user2confirmed, isblocked, date) <> (FriendRow.tupled, FriendRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(userid1), Rep.Some(userid2)).shaped.<>({r=>import r._; _1.map(_=> FriendRow.tupled((_1.get, _2.get, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(user1id), Rep.Some(user2id), Rep.Some(user1confirmed), Rep.Some(user2confirmed), Rep.Some(isblocked), Rep.Some(date)).shaped.<>({r=>import r._; _1.map(_=> FriendRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column Id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("Id", O.AutoInc, O.PrimaryKey)
-    /** Database column UserId1 SqlType(INT) */
-    val userid1: Rep[Int] = column[Int]("UserId1")
-    /** Database column UserId2 SqlType(INT) */
-    val userid2: Rep[Int] = column[Int]("UserId2")
+    /** Database column User1Id SqlType(INT) */
+    val user1id: Rep[Int] = column[Int]("User1Id")
+    /** Database column User2Id SqlType(INT) */
+    val user2id: Rep[Int] = column[Int]("User2Id")
+    /** Database column User1Confirmed SqlType(BIT) */
+    val user1confirmed: Rep[Boolean] = column[Boolean]("User1Confirmed")
+    /** Database column User2Confirmed SqlType(BIT) */
+    val user2confirmed: Rep[Boolean] = column[Boolean]("User2Confirmed")
+    /** Database column Blocked SqlType(BIT) */
+    val isblocked: Rep[Boolean] = column[Boolean]("IsBlocked")
+    /** Database column Date SqlType(DATE) */
+    val date: Rep[java.sql.Date] = column[java.sql.Date]("Date")
 
     /** Foreign key referencing User (database name Friend_User_UserId1) */
-    lazy val userFk1 = foreignKey("Friend_User_UserId1", userid1, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+    lazy val userFk1 = foreignKey("Friend_User_UserId1", user1id, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
     /** Foreign key referencing User (database name Friend_User_UserId2) */
-    lazy val userFk2 = foreignKey("Friend_User_UserId2", userid2, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+    lazy val userFk2 = foreignKey("Friend_User_UserId2", user2id, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   }
   /** Collection-like TableQuery object for table Friend */
   lazy val Friend = new TableQuery(tag => new Friend(tag))
 
   /** Entity class storing rows of table Session
    *  @param id Database column Id SqlType(VARCHAR), PrimaryKey, Length(150,true)
-   *  @param userid Database column UserId SqlType(INT) */
-  case class SessionRow(id: String, userid: Int)
+   *  @param userid Database column UserId SqlType(INT)
+   *  @param accesstime Database column AccessTime SqlType(DATETIME) */
+  case class SessionRow(id: String, userid: Int, accesstime: Long)
   /** GetResult implicit for fetching SessionRow objects using plain SQL queries */
-  implicit def GetResultSessionRow(implicit e0: GR[String], e1: GR[Int]): GR[SessionRow] = GR{
+  implicit def GetResultSessionRow(implicit e0: GR[String], e1: GR[Int], e2: GR[java.sql.Timestamp]): GR[SessionRow] = GR{
     prs => import prs._
-    SessionRow.tupled((<<[String], <<[Int]))
+    SessionRow.tupled((<<[String], <<[Int], <<[Long]))
   }
   /** Table description of table Session. Objects of this class serve as prototypes for rows in queries. */
   class Session(_tableTag: Tag) extends Table[SessionRow](_tableTag, "Session") {
-    def * = (id, userid) <> (SessionRow.tupled, SessionRow.unapply)
+    def * = (id, userid, accesstime) <> (SessionRow.tupled, SessionRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(userid)).shaped.<>({r=>import r._; _1.map(_=> SessionRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(userid), Rep.Some(accesstime)).shaped.<>({r=>import r._; _1.map(_=> SessionRow.tupled((_1.get, _2.get, _3.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column Id SqlType(VARCHAR), PrimaryKey, Length(150,true) */
     val id: Rep[String] = column[String]("Id", O.PrimaryKey, O.Length(150,varying=true))
     /** Database column UserId SqlType(INT) */
     val userid: Rep[Int] = column[Int]("UserId")
+    /** Database column AccessTime SqlType(DATETIME) */
+    val accesstime: Rep[Long] = column[Long]("AccessTime")
 
     /** Foreign key referencing User (database name Session_User_UserId) */
     lazy val userFk = foreignKey("Session_User_UserId", userid, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
@@ -117,18 +135,19 @@ trait Tables {
    *  @param displayname Database column DisplayName SqlType(VARCHAR), Length(100,true)
    *  @param email Database column Email SqlType(VARCHAR), Length(100,true)
    *  @param passwordhash Database column PasswordHash SqlType(VARCHAR), Length(200,true)
-   *  @param duedate Database column DueDate SqlType(DATE), Default(None) */
-  case class UserRow(id: Int, displayname: String, email: String, passwordhash: String, duedate: Option[java.sql.Date] = None)
+   *  @param duedate Database column DueDate SqlType(DATE), Default(None)
+   *  @param joindate Database column JoinDate SqlType(DATE) */
+  case class UserRow(id: Int, displayname: String, email: String, passwordhash: String, duedate: Option[java.sql.Date] = None, joindate: java.sql.Date)
   /** GetResult implicit for fetching UserRow objects using plain SQL queries */
-  implicit def GetResultUserRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[java.sql.Date]]): GR[UserRow] = GR{
+  implicit def GetResultUserRow(implicit e0: GR[Int], e1: GR[String], e2: GR[Option[java.sql.Date]], e3: GR[java.sql.Date]): GR[UserRow] = GR{
     prs => import prs._
-    UserRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[java.sql.Date]))
+    UserRow.tupled((<<[Int], <<[String], <<[String], <<[String], <<?[java.sql.Date], <<[java.sql.Date]))
   }
   /** Table description of table User. Objects of this class serve as prototypes for rows in queries. */
   class User(_tableTag: Tag) extends Table[UserRow](_tableTag, "User") {
-    def * = (id, displayname, email, passwordhash, duedate) <> (UserRow.tupled, UserRow.unapply)
+    def * = (id, displayname, email, passwordhash, duedate, joindate) <> (UserRow.tupled, UserRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(displayname), Rep.Some(email), Rep.Some(passwordhash), duedate).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(displayname), Rep.Some(email), Rep.Some(passwordhash), duedate, Rep.Some(joindate)).shaped.<>({r=>import r._; _1.map(_=> UserRow.tupled((_1.get, _2.get, _3.get, _4.get, _5, _6.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column Id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("Id", O.AutoInc, O.PrimaryKey)
@@ -140,6 +159,8 @@ trait Tables {
     val passwordhash: Rep[String] = column[String]("PasswordHash", O.Length(200,varying=true))
     /** Database column DueDate SqlType(DATE), Default(None) */
     val duedate: Rep[Option[java.sql.Date]] = column[Option[java.sql.Date]]("DueDate", O.Default(None))
+    /** Database column JoinDate SqlType(DATE) */
+    val joindate: Rep[java.sql.Date] = column[java.sql.Date]("JoinDate")
 
     /** Uniqueness Index over (email) (database name User_Email_Unique) */
     val index1 = index("User_Email_Unique", email, unique=true)

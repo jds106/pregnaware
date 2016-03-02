@@ -5,11 +5,10 @@ import java.time.LocalDate
 import akka.actor.ActorContext
 import akka.util.Timeout
 import pregnaware.frontend.services.BackEndFuncs
+import pregnaware.user.entities._
+import pregnaware.utils.Json4sSupport._
 import spray.http.HttpMethods._
 import spray.httpx.ResponseTransformation._
-import pregnaware.user.entities._
-import pregnaware.utils.ExecutionWrapper
-import pregnaware.utils.Json4sSupport._
 
 import scala.concurrent.{ExecutionContext, Future}
 
@@ -24,16 +23,12 @@ abstract class UserServiceBackend(userServiceName: String) extends BackEndFuncs(
     send(GET, s"user/$userId").map(r => r ~> unmarshal[WrappedUser])
   }
 
-  def postUser(
-    displayName: String, email: String, passwordHash: String) : Future[WrappedUser] = {
-
+  def postUser(displayName: String, email: String, passwordHash: String) : Future[WrappedUser] = {
     val addUserRequest = AddUserRequest(displayName, email, passwordHash)
     send(POST, "user", (b,u) => b(u, addUserRequest)).map(r => r ~> unmarshal[WrappedUser])
   }
 
-  def putUser(
-    userId: Int, displayName: String, email: String, passwordHash: String) : Future[Unit] = {
-
+  def putUser(userId: Int, displayName: String, email: String, passwordHash: String) : Future[Unit] = {
     val editUserRequest = EditUserRequest(displayName, email, passwordHash)
     send(PUT, s"user/$userId", (b,u) => b(u, editUserRequest)).map(_ => ())
   }

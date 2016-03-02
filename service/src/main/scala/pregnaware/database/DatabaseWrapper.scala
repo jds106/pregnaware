@@ -1,15 +1,17 @@
 package pregnaware.database
 
 import akka.util.Timeout
-import pregnaware.database.wrappers.{BabyNameWrapper, SessionWrapper, UserWrapper}
+import pregnaware.database.wrappers._
 
 import scala.concurrent.ExecutionContext
 
 /** Wraps up the required database interactions */
 trait DatabaseWrapper
-  extends SessionWrapper
+  extends BabyNameWrapper
+  with DueDateWrapper
+  with FriendWrapper
+  with SessionWrapper
   with UserWrapper
-  with BabyNameWrapper
 
 object DatabaseWrapper {
   def apply(implicit ec: ExecutionContext, to: Timeout) : DatabaseWrapper = {

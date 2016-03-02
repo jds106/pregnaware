@@ -26,7 +26,9 @@ object ConnectionManager {
     val future = f(db)
 
     // Once complete, close the database connection
-    future.onComplete{case t => db.close()}
+    future.onComplete {
+      case t => db.close()
+    }
 
     // Return this future
     future

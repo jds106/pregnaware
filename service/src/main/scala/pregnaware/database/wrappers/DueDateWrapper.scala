@@ -1,11 +1,10 @@
-package pregnaware.database.wrappers.userwrappers
+package pregnaware.database.wrappers
 
 import java.sql.Date
 import java.time.LocalDate
 
 import pregnaware.database.ConnectionManager._
 import pregnaware.database.schema.Tables._
-import pregnaware.utils.ExecutionWrapper
 import slick.driver.MySQLDriver.api._
 
 import scala.concurrent.Future

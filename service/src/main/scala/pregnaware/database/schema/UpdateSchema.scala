@@ -1,4 +1,4 @@
-package pregnaware.database
+package pregnaware.database.schema
 
 import com.typesafe.scalalogging.StrictLogging
 import pregnaware.utils.AppConfig

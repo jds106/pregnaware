@@ -1,4 +1,4 @@
-package pregnaware.database.wrappers.userwrappers
+package pregnaware.database.wrappers
 
 import java.sql.Date
 import java.time.LocalDate
@@ -92,8 +92,9 @@ trait FriendWrapper extends CommonWrapper {
   }
 
   def blockFriend(userId: Int, friendId: Int): Future[Unit] = {
-    if (userId == friendId)
+    if (userId == friendId) {
       throw new Exception(s"User $userId cannot block themselves")
+    }
 
     getFriendRow(userId, friendId).flatMap {
       case None =>

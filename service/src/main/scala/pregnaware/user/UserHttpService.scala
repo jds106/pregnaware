@@ -1,5 +1,7 @@
 package pregnaware.user
 
+import java.time.LocalDate
+
 import akka.actor.{ActorContext, ActorRefFactory}
 import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
@@ -17,12 +19,9 @@ object UserHttpService {
     (implicit ac: ActorContext, ec: ExecutionContext, to: Timeout): UserHttpService = {
 
     new UserHttpService(persistence) {
-
       // Needed for ExecutionWrapper
       implicit override final def context: ActorContext = ac
-
       implicit override final def executor: ExecutionContext = ec
-
       implicit override final def timeout: Timeout = to
 
       // Needed for HttpService
@@ -38,7 +37,7 @@ abstract class UserHttpService(persistence: UserPersistence)
   /** The routes defined by this service */
   val routes =
     pathPrefix(UserHttpService.serviceName) {
-      getUser ~ findUser ~ postUser ~ putUser ~ putFriend ~ blockFriend ~ deleteFriend
+      getUser ~ findUser ~ postUser ~ putUser ~ putFriend ~ blockFriend ~ deleteFriend ~ putDueDate ~ deleteDueDate
     }
 
   /** userId -> WrappedUser */
@@ -111,6 +110,22 @@ abstract class UserHttpService(persistence: UserPersistence)
     path("user" / IntNumber / "friend" / IntNumber) { (userId, friendId) =>
       val deleteFriendFut = persistence.deleteFriend(userId, friendId)
       completeFuture("deleteFriend", deleteFriendFut)
+    }
+  }
+
+  def putDueDate: Route = put {
+    path("user" / IntNumber / "duedate") { userId =>
+      entity(as[LocalDate]) { dueDate =>
+        routeFuture("putDueDate", persistence.setDueDate(userId, dueDate)) { storedDate =>
+          complete(storedDate)
+        }
+      }
+    }
+  }
+
+  def deleteDueDate: Route = delete {
+    path("user" / IntNumber / "duedate") { userId =>
+      completeFuture("deleteDueDate", persistence.deleteDueDate(userId))
     }
   }
 }

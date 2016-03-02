@@ -60,43 +60,40 @@ trait Tables {
 
   /** Entity class storing rows of table Friend
    *  @param id Database column Id SqlType(INT), AutoInc, PrimaryKey
-   *  @param user1id Database column User1Id SqlType(INT)
-   *  @param user2id Database column User2Id SqlType(INT)
-   *  @param user1confirmed Database column User1Confirmed SqlType(BIT)
-   *  @param user2confirmed Database column User2Confirmed SqlType(BIT)
-   *  @param isblocked Database column Blocked SqlType(BIT)
+   *  @param senderid Database column SenderId SqlType(INT)
+   *  @param receiverid Database column ReceiverId SqlType(INT)
+   *  @param isconfirmed Database column IsConfirmed SqlType(BIT)
+   *  @param isblocked Database column IsBlocked SqlType(BIT)
    *  @param date Database column Date SqlType(DATE) */
-  case class FriendRow(id: Int, user1id: Int, user2id: Int, user1confirmed: Boolean, user2confirmed: Boolean, isblocked: Boolean, date: java.sql.Date)
+  case class FriendRow(id: Int, senderid: Int, receiverid: Int, isconfirmed: Boolean, isblocked: Boolean, date: java.sql.Date)
   /** GetResult implicit for fetching FriendRow objects using plain SQL queries */
   implicit def GetResultFriendRow(implicit e0: GR[Int], e1: GR[Boolean], e2: GR[java.sql.Date]): GR[FriendRow] = GR{
     prs => import prs._
-    FriendRow.tupled((<<[Int], <<[Int], <<[Int], <<[Boolean], <<[Boolean], <<[Boolean], <<[java.sql.Date]))
+    FriendRow.tupled((<<[Int], <<[Int], <<[Int], <<[Boolean], <<[Boolean], <<[java.sql.Date]))
   }
   /** Table description of table Friend. Objects of this class serve as prototypes for rows in queries. */
   class Friend(_tableTag: Tag) extends Table[FriendRow](_tableTag, "Friend") {
-    def * = (id, user1id, user2id, user1confirmed, user2confirmed, isblocked, date) <> (FriendRow.tupled, FriendRow.unapply)
+    def * = (id, senderid, receiverid, isconfirmed, isblocked, date) <> (FriendRow.tupled, FriendRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(id), Rep.Some(user1id), Rep.Some(user2id), Rep.Some(user1confirmed), Rep.Some(user2confirmed), Rep.Some(isblocked), Rep.Some(date)).shaped.<>({r=>import r._; _1.map(_=> FriendRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get, _7.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(id), Rep.Some(senderid), Rep.Some(receiverid), Rep.Some(isconfirmed), Rep.Some(isblocked), Rep.Some(date)).shaped.<>({r=>import r._; _1.map(_=> FriendRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get, _6.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column Id SqlType(INT), AutoInc, PrimaryKey */
     val id: Rep[Int] = column[Int]("Id", O.AutoInc, O.PrimaryKey)
-    /** Database column User1Id SqlType(INT) */
-    val user1id: Rep[Int] = column[Int]("User1Id")
-    /** Database column User2Id SqlType(INT) */
-    val user2id: Rep[Int] = column[Int]("User2Id")
-    /** Database column User1Confirmed SqlType(BIT) */
-    val user1confirmed: Rep[Boolean] = column[Boolean]("User1Confirmed")
-    /** Database column User2Confirmed SqlType(BIT) */
-    val user2confirmed: Rep[Boolean] = column[Boolean]("User2Confirmed")
-    /** Database column Blocked SqlType(BIT) */
+    /** Database column SenderId SqlType(INT) */
+    val senderid: Rep[Int] = column[Int]("SenderId")
+    /** Database column ReceiverId SqlType(INT) */
+    val receiverid: Rep[Int] = column[Int]("ReceiverId")
+    /** Database column IsConfirmed SqlType(BIT) */
+    val isconfirmed: Rep[Boolean] = column[Boolean]("IsConfirmed")
+    /** Database column IsBlocked SqlType(BIT) */
     val isblocked: Rep[Boolean] = column[Boolean]("IsBlocked")
     /** Database column Date SqlType(DATE) */
     val date: Rep[java.sql.Date] = column[java.sql.Date]("Date")
 
     /** Foreign key referencing User (database name Friend_User_UserId1) */
-    lazy val userFk1 = foreignKey("Friend_User_UserId1", user1id, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+    lazy val userFk1 = foreignKey("Friend_User_UserId1", senderid, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
     /** Foreign key referencing User (database name Friend_User_UserId2) */
-    lazy val userFk2 = foreignKey("Friend_User_UserId2", user2id, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
+    lazy val userFk2 = foreignKey("Friend_User_UserId2", receiverid, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   }
   /** Collection-like TableQuery object for table Friend */
   lazy val Friend = new TableQuery(tag => new Friend(tag))
@@ -104,10 +101,10 @@ trait Tables {
   /** Entity class storing rows of table Session
    *  @param id Database column Id SqlType(VARCHAR), PrimaryKey, Length(150,true)
    *  @param userid Database column UserId SqlType(INT)
-   *  @param accesstime Database column AccessTime SqlType(DATETIME) */
+   *  @param accesstime Database column AccessTime SqlType(BIGINT) */
   case class SessionRow(id: String, userid: Int, accesstime: Long)
   /** GetResult implicit for fetching SessionRow objects using plain SQL queries */
-  implicit def GetResultSessionRow(implicit e0: GR[String], e1: GR[Int], e2: GR[java.sql.Timestamp]): GR[SessionRow] = GR{
+  implicit def GetResultSessionRow(implicit e0: GR[String], e1: GR[Int], e2: GR[Long]): GR[SessionRow] = GR{
     prs => import prs._
     SessionRow.tupled((<<[String], <<[Int], <<[Long]))
   }
@@ -121,7 +118,7 @@ trait Tables {
     val id: Rep[String] = column[String]("Id", O.PrimaryKey, O.Length(150,varying=true))
     /** Database column UserId SqlType(INT) */
     val userid: Rep[Int] = column[Int]("UserId")
-    /** Database column AccessTime SqlType(DATETIME) */
+    /** Database column AccessTime SqlType(BIGINT) */
     val accesstime: Rep[Long] = column[Long]("AccessTime")
 
     /** Foreign key referencing User (database name Session_User_UserId) */

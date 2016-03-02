@@ -8,7 +8,7 @@ import pregnaware.database.schema.Tables._
 import pregnaware.database.wrappers.userwrappers.{FriendWrapper, DueDateWrapper}
 import pregnaware.naming.entities.WrappedBabyName
 import pregnaware.user.UserPersistence
-import pregnaware.user.entities.{WrappedFriendToBe, WrappedFriend, WrappedUser}
+import pregnaware.user.entities.{WrappedFriend, WrappedUser}
 import slick.driver.MySQLDriver.api._
 
 import scala.concurrent.Future
@@ -35,8 +35,8 @@ trait UserWrapper extends UserPersistence with DueDateWrapper with FriendWrapper
           Seq.empty[WrappedBabyName],
           user.passwordhash,
           Seq.empty[WrappedFriend],
-          Seq.empty[WrappedFriendToBe],
-          Seq.empty[WrappedFriendToBe])
+          Seq.empty[WrappedFriend],
+          Seq.empty[WrappedFriend])
       }
     }
   }

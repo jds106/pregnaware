@@ -39,8 +39,11 @@ abstract class UserServiceBackend(userServiceName: String) extends BackEndFuncs(
   }
 
   def putFriend(userId: Int, friendId: Int) : Future[WrappedFriend] = {
-    val addFriendRequest = AddFriendRequest(friendId)
-    send(PUT, s"user/$userId/friend", (b,u) => b(u, addFriendRequest)).map(r => r ~> unmarshal[WrappedFriend])
+    send(PUT, s"user/$userId/friend/$friendId").map(r => r ~> unmarshal[WrappedFriend])
+  }
+
+  def blockFriend(userId: Int, friendId: Int) : Future[Unit] = {
+    send(PUT, s"user/$userId/friend/$friendId/block").map(_ => ())
   }
 
   def deleteFriend(userId: Int, friendId: Int) : Future[Unit] = {

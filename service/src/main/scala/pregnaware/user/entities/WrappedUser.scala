@@ -14,6 +14,6 @@ case class WrappedUser(
   babyNames: Seq[WrappedBabyName],
   passwordHash: String,
   friends: Seq[WrappedFriend],
-  friendRequestsSent: Seq[WrappedFriendToBe],
-  friendRequestsReceived: Seq[WrappedFriendToBe])
+  friendRequestsSent: Seq[WrappedFriend],
+  friendRequestsReceived: Seq[WrappedFriend])
 

@@ -22,10 +22,11 @@ trait SessionWrapper extends SessionPersistence {
   /** Returns a session for the user id - will create if missing */
   def getSession(userId: Int): Future[String] = {
     connection { db =>
-      // Return the existing session if one exists
+      // Return the existing session if one exists (and update the last access time)
       db.run(Session.filter(_.userid === userId).map(_.id).result.headOption).flatMap {
         case Some(sessionId) =>
-          Future.successful(sessionId)
+          val update = Session.filter(_.userid === userId).map(_.accesstime).update(Instant.now.toEpochMilli)
+          db.run(update).map(_ => sessionId)
 
         case None =>
           val sessionId = java.util.UUID.randomUUID().toString

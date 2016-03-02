@@ -14,13 +14,15 @@ object UserHttpService {
   val serviceName = "UserSvc"
 
   def apply(persistence: UserPersistence)
-    (implicit ac: ActorContext, ec: ExecutionContext, to: Timeout) : UserHttpService = {
+    (implicit ac: ActorContext, ec: ExecutionContext, to: Timeout): UserHttpService = {
 
     new UserHttpService(persistence) {
 
       // Needed for ExecutionWrapper
       implicit override final def context: ActorContext = ac
+
       implicit override final def executor: ExecutionContext = ec
+
       implicit override final def timeout: Timeout = to
 
       // Needed for HttpService
@@ -36,7 +38,7 @@ abstract class UserHttpService(persistence: UserPersistence)
   /** The routes defined by this service */
   val routes =
     pathPrefix(UserHttpService.serviceName) {
-      getUser ~ findUser ~ postUser ~ putUser ~ putFriend ~ deleteFriend
+      getUser ~ findUser ~ postUser ~ putUser ~ putFriend ~ blockFriend ~ deleteFriend
     }
 
   /** userId -> WrappedUser */
@@ -88,13 +90,19 @@ abstract class UserHttpService(persistence: UserPersistence)
     }
   }
 
-  /** userId / AddFriendRequest -> WrappedFriend */
+  /** userId / friendId -> WrappedFriend (either creates a friend request, or confirms a friendship) */
   def putFriend: Route = put {
-    path("user" / IntNumber / "friend") { userId =>
-      entity(as[AddFriendRequest]) { request =>
-        val addFriendFut = persistence.addFriend(userId, request.friendId)
-        routeFuture("putFriend", addFriendFut)(f => complete(f))
-      }
+    path("user" / IntNumber / "friend" / IntNumber) { (userId, friendId) =>
+      val addFriendFut = persistence.addFriend(userId, friendId)
+      routeFuture("putFriend", addFriendFut)(f => complete(f))
+    }
+  }
+
+  /** userId / friendId -> () */
+  def blockFriend: Route = put {
+    path("user" / IntNumber / "friend" / IntNumber / "block") { (userId, friendId) =>
+      val blockFriendFut = persistence.blockFriend(userId, friendId)
+      completeFuture("blockFriend", blockFriendFut)
     }
   }
 

@@ -10,7 +10,7 @@ case class WrappedUser(
   email: String,
   dueDate: Option[LocalDate],
   joinedDate: LocalDate,
-  lastAccessedTime: Instant,
+  lastAccessedTime: Long,
   babyNames: Seq[WrappedBabyName],
   passwordHash: String,
   friends: Seq[WrappedFriend],

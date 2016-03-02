@@ -17,6 +17,26 @@ import scala.concurrent.Future
   */
 trait UserWrapper extends UserPersistence with CommonWrapper {
 
+  /** Get a user (plus friends) by e-mail */
+  def getUser(email: String): Future[Option[WrappedUser]] = {
+    connection { db =>
+      db.run(User.filter(_.email === email).result.headOption).flatMap {
+        case None => Future.successful(None)
+        case Some(user) => getWrappedUser(user)
+      }
+    }
+  }
+
+  /** Get a user (plus friends) by user id */
+  def getUser(userId: Int): Future[Option[WrappedUser]] = {
+    connection { db =>
+      db.run(User.filter(_.id === userId).result.headOption).flatMap {
+        case None => Future.successful(None)
+        case Some(user) => getWrappedUser(user)
+      }
+    }
+  }
+
   /** Add a new user */
   def addUser(displayName: String, email: String, passwordHash: String): Future[WrappedUser] = {
     connection { db =>
@@ -30,7 +50,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
           user.email,
           None,
           joinedDate,
-          Instant.now,
+          Instant.now.toEpochMilli,
           Seq.empty[WrappedBabyName],
           user.passwordhash,
           Seq.empty[WrappedFriend],
@@ -63,22 +83,24 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
     }
   }
 
-  /** Get a user (plus friends) by e-mail */
-  def getUser(email: String): Future[Option[WrappedUser]] = {
+  def getUserState(userId: Int) : Future[String] = {
     connection { db =>
-      db.run(User.filter(_.email === email).result.headOption).flatMap {
-        case None => Future.successful(None)
-        case Some(user) => getWrappedUser(user)
+      db.run(Userstate.filter(_.userid === userId).map(_.state).result.headOption).map {
+        case None => "{ }"
+        case Some(data) => data
       }
     }
   }
 
-  /** Get a user (plus friends) by user id */
-  def getUser(userId: Int): Future[Option[WrappedUser]] = {
+  /** Stores user data (treated as an un-processed blob of JSON */
+  def setUserState(userId: Int, data: String) : Future[Unit] = {
     connection { db =>
-      db.run(User.filter(_.id === userId).result.headOption).flatMap {
-        case None => Future.successful(None)
-        case Some(user) => getWrappedUser(user)
+      db.run(Userstate.filter(_.userid === userId).map(_.state).result.headOption).flatMap {
+        case Some(_) =>
+          db.run(Userstate.filter(_.userid === userId).map(_.state).update(data)).map(_ => ())
+
+        case None =>
+          db.run(Userstate += UserstateRow(userId, data)).map(_ => ())
       }
     }
   }
@@ -100,10 +122,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
         session <- sessionFut
       } yield {
         val dueDate = user.duedate.map(_.toLocalDate)
-        val lastAccessTime = session match {
-          case None => Instant.now
-          case Some(t) => Instant.ofEpochMilli(t)
-        }
+        val lastAccessTime = session.getOrElse(Instant.now.toEpochMilli)
 
         Some(WrappedUser(
           user.id, user.displayname, user.email, dueDate, user.joindate.toLocalDate,

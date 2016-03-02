@@ -37,4 +37,10 @@ trait UserPersistence extends ExecutionWrapper {
 
   /** Removes a due date */
   def deleteDueDate(userId: Int) : Future[Unit]
+
+  /** Retrieves user data (treated as an unprocessed blob of JSON */
+  def getUserState(userId: Int) : Future[String]
+
+  /** Stores user data (treated as an unprocessed blob of JSON */
+  def setUserState(userId: Int, data: String) : Future[Unit]
 }

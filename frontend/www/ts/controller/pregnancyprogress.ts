@@ -70,18 +70,27 @@ module controller {
                 this.user = user;
                 this.$scope.viewedUser = this.user.displayName;
                 this.$scope.canEdit = true;
-                this.$scope.progress = new EnhancedProgressModel(this.user.dueDate);
+
+                this.$scope.progress =
+                    this.user.dueDate
+                        ? new EnhancedProgressModel(this.user.dueDate)
+                        : null;
             });
 
             this.usermgmt.friendSelectedEvent((friend: WrappedFriend) => {
                 if (friend == null) {
                     this.$scope.viewedUser = this.user.displayName;
                     this.$scope.canEdit = true;
-                    this.$scope.progress = new EnhancedProgressModel(this.user.dueDate);
+                    this.$scope.progress =
+                        this.user.dueDate
+                            ? new EnhancedProgressModel(this.user.dueDate)
+                            : null;
                 } else {
                     this.$scope.viewedUser = friend.displayName;
                     this.$scope.canEdit = false;
-                    this.$scope.progress = new EnhancedProgressModel(friend.dueDate);
+                    this.$scope.progress = friend.dueDate
+                        ? new EnhancedProgressModel(friend.dueDate)
+                        : null;
                 }
 
                 this.selectedFriend = friend;

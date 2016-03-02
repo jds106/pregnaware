@@ -3,7 +3,7 @@ package pregnaware.frontend.services.user
 import java.time.LocalDate
 
 import pregnaware.frontend.FrontEndDirectives
-import pregnaware.frontend.entities.{AddFriendRequest, AddUserRequest, EditUserRequest, LoginRequest}
+import pregnaware.frontend.entities.{AddUserRequest, EditUserRequest, LoginRequest}
 import org.mindrot.jbcrypt.BCrypt
 import spray.routing._
 import pregnaware.utils.Json4sSupport._
@@ -20,7 +20,8 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
   val userServiceRoutes: Route =
     login ~ getUser ~ postUser ~ putUser ~
       putFriend ~ deleteFriend ~
-      putDueDate ~ deleteDueDate
+      putDueDate ~ deleteDueDate ~
+      getUserState ~ putUserState
 
   /** LoginRequest -> sessionId */
   def login: Route = post {
@@ -84,10 +85,10 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
   def putFriend: Route = put {
     path("user" / "friend") {
       getUserId("putFriend") { userId =>
-        entity(as[AddFriendRequest]) { request =>
-          onComplete(getUserService.findUser(request.email)) {
+        entity(as[String]) { email =>
+          onComplete(getUserService.findUser(email)) {
             case Failure(error) =>
-              complete(ResponseCodes.NotFound -> s"Friend not found for email: ${request.email}")
+              complete(ResponseCodes.NotFound -> s"Friend not found for email: $email")
 
             case Success(friendUser) =>
               routeFuture("putFriend[put]", getUserService.putFriend(userId, friendUser.userId)) { friend =>
@@ -126,6 +127,26 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
     path("user" / "duedate") {
       getUserId("deleteDueDate") { userId =>
         completeFuture("deleteDueDate", getUserService.deleteDueDate(userId))
+      }
+    }
+  }
+
+  /** () -> state */
+  def getUserState: Route = get {
+    path("user" / "state") {
+      getUserId("getUserState") { userId =>
+        routeFuture("getUserState", getUserService.getUserState(userId))(state => complete(state))
+      }
+    }
+  }
+
+  /** state -> () */
+  def putUserState: Route = put {
+    path("user" / "state") {
+      entity(as[String]) { state =>
+        getUserId("putUserState") { userId =>
+          completeFuture("putUserState", getUserService.petUserState(userId, state))
+        }
       }
     }
   }

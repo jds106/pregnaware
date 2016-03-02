@@ -64,10 +64,10 @@ var service;
             return this.$http.put(FrontEndUrl.getUrl('user', this.getSessionId()), editUserRequest);
         };
         FrontEndSvc.prototype.addFriend = function (friendEmail) {
-            return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), { email: friendEmail });
+            return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), friendEmail);
         };
-        FrontEndSvc.prototype.deleteFriend = function (friendEmail) {
-            return this.$http.delete(FrontEndUrl.getUrl('user/friend', this.getSessionId()));
+        FrontEndSvc.prototype.deleteFriend = function (friendId) {
+            return this.$http.delete(FrontEndUrl.getUrl('user/friend/' + friendId, this.getSessionId()));
         };
         /** Creates a link to the session created for the new friend */
         FrontEndSvc.prototype.getCreateFriendLink = function (urlRoot, sessionId) {
@@ -82,10 +82,17 @@ var service;
         };
         /* ---- Names ---- */
         FrontEndSvc.prototype.putName = function (name, isBoy, suggestedForUserId) {
-            return this.$http.put(FrontEndUrl.getUrl('NamingSvc/name/' + suggestedForUserId, this.getSessionId()), { name: name, isBoy: isBoy });
+            return this.$http.put(FrontEndUrl.getUrl('names/' + suggestedForUserId, this.getSessionId()), { name: name, isBoy: isBoy });
         };
         FrontEndSvc.prototype.deleteName = function (nameId) {
-            return this.$http.delete(FrontEndUrl.getUrl('NamingSvc/name/' + nameId, this.getSessionId()));
+            return this.$http.delete(FrontEndUrl.getUrl('names/' + nameId, this.getSessionId()));
+        };
+        /* ---- State ---- */
+        FrontEndSvc.prototype.getUserState = function () {
+            return this.$http.get(FrontEndUrl.getUrl('user/state', this.getSessionId()));
+        };
+        FrontEndSvc.prototype.putUserState = function (state) {
+            return this.$http.put(FrontEndUrl.getUrl('user/state', this.getSessionId()), state);
         };
         return FrontEndSvc;
     })();
@@ -320,18 +327,26 @@ var controller;
                 _this.user = user;
                 _this.$scope.viewedUser = _this.user.displayName;
                 _this.$scope.canEdit = true;
-                _this.$scope.progress = new EnhancedProgressModel(_this.user.dueDate);
+                _this.$scope.progress =
+                    _this.user.dueDate
+                        ? new EnhancedProgressModel(_this.user.dueDate)
+                        : null;
             });
             this.usermgmt.friendSelectedEvent(function (friend) {
                 if (friend == null) {
                     _this.$scope.viewedUser = _this.user.displayName;
                     _this.$scope.canEdit = true;
-                    _this.$scope.progress = new EnhancedProgressModel(_this.user.dueDate);
+                    _this.$scope.progress =
+                        _this.user.dueDate
+                            ? new EnhancedProgressModel(_this.user.dueDate)
+                            : null;
                 }
                 else {
                     _this.$scope.viewedUser = friend.displayName;
                     _this.$scope.canEdit = false;
-                    _this.$scope.progress = new EnhancedProgressModel(friend.dueDate);
+                    _this.$scope.progress = friend.dueDate
+                        ? new EnhancedProgressModel(friend.dueDate)
+                        : null;
                 }
                 _this.selectedFriend = friend;
             });

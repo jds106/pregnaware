@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Babyname.schema ++ Friend.schema ++ Session.schema ++ User.schema ++ Userlayout.schema
+  lazy val schema: profile.SchemaDescription = Babyname.schema ++ Friend.schema ++ Session.schema ++ User.schema ++ Userstate.schema
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -165,29 +165,29 @@ trait Tables {
   /** Collection-like TableQuery object for table User */
   lazy val User = new TableQuery(tag => new User(tag))
 
-  /** Entity class storing rows of table Userlayout
+  /** Entity class storing rows of table Userstate
    *  @param userid Database column UserId SqlType(INT), PrimaryKey
-   *  @param layout Database column Layout SqlType(VARCHAR), Length(1000,true) */
-  case class UserlayoutRow(userid: Int, layout: String)
-  /** GetResult implicit for fetching UserlayoutRow objects using plain SQL queries */
-  implicit def GetResultUserlayoutRow(implicit e0: GR[Int], e1: GR[String]): GR[UserlayoutRow] = GR{
+   *  @param state Database column State SqlType(VARCHAR), Length(1000,true) */
+  case class UserstateRow(userid: Int, state: String)
+  /** GetResult implicit for fetching UserstateRow objects using plain SQL queries */
+  implicit def GetResultUserstateRow(implicit e0: GR[Int], e1: GR[String]): GR[UserstateRow] = GR{
     prs => import prs._
-    UserlayoutRow.tupled((<<[Int], <<[String]))
+    UserstateRow.tupled((<<[Int], <<[String]))
   }
-  /** Table description of table UserLayout. Objects of this class serve as prototypes for rows in queries. */
-  class Userlayout(_tableTag: Tag) extends Table[UserlayoutRow](_tableTag, "UserLayout") {
-    def * = (userid, layout) <> (UserlayoutRow.tupled, UserlayoutRow.unapply)
+  /** Table description of table UserState. Objects of this class serve as prototypes for rows in queries. */
+  class Userstate(_tableTag: Tag) extends Table[UserstateRow](_tableTag, "UserState") {
+    def * = (userid, state) <> (UserstateRow.tupled, UserstateRow.unapply)
     /** Maps whole row to an option. Useful for outer joins. */
-    def ? = (Rep.Some(userid), Rep.Some(layout)).shaped.<>({r=>import r._; _1.map(_=> UserlayoutRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+    def ? = (Rep.Some(userid), Rep.Some(state)).shaped.<>({r=>import r._; _1.map(_=> UserstateRow.tupled((_1.get, _2.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
 
     /** Database column UserId SqlType(INT), PrimaryKey */
     val userid: Rep[Int] = column[Int]("UserId", O.PrimaryKey)
-    /** Database column Layout SqlType(VARCHAR), Length(1000,true) */
-    val layout: Rep[String] = column[String]("Layout", O.Length(1000,varying=true))
+    /** Database column State SqlType(VARCHAR), Length(1000,true) */
+    val state: Rep[String] = column[String]("State", O.Length(1000,varying=true))
 
     /** Foreign key referencing User (database name UserLayout_User_UserId) */
     lazy val userFk = foreignKey("UserLayout_User_UserId", userid, User)(r => r.id, onUpdate=ForeignKeyAction.NoAction, onDelete=ForeignKeyAction.Cascade)
   }
-  /** Collection-like TableQuery object for table Userlayout */
-  lazy val Userlayout = new TableQuery(tag => new Userlayout(tag))
+  /** Collection-like TableQuery object for table Userstate */
+  lazy val Userstate = new TableQuery(tag => new Userstate(tag))
 }

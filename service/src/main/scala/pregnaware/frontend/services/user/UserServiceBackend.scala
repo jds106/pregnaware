@@ -16,7 +16,7 @@ import scala.concurrent.{ExecutionContext, Future}
 abstract class UserServiceBackend(userServiceName: String) extends BackEndFuncs(userServiceName) {
 
   def findUser(email: String) : Future[WrappedUser] = {
-    send(GET, s"user/$email").map(r => r ~> unmarshal[WrappedUser])
+    send(GET, s"finduser/$email").map(r => r ~> unmarshal[WrappedUser])
   }
 
   def getUser(userId: Int) : Future[WrappedUser] = {
@@ -51,6 +51,14 @@ abstract class UserServiceBackend(userServiceName: String) extends BackEndFuncs(
 
   def deleteDueDate(userId: Int) : Future[Unit] = {
     send(DELETE, s"user/$userId/duedate").map(_ => ())
+  }
+
+  def getUserState(userId: Int) : Future[String] = {
+    send(GET, s"user/$userId/state").map(r => r ~> unmarshal[String])
+  }
+
+  def petUserState(userId: Int, state: String) : Future[Unit] = {
+    send(PUT, s"user/$userId/state", (b,u) => b(u, state)).map(_ => ())
   }
 }
 

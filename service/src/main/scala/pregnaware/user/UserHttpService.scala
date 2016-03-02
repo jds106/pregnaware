@@ -37,7 +37,10 @@ abstract class UserHttpService(persistence: UserPersistence)
   /** The routes defined by this service */
   val routes =
     pathPrefix(UserHttpService.serviceName) {
-      getUser ~ findUser ~ postUser ~ putUser ~ putFriend ~ blockFriend ~ deleteFriend ~ putDueDate ~ deleteDueDate
+      getUser ~ findUser ~ postUser ~ putUser ~
+        putFriend ~ blockFriend ~ deleteFriend ~
+        putDueDate ~ deleteDueDate ~
+        getUserState ~ putUserState
     }
 
   /** userId -> WrappedUser */
@@ -52,7 +55,7 @@ abstract class UserHttpService(persistence: UserPersistence)
 
   /** email -> WrappedUser */
   def findUser: Route = get {
-    path("findUser" / Segment) { email =>
+    path("finduser" / Segment) { email =>
       routeFuture("findUser", persistence.getUser(email)) {
         case None => complete(ResponseCodes.NotFound)
         case Some(u) => complete(u)
@@ -126,6 +129,20 @@ abstract class UserHttpService(persistence: UserPersistence)
   def deleteDueDate: Route = delete {
     path("user" / IntNumber / "duedate") { userId =>
       completeFuture("deleteDueDate", persistence.deleteDueDate(userId))
+    }
+  }
+
+  def getUserState: Route = get {
+    path("user" / IntNumber / "state") { userId =>
+      routeFuture("getUserState", persistence.getUserState(userId))(state => complete(state))
+    }
+  }
+
+  def putUserState: Route = put {
+    path("user" / IntNumber / "state") { userId =>
+      entity(as[String]) { state =>
+        completeFuture("putUserState", persistence.setUserState(userId, state))
+      }
     }
   }
 }

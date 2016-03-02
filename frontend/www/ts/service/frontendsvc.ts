@@ -66,11 +66,11 @@ module service {
         }
 
         public addFriend(friendEmail: String) : angular.IHttpPromise<WrappedFriend> {
-            return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), {email: friendEmail});
+            return this.$http.put(FrontEndUrl.getUrl('user/friend', this.getSessionId()), friendEmail);
         }
 
-        public deleteFriend(friendEmail: String) : angular.IHttpPromise<any> {
-            return this.$http.delete(FrontEndUrl.getUrl('user/friend', this.getSessionId()));
+        public deleteFriend(friendId: number) : angular.IHttpPromise<any> {
+            return this.$http.delete(FrontEndUrl.getUrl('user/friend/' + friendId, this.getSessionId()));
         }
 
         /** Creates a link to the session created for the new friend */
@@ -92,13 +92,23 @@ module service {
 
         public putName(name: string, isBoy: boolean, suggestedForUserId: number) : angular.IHttpPromise<WrappedBabyName> {
             return this.$http.put(
-                FrontEndUrl.getUrl('NamingSvc/name/' + suggestedForUserId, this.getSessionId()),
+                FrontEndUrl.getUrl('names/' + suggestedForUserId, this.getSessionId()),
                 { name: name, isBoy: isBoy });
         }
 
         public deleteName(nameId: number) : angular.IHttpPromise<any> {
             return this.$http.delete(
-                FrontEndUrl.getUrl('NamingSvc/name/' + nameId, this.getSessionId()));
+                FrontEndUrl.getUrl('names/' + nameId, this.getSessionId()));
+        }
+
+        /* ---- State ---- */
+
+        public getUserState() : angular.IHttpPromise<string> {
+            return this.$http.get(FrontEndUrl.getUrl('user/state', this.getSessionId()))
+        }
+
+        public putUserState(state: string) : angular.IHttpPromise<any> {
+            return this.$http.put(FrontEndUrl.getUrl('user/state', this.getSessionId()), state)
         }
     }
 }

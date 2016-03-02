@@ -15,7 +15,16 @@ trait SessionWrapper extends SessionPersistence {
   def getUserIdFromSession(sessionId: String): Future[Option[Int]] = {
     connection { db =>
       val query = Session.filter(_.id === sessionId).map(_.userid)
-      db.run(query.result.headOption)
+
+      // Return the existing user if one exists (and update the last access time)
+      db.run(query.result.headOption).flatMap {
+        case Some(userId) =>
+          val update = Session.filter(_.userid === userId).map(_.accesstime).update(Instant.now.toEpochMilli)
+          db.run(update).map(_ => Some(userId))
+
+        case None =>
+          Future.successful(None)
+      }
     }
   }
 

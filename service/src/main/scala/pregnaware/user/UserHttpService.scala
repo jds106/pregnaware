@@ -80,14 +80,16 @@ abstract class UserHttpService(persistence: UserPersistence)
     }
   }
 
-  /** userId / EditUserRequest -> () */
+  /** userId / EditUserRequest -> WrappedUser */
   def putUser: Route = put {
     path("user" / IntNumber) { userId =>
       entity(as[EditUserRequest]) { request =>
         val updateUserFut = persistence.updateUser(
           userId, request.displayName, request.email, request.passwordHash)
 
-        completeFuture("putUser", updateUserFut)
+        routeFuture("putUser", updateUserFut) { updatedUser =>
+          complete(ResponseCodes.OK -> updatedUser)
+        }
       }
     }
   }

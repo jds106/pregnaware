@@ -61,21 +61,23 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
     }
   }
 
-  /** EditUserRequest -> () */
+  /** EditUserRequest -> WrappedUser */
   def putUser: Route = put {
     path("user") {
       getUser("putUser[fetch]") { user =>
         entity(as[EditUserRequest]) { request =>
 
           val displayName = request.displayName.getOrElse(user.displayName)
-          val email = request.email.getOrElse(user.displayName)
+          val email = request.email.getOrElse(user.email)
           val passwordHash = request.password match {
             case None => user.passwordHash
             case Some(password) => BCrypt.hashpw(password, salt)
           }
 
           val editUserFut = getUserService.putUser(user.userId, displayName, email, passwordHash)
-          completeFuture("putUser[edit]", editUserFut)
+          routeFuture("putUser[edit]", editUserFut) { updatedUser =>
+            complete(ResponseCodes.OK -> updatedUser)
+          }
         }
       }
     }

@@ -1,0 +1,33 @@
+/* Used to hide handlebar artifacts until Angular has loaded */
+[ng\:cloak], [ng-cloak], [data-ng-cloak], [x-ng-cloak], .ng-cloak, .x-ng-cloak {
+    display: none !important;
+}
+
+.navbar-background {
+    background-color: white;
+}
+
+/*Highlighting for form validation (only applied if the form is invalid and touched)*/
+input.ng-invalid.ng-touched {
+    border-color: red;
+/*outline-color: red;*/
+}
+
+input.ng-valid {
+/*border-color: green;*/
+/*outline-color: green;*/
+}
+
+.jumbotron {
+    color: white;
+    background-color: royalblue;
+    text-align: center;
+}
+
+.login-margin {
+    margin: 5px;
+}
+
+.btn-login {
+    width: 100%;
+}

@@ -28,9 +28,9 @@ abstract class UserServiceBackend(userServiceName: String) extends BackEndFuncs(
     send(POST, "user", (b,u) => b(u, addUserRequest)).map(r => r ~> unmarshal[WrappedUser])
   }
 
-  def putUser(userId: Int, displayName: String, email: String, passwordHash: String) : Future[Unit] = {
+  def putUser(userId: Int, displayName: String, email: String, passwordHash: String) : Future[WrappedUser] = {
     val editUserRequest = EditUserRequest(displayName, email, passwordHash)
-    send(PUT, s"user/$userId", (b,u) => b(u, editUserRequest)).map(_ => ())
+    send(PUT, s"user/$userId", (b,u) => b(u, editUserRequest)).map(r => r ~> unmarshal[WrappedUser])
   }
 
   def putFriend(userId: Int, friendId: Int) : Future[WrappedFriend] = {

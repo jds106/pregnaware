@@ -12,7 +12,7 @@ trait UserPersistence extends ExecutionWrapper {
   def addUser(displayName: String, email: String, passwordHash: String): Future[WrappedUser]
 
   /** Modify an existing user */
-  def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[Unit]
+  def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[WrappedUser]
 
   /** Remove an existing user */
   def deleteUser(userId : Int): Future[Unit]

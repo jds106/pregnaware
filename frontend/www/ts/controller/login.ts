@@ -21,16 +21,16 @@ module controller {
         };
 
         private $cookies: angular.cookies.ICookiesService;
-        private $window: angular.IWindowService;
+        private $location: angular.ILocationService;
         private frontend: service.FrontEndSvc;
 
         constructor(
             $cookies: angular.cookies.ICookiesService,
-            $window: angular.IWindowService,
+            $location: angular.ILocationService,
             frontend: service.FrontEndSvc) {
 
             this.$cookies = $cookies;
-            this.$window = $window;
+            this.$location = $location;
             this.frontend = frontend;
 
             var email = $cookies.get(CookieKeys.EmailKey);
@@ -48,7 +48,7 @@ module controller {
                 .success((sessionId: string) => {
                     this.$cookies.put(CookieKeys.EmailKey, this.loginRequest.email);
                     this.$cookies.put(CookieKeys.SessionIdKey, sessionId);
-                    this.$window.location.pathname = '/main'
+                    this.$location.path = '/main'
                 });
         }
 
@@ -60,7 +60,7 @@ module controller {
                 .success((sessionId: string) => {
                     this.$cookies.put(CookieKeys.EmailKey, this.newUserRequest.email);
                     this.$cookies.put(CookieKeys.SessionIdKey, sessionId);
-                    this.$window.location.pathname = '/main'
+                    this.$location.path = '/main'
                 });
         }
     }

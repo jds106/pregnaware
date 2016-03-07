@@ -61,12 +61,12 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
   }
 
   /** Modify an existing user */
-  def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[Unit] = {
+  def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[WrappedUser] = {
     connection { db =>
       val query = User.filter(_.id === userId).map(u => (u.displayname, u.email, u.passwordhash))
       val action = query.update((displayName, email, passwordHash))
-      db.run(action).map {
-        case 1 => ()
+      db.run(action).flatMap {
+        case 1 => getUser(userId).map(uOpt => uOpt.get)
         case n => throw new Exception(s"Modified $n users with $userId")
       }
     }

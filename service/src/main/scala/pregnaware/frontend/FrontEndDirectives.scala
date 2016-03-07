@@ -13,7 +13,7 @@ trait FrontEndDirectives extends Directives with CustomDirectives with StrictLog
   def getUserService : UserServiceBackend
 
   def getUserId(name: String)(handler: Int => Route): Route = {
-    parameter('sessionId.as[String]) { sessionId =>
+    headerValueByName("X-SessionId") { sessionId =>
       routeFuture(name, getSessionPersistence.getUserIdFromSession(sessionId)) {
         case None => complete(ResponseCodes.NotFound -> s"No session found for session id $sessionId")
         case Some(userId) => handler(userId)

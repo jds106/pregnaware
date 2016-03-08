@@ -1,7 +1,7 @@
 package pregnaware.database
 
 import akka.util.Timeout
-import pregnaware.UnitSpec
+import pregnaware.{DbTest, UnitSpec}
 import pregnaware.user.entities.WrappedFriend
 
 import scala.concurrent.duration._
@@ -18,7 +18,7 @@ class BlockFriendTest extends UnitSpec {
     override implicit def timeout: Timeout = self.timeout
   }
 
-  "User" should "be created" in {
+  "User" should "be created" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.addUser("TEST_1", "TEST_EMAIL_1", "TEST_PASSWORD_1"), timeout)
     val user2 = Await.result(dbWrapper.addUser("TEST_2", "TEST_EMAIL_2", "TEST_PASSWORD_2"), timeout)
     val user3 = Await.result(dbWrapper.addUser("TEST_3", "TEST_EMAIL_3", "TEST_PASSWORD_3"), timeout)
@@ -34,7 +34,7 @@ class BlockFriendTest extends UnitSpec {
     }
   }
 
-  "User" should "make and receive friend requests" in {
+  "User" should "make and receive friend requests" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.getUser("TEST_EMAIL_1"), timeout).get
     val user2 = Await.result(dbWrapper.getUser("TEST_EMAIL_2"), timeout).get
     val user3 = Await.result(dbWrapper.getUser("TEST_EMAIL_3"), timeout).get
@@ -67,7 +67,7 @@ class BlockFriendTest extends UnitSpec {
     // We now have 1 -> 2, 1 -> 3, 2 -> 3
   }
 
-  "User" should "block a pending request" in {
+  "User" should "block a pending request" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.getUser("TEST_EMAIL_1"), timeout).get
     val user2 = Await.result(dbWrapper.getUser("TEST_EMAIL_2"), timeout).get
     val user3 = Await.result(dbWrapper.getUser("TEST_EMAIL_3"), timeout).get
@@ -87,7 +87,7 @@ class BlockFriendTest extends UnitSpec {
     user2PostBlock.friendRequestsReceived should be(empty)
   }
 
-  "User" should "block a confirmed friend" in {
+  "User" should "block a confirmed friend" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.getUser("TEST_EMAIL_1"), timeout).get
     val user2 = Await.result(dbWrapper.getUser("TEST_EMAIL_2"), timeout).get
     val user3 = Await.result(dbWrapper.getUser("TEST_EMAIL_3"), timeout).get
@@ -138,7 +138,7 @@ class BlockFriendTest extends UnitSpec {
   }
 
   // This cleans up the users created in this test
-  "Users" should "be deleted" in {
+  "Users" should "be deleted" taggedAs(DbTest) in {
     Seq("TEST_EMAIL_1", "TEST_EMAIL_2", "TEST_EMAIL_3").foreach { email =>
       val deleteFut = dbWrapper.getUser(email).flatMap {
         case None => Future.successful(())

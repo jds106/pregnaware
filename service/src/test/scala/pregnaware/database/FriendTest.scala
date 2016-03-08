@@ -3,7 +3,7 @@ package pregnaware.database
 import java.time.LocalDate
 
 import akka.util.Timeout
-import pregnaware.UnitSpec
+import pregnaware.{DbTest, UnitSpec}
 import pregnaware.user.entities.WrappedFriend
 
 import scala.concurrent.duration._
@@ -21,7 +21,7 @@ class FriendTest extends UnitSpec {
     override implicit def timeout: Timeout = self.timeout
   }
 
-  "User" should "be added" in {
+  "User" should "be added" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.addUser("TEST_1", "TEST_EMAIL_1", "TEST_PASSWORD_1"), timeout)
     user1.displayName should be("TEST_1")
     user1.email should be("TEST_EMAIL_1")
@@ -39,7 +39,7 @@ class FriendTest extends UnitSpec {
     user2.dueDate should not be defined
   }
 
-  "User" should "add friend" in {
+  "User" should "add friend" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.getUser("TEST_EMAIL_1"), timeout).get
     val user2 = Await.result(dbWrapper.getUser("TEST_EMAIL_2"), timeout).get
 
@@ -113,7 +113,7 @@ class FriendTest extends UnitSpec {
     user2PostFriendAccept.friendRequestsReceived should be (empty)
   }
 
-  "User" should "delete friend" in {
+  "User" should "delete friend" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.getUser("TEST_EMAIL_1"), timeout).get
     val user2 = Await.result(dbWrapper.getUser("TEST_EMAIL_2"), timeout).get
 
@@ -126,7 +126,7 @@ class FriendTest extends UnitSpec {
   }
 
   // This cleans up the users created in this test
-  "Users" should "be deleted" in {
+  "Users" should "be deleted" taggedAs(DbTest) in {
     Seq("TEST_EMAIL_1", "TEST_EMAIL_2").foreach { email =>
       val deleteFut = dbWrapper.getUser(email).flatMap {
         case None => Future.successful(())

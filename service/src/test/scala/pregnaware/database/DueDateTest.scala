@@ -3,7 +3,7 @@ package pregnaware.database
 import java.time.LocalDate
 
 import akka.util.Timeout
-import pregnaware.UnitSpec
+import pregnaware.{DbTest, UnitSpec}
 import pregnaware.database.wrappers.UserWrapper
 
 import scala.concurrent.duration._
@@ -20,7 +20,7 @@ class DueDateTest extends UnitSpec {
     override implicit def timeout: Timeout = self.timeout
   }
 
-  "User" should "add due date" in {
+  "User" should "add due date" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.addUser("TEST_1", "TEST_EMAIL_1", "TEST_PASSWORD_1"), timeout)
     user1.dueDate should not be defined
 
@@ -38,7 +38,7 @@ class DueDateTest extends UnitSpec {
   }
 
   // This cleans up the users created in this test
-  "Users" should "be deleted" in {
+  "Users" should "be deleted" taggedAs(DbTest) in {
     Seq("TEST_EMAIL_1").foreach { email =>
       val deleteFut = dbWrapper.getUser(email).flatMap {
         case None => Future.successful(())

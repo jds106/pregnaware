@@ -64,6 +64,9 @@ assemblyMergeStrategy in assembly := {
   case other => (assemblyMergeStrategy in assembly).value(other)
 }
 
+// Do not run the DbTests or SlowTests when running the package assembly
+test in assembly := {}
+
 scalacOptions ++= Seq(
   "-encoding", "UTF-8", "-deprecation", "-unchecked", "-feature", "-Xlint", "-Yinline-warnings", "-Ywarn-infer-any")
 

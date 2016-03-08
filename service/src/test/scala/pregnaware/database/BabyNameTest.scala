@@ -1,7 +1,7 @@
 package pregnaware.database
 
 import akka.util.Timeout
-import pregnaware.UnitSpec
+import pregnaware.{DbTest, UnitSpec}
 
 import scala.concurrent.duration._
 import scala.concurrent.{Future, Await, ExecutionContext}
@@ -17,7 +17,7 @@ class BabyNameTest extends UnitSpec {
     override implicit def timeout: Timeout = self.timeout
   }
 
-  "User" should "add baby names" in {
+  "User" should "add baby names" taggedAs(DbTest) in {
     val user1 = Await.result(dbWrapper.addUser("TEST_1", "TEST_EMAIL_1", "TEST_PASSWORD_1"), timeout)
     val user2 = Await.result(dbWrapper.addUser("TEST_2", "TEST_EMAIL_2", "TEST_PASSWORD_2"), timeout)
 
@@ -45,7 +45,7 @@ class BabyNameTest extends UnitSpec {
   }
 
   // This cleans up the users created in this test
-  "Users" should "be deleted" in {
+  "Users" should "be deleted" taggedAs(DbTest) in {
     Seq("TEST_EMAIL_1", "TEST_EMAIL_2").foreach { email =>
       val deleteFut = dbWrapper.getUser(email).flatMap {
         case None => Future.successful(())

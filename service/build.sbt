@@ -67,6 +67,9 @@ assemblyMergeStrategy in assembly := {
 // Do not run the DbTests or SlowTests when running the package assembly
 test in assembly := {}
 
+// Set the entry point for the assembled Jar
+mainClass in assembly := Some("pregnaware.ProgressServiceActor")
+
 scalacOptions ++= Seq(
   "-encoding", "UTF-8", "-deprecation", "-unchecked", "-feature", "-Xlint", "-Yinline-warnings", "-Ywarn-infer-any")
 

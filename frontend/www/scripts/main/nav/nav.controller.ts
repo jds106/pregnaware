@@ -9,22 +9,26 @@ module main.nav {
     export class NavController {
         private $scope: NavModel;
         private $uibModal: ng.ui.bootstrap.IModalService;
+        private $locale: ng.ILocaleService;
         private frontEndService: services.FrontEndService;
         private userService: services.UserService;
 
         constructor(
             $scope: NavModel,
             $uibModal: ng.ui.bootstrap.IModalService,
+            $locale: ng.ILocaleService,
             frontEndService: services.FrontEndService,
             userService: services.UserService) {
 
             this.$scope = $scope;
             this.$uibModal = $uibModal;
+            this.$locale = $locale;
             this.frontEndService = frontEndService;
             this.userService = userService;
 
             this.userService.userSetEvent(user => this.$scope.user = user);
 
+            this.$scope.locale = this.$locale.id;
             this.$scope.confirmFriendRequest = (friend) => this.confirmFriendRequest(friend);
             this.$scope.ignoreFriendRequest = (friend) => this.ignoreFriendRequest(friend);
 

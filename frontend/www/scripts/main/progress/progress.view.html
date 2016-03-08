@@ -28,7 +28,7 @@
             <p class="text-center">Remaining: {{progress.daysRemaining}} days ({{progress.weeksRemaining}} weeks)</p>
           </div>
           <div class="col-md-4">
-            <p class="pull-right">Due: {{progress.formattedDueDate}}</p>
+            <p class="pull-right">Due: {{progress.dueDateVal | date : 'longDate'}}</p>
           </div>
         </div>
       </div> <!-- End known due date -->

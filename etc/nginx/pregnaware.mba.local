@@ -1,0 +1,29 @@
+#####################################
+# USED FOR TESTING ON LOCAL MACHINE #
+#####################################
+
+# This file needs to be placed in this directory (which may be missing on install):
+#       /usr/local/etc/nginx/sites-enabled
+
+# Don't forget to add this line to /usr/local/etc/nginx/nginx.conf:
+#       include /usr/local/etc/nginx/sites-enabled/*;
+
+#   Logs appear here: 
+#       /usr/local/var/log/nginx/
+#
+server {
+
+    listen 8680;
+    server_name localhost;
+    root /Users/jamesseymour/Programming/Scala/pregnaware/frontend/www;
+
+    # This supports URI re-writing so I can use HTML5Mode in the Angular app
+    location / {
+        try_files $uri /index.html;
+    }
+
+    # Forward all REST requests to the Front End Service
+    location /FrontEndSvc {
+        proxy_pass http://localhost:8601;
+    }
+}

@@ -10,6 +10,9 @@ module main.nav {
 
         user: WrappedUser;
 
+        /* Report the user's local */
+        locale: string;
+
         /* Modify the current user's account settings */
         updateAccountSettings: () => void;
 

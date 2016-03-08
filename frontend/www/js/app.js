@@ -394,9 +394,9 @@ var main;
                 enumerable: true,
                 configurable: true
             });
-            Object.defineProperty(EnhancedProgressModel.prototype, "formattedDueDate", {
+            Object.defineProperty(EnhancedProgressModel.prototype, "dueDateVal", {
                 get: function () {
-                    return this.dueDate.format("LL");
+                    return this.dueDate.valueOf();
                 },
                 enumerable: true,
                 configurable: true
@@ -596,13 +596,15 @@ var main;
     (function (nav) {
         'use strict';
         var NavController = (function () {
-            function NavController($scope, $uibModal, frontEndService, userService) {
+            function NavController($scope, $uibModal, $locale, frontEndService, userService) {
                 var _this = this;
                 this.$scope = $scope;
                 this.$uibModal = $uibModal;
+                this.$locale = $locale;
                 this.frontEndService = frontEndService;
                 this.userService = userService;
                 this.userService.userSetEvent(function (user) { return _this.$scope.user = user; });
+                this.$scope.locale = this.$locale.id;
                 this.$scope.confirmFriendRequest = function (friend) { return _this.confirmFriendRequest(friend); };
                 this.$scope.ignoreFriendRequest = function (friend) { return _this.ignoreFriendRequest(friend); };
                 this.$scope.logout = function () {

@@ -45,8 +45,8 @@ module main.progress {
             this.daysRemaining = this.dueDate.diff(today, 'days');
         }
 
-        public get formattedDueDate() {
-            return this.dueDate.format("LL");
+        public get dueDateVal() : number {
+            return this.dueDate.valueOf();
         }
     }
 }

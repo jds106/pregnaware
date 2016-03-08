@@ -1,0 +1,95 @@
+<div>
+  <!--
+    Taken from
+      http://www.sitepoint.com/understanding-twitter-bootstrap-3/
+    - navbar-wrapper is the wrapper to the menu items
+    - navbar-default gives the background color to the menu and also applies a border to it
+    - navbar-fixed-top helps to make the menu bar fixed at the top of the page even if we are scrolling
+  -->
+
+  <nav class="navbar-wrapper navbar-default navbar-background" role="navigation">
+    <div class="container">
+      <!-- Brand and toggle get grouped for better mobile display -->
+      <div class="navbar-header">
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+          <span class="sr-only">Toggle navigation</span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <h1>Pregnaware</h1>
+      </div>
+
+      <!-- Collect the nav links, forms, and other content for toggling -->
+      <div class="collapse navbar-collapse navbar-right">
+        <!-- Log out -->
+        <ul class="nav navbar-nav">
+          <li><a class="navbar-link" href="#" ng-click="logout()">Logout {{user.displayName}}</a></li>
+
+          <li>
+            <a class="navbar-link" href ng-click="addFriend()" uib-tooltip="Add friend" tooltip-placement="bottom">
+              <span class="glyphicon glyphicon-plus"></span>
+            </a>
+          </li>
+
+          <li><a class="navbar-link" href ng-click="updateAccountSettings()" uib-tooltip="Account settings"
+                 tooltip-placement="bottom"><span
+              class="glyphicon glyphicon-cog"></span></a></li>
+        </ul>
+
+        <!-- Friends -->
+        <ul class="nav navbar-nav">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+              <span class="glyphicon glyphicon-user"></span><span class="caret"></span></a>
+            <ul class="dropdown-menu">
+              <li><a href ng-click="viewUser()">Me</a></li>
+              <li class="divider"></li>
+
+              <!-- Shown when friends available -->
+              <li ng-show="user.friends.length > 0" ng-repeat="friend in user.friends">
+                <a href ng-click="viewFriend(friend)">{{friend.displayName}}</a>
+              </li>
+
+              <!-- Shown if no friends -->
+              <li ng-hide="user.friends.length > 0" class="dropdown-header">
+                No friends have added you yet...
+              </li>
+            </ul>
+          </li>
+        </ul>
+
+        <!-- Friend requests received -->
+        <ul class="nav navbar-nav" ng-show="user.friendRequestsReceived.length > 0">
+          <li class="dropdown">
+            <a href="#" class="dropdown-toggle" data-toggle="dropdown">
+              Friend Requests
+              <span class="label label-info">{{user.friendRequestsReceived.length}}</span>
+              <span class="caret"></span></a>
+
+            <ul class="dropdown-menu">
+
+              <div ng-repeat="friend in user.friendRequestsReceived">
+                <li>
+                  <div class="text-success text-center">{{friend.displayName}}</div>
+                  <div class="text-center">
+                    <button ng-click="confirmFriendRequest(friend)" class="btn btn-xs btn-success"
+                            style="margin-right: 5px">Add
+                    </button>
+                    <button ng-click="ignoreFriendRequest(friend)" class="btn btn-xs btn-info"
+                            style="margin-right: 5px">Ignore
+                    </button>
+                  </div>
+                </li>
+
+                <li ng-if="!$last" class="divider"></li>
+              </div>
+
+            </ul>
+          </li>
+        </ul>
+
+      </div>
+    </div>
+  </nav>
+</div>

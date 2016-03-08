@@ -63,7 +63,7 @@ abstract class UserHttpService(persistence: UserPersistence)
     }
   }
 
-  /** AddUserRequest -> WrappedUser */
+  /** AddUserRequest -> sessionId */
   def postUser: Route = post {
     path("user") {
       entity(as[AddUserRequest]) { entry =>

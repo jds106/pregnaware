@@ -83,13 +83,16 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
     }
   }
 
-  /** AddFriendRequest -> () */
+  /** email -> WrappedFriend */
   def putFriend: Route = put {
     path("user" / "friend") {
       getUserId("putFriend") { userId =>
-        entity(as[String]) { email =>
+        logger.info(s"Adding friend for user $userId")
+        extract(_.request.entity.asString) { email =>
+          logger.info(s"Looking for user with e-mail $email")
           onComplete(getUserService.findUser(email)) {
             case Failure(error) =>
+              logger.info(s"Got error ${error.getMessage}")
               complete(ResponseCodes.NotFound -> s"Friend not found for email: $email")
 
             case Success(friendUser) =>

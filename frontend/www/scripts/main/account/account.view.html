@@ -1,0 +1,46 @@
+<div style="padding:10px">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title text-center">Account Settings</h3>
+    </div>
+    <div class="panel-body">
+
+      <!-- Display name -->
+      <form class="form form-group">
+        <label class="control-label" for="displayName">Display name:</label>
+        <input type="text" class="form-control" id="displayName" ng-model="newDisplayName">
+      </form>
+
+      <!-- E-mail address -->
+      <form class="form form-group">
+        <label class="control-label" for="email">E-mail:</label>
+        <input type="text" class="form-control" id="email" ng-model="newEmail">
+      </form>
+
+      <!-- Password -->
+      <form class="form form-group">
+        <label class="control-label" for="password">Password:</label>
+        <input type="password" class="form-control" id="password" ng-model="newPassword">
+      </form>
+
+      <!-- Confirm password -->
+      <form class="form form-group">
+        <label class="control-label" for="confirmPassword">Confirm password:</label>
+        <input type="password" class="form-control" id="confirmPassword" ng-model="confirmPassword">
+      </form>
+
+      <div ng-show="passwordMatch" class="alert alert-success">Passwords match</div>
+      <div ng-show="passwordMismatch" class="alert alert-danger">Passwords do not match</div>
+
+      <!-- Buttons -->
+      <form class="form form-group text-center">
+        <button class="btn btn-primary" ng-disabled="passwordMismatch"
+                ng-click="saveChanges(newDisplayName, originalDisplayName, newEmail, originalEmail, newPassword)">
+          Confirm
+        </button>
+        <button class="btn btn-default" ng-click="cancelChanges()">Cancel</button>
+      </form>
+
+    </div>
+  </div>
+</div>

@@ -116,7 +116,7 @@ trait FriendWrapper extends CommonWrapper {
   def deleteFriend(userId: Int, friendId: Int): Future[Unit] = {
     connection { db =>
       val existingFriendQuery = Friend.filter { f =>
-        (f.senderid === userId && f.receiverid === friendId) || (f.senderid === userId && f.receiverid === friendId)
+        (f.senderid === userId && f.receiverid === friendId) || (f.senderid === friendId && f.receiverid === userId)
       }
 
       db.run(existingFriendQuery.delete).map {

@@ -1,0 +1,52 @@
+<div>
+  <div class="jumbotron">
+    <h1>Pregnaware</h1>
+
+    <div class="container">
+      <div class="row">
+        <div class="col-xs-3 col-xs-offset-3">
+          <button ng-click="showLogin()" class="btn btn-default btn-lg btn-login">Login</button>
+        </div>
+        <div class="col-xs-3">
+          <button ng-click="showRegister()" class="btn btn-default btn-lg btn-login">New User</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container form-group-lg" ng-show="isRegisterVisible">
+    <div class="row">
+      <div class="col-xs-6 col-xs-offset-3">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <input class="form-control login-margin" required ng-model="displayName" type="text" placeholder="Display Name"/>
+
+            <input class="form-control login-margin" required ng-model="email" type="email" placeholder="Email"/>
+
+            <input class="form-control login-margin" required ng-model="password" ng-minlength="6" type="password"
+                   placeholder="Password"/>
+
+            <a href ng-click="register()" class="form-control btn btn-default btn-lg login-margin">Register</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="container form-group-lg" ng-show="isLoginVisible">
+    <div class="row">
+      <div class="col-xs-6 col-xs-offset-3">
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <input class="form-control login-margin" required ng-model="email" type="email" placeholder="Email"/>
+
+            <input class="form-control login-margin" required ng-model="password" ng-minlength="6" type="password"
+                   placeholder="Password"/>
+
+            <a href ng-click="login()" class="form-control btn btn-default btn-lg login-margin">Login</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

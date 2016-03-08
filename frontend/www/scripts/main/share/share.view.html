@@ -1,0 +1,52 @@
+<div style="padding:10px">
+  <div class="panel panel-default">
+    <div class="panel-heading">
+      <h3 class="panel-title text-center">Add Friend</h3>
+    </div>
+    <div class="panel-body">
+
+      <!-- Prompt the user to enter a friend's e-mail address -->
+      <div ng-hide="showExistingUserSuccess || showNewUserSuccess">
+        <div class="text-center">
+          <form class="form-inline">
+            <div class="input-group">
+              <input type="email" class="form-control" placeholder="Friend's e-mail" ng-model="friendEmail">
+            <span class="input-group-btn">
+              <button class="btn btn-default" ng-click="share(friendEmail)">Confirm</button>
+            </span>
+            </div>
+          </form>
+
+          <hr>
+
+          <p class="text-center text-info">
+            Your friends will not be able to delete existing baby names, nor make changes to your profile.
+            But they will be able to see your progress, add their own name suggestions, and share
+            in your growing excitement!
+          </p>
+          <button class="btn btn-primary" ng-click="close()">Cancel</button>
+        </div>
+      </div>
+
+      <!-- Shown when the user has made a friend of a current user -->
+      <div ng-show="showExistingUserSuccess">
+        <div class="text-center">
+          <p>Congratulations - you have sent a friend request to {{friendDisplayName}}!</p>
+          <p>When they accept, they will see how you're progressing and add a few baby name suggestions.</p>
+          <button class="btn btn-primary" ng-click="close()">OK</button>
+        </div>
+      </div>
+
+      <!-- Shown when the user has made a friend of a new user -->
+      <div ng-show="showNewUserSuccess">
+        <div class="text-center">
+          <p>
+            This user does not yet exist - send them an <a href="{{mailToLink}}">email</a>
+            and invite them to share in your pregnancy.
+          </p>
+          <button class="btn btn-primary" ng-click="close()">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

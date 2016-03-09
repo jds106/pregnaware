@@ -15,5 +15,8 @@ module App {
     // Add the directives required by the main view
     main.MainController.directives.forEach((d: ng.IDirective) => app.directive(d.name, () => d));
 
+    // Initialise the controller for the index.html page
+    app.controller('IndexController', IndexController);
+
     //app.run(function($templateCache: ITemplateCacheService) => { $templateCache.removeAll();})
 }

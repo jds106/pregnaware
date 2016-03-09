@@ -5,8 +5,8 @@ var services;
     var RouteConfig = (function () {
         function RouteConfig($routeProvider, $locationProvider) {
             $routeProvider.when('/login', {
-                templateUrl: '/scripts/login/login.view.html',
-                controller: login.LoginController,
+                templateUrl: function () { return '/scripts/login/login.view.html'; },
+                controller: login.LoginController
             });
             $routeProvider.when('/main', {
                 templateUrl: '/scripts/main/main.view.html',
@@ -52,12 +52,27 @@ var services;
     })();
     services.StatusCodeHandler = StatusCodeHandler;
     var FrontEndService = (function () {
-        function FrontEndService($http, $cookies, routeService) {
+        function FrontEndService($http, $cookies, routeService, userService) {
+            var _this = this;
             this.sessionIdKey = "sessionId";
             this.$http = $http;
             this.$cookies = $cookies;
+            this.userService = userService;
             this.routeService = routeService;
-            this.sessionId = this.$cookies.get(this.sessionIdKey);
+            /** Optimistically fetch the user - tests to see if we are logged in */
+            var headers = { headers: { "X-SessionId": this.$cookies.get(this.sessionIdKey) } };
+            this.$http.get(this.getUrl('user'), headers)
+                .error(function (e) {
+                _this.sessionId = null;
+                _this.$cookies.remove(_this.sessionIdKey);
+                _this.userService.User = null;
+                _this.routeService.loginPage();
+            })
+                .success(function (user) {
+                _this.sessionId = _this.$cookies.get(_this.sessionIdKey);
+                _this.userService.User = user;
+                _this.routeService.mainPage();
+            });
         }
         FrontEndService.prototype.getHeaders = function () {
             var headers = {};
@@ -71,12 +86,16 @@ var services;
         /* ---- Login / Logout ---- */
         FrontEndService.prototype.login = function (email, password) {
             var _this = this;
-            var response = this.$http.post(this.getUrl('login'), { email: email, password: password }, this.getHeaders());
-            response.success(function (sessionId) {
+            this.$http.post(this.getUrl('login'), { email: email, password: password }, {})
+                .success(function (sessionId) {
                 _this.sessionId = sessionId;
                 _this.$cookies.put(_this.sessionIdKey, sessionId);
+                _this.getUser()
+                    .success(function (user) {
+                    _this.userService.User = user;
+                    _this.routeService.mainPage();
+                });
             });
-            return response;
         };
         FrontEndService.prototype.logout = function () {
             this.sessionId = null;
@@ -135,16 +154,11 @@ var services;
 (function (services) {
     'use strict';
     var UserService = (function () {
-        function UserService(frontEndService) {
-            var _this = this;
+        function UserService() {
             // The list of user-set handlers
             this.userListeners = [];
             // The list of handlers called when the viewed user is changed
             this.selectedFriendListeners = [];
-            this.frontEndService = frontEndService;
-            this.frontEndService.getUser()
-                .error(function (error) { return console.error('Could not find user name', error); })
-                .success(function (response) { return _this.User = response; });
         }
         /** Allow clients to register for the user-set notification (happens once) */
         UserService.prototype.userSetEvent = function (handler) {
@@ -189,13 +203,11 @@ var login;
 (function (login) {
     'use strict';
     var LoginController = (function () {
-        function LoginController($scope, $location, frontEndService, userService, routeService) {
+        function LoginController($scope, $location, frontEndService) {
             var _this = this;
             this.$scope = $scope;
             this.$location = $location;
             this.frontEndService = frontEndService;
-            this.userService = userService;
-            this.routeService = routeService;
             $scope.showLogin = function () {
                 $scope.isRegisterVisible = false;
                 $scope.isLoginVisible = true;
@@ -205,25 +217,12 @@ var login;
                 $scope.isRegisterVisible = true;
             };
             $scope.login = function () {
-                _this.frontEndService.login($scope.email, $scope.password)
-                    .error(function (e) { return console.error('Failed to log in', e); })
-                    .success(function () { return _this.getUserAndOpenMain(); });
+                _this.frontEndService.login($scope.email, $scope.password);
             };
             $scope.register = function () {
-                _this.frontEndService.newUser($scope.displayName, $scope.email, $scope.password)
-                    .error(function (e) { return console.error('Failed to register in', e); })
-                    .success(function () { return _this.getUserAndOpenMain(); });
+                _this.frontEndService.newUser($scope.displayName, $scope.email, $scope.password);
             };
         }
-        LoginController.prototype.getUserAndOpenMain = function () {
-            var _this = this;
-            this.frontEndService.getUser()
-                .error(function (e) { return console.error('Failed to get user'); })
-                .success(function (user) {
-                _this.userService.User = user;
-                _this.routeService.mainPage();
-            });
-        };
         return LoginController;
     })();
     login.LoginController = LoginController;
@@ -706,6 +705,22 @@ var main;
     })();
     main.MainController = MainController;
 })(main || (main = {}));
+/// <reference path="references.ts" />
+var App;
+(function (App) {
+    'use strict';
+})(App || (App = {}));
+/// <reference path="references.ts" />
+var App;
+(function (App) {
+    'use strict';
+    var IndexController = (function () {
+        function IndexController($scope, frontEndService) {
+        }
+        return IndexController;
+    })();
+    App.IndexController = IndexController;
+})(App || (App = {}));
 /// <reference path="typings/tsd.d.ts" />
 /// <reference path="models/local-date.ts" />
 /// <reference path="models/wrapped-baby-name.ts" />
@@ -727,6 +742,8 @@ var main;
 /// <reference path="main/nav/nav.model.ts" />
 /// <reference path="main/nav/nav.controller.ts" />
 /// <reference path="main/main.controller.ts" />
+/// <reference path="index.model.ts" />
+/// <reference path="index.controller.ts" />
 /// <reference path="app.ts" /> 
 /// <reference path="references.ts" />
 var App;
@@ -739,5 +756,7 @@ var App;
     app.config(services.RouteConfig);
     // Add the directives required by the main view
     main.MainController.directives.forEach(function (d) { return app.directive(d.name, function () { return d; }); });
+    // Initialise the controller for the index.html page
+    app.controller('IndexController', App.IndexController);
 })(App || (App = {}));
 //# sourceMappingURL=app.js.map

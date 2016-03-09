@@ -18,10 +18,20 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
 
   // The routes provided by this service
   val userServiceRoutes: Route =
-    login ~ getUser ~ postUser ~ putUser ~
+    authenticate ~ login ~
+      getUser ~ postUser ~ putUser ~
       putFriend ~ deleteFriend ~
       putDueDate ~ deleteDueDate ~
       getUserState ~ putUserState
+
+  /** () -> OK | NotFound */
+  def authenticate: Route = get {
+    path("authenticate") {
+      getUserId("authenticate") { _ =>
+        complete(ResponseCodes.OK)
+      }
+    }
+  }
 
   /** LoginRequest -> sessionId */
   def login: Route = post {

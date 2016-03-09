@@ -29,4 +29,6 @@
 
 /// <reference path="main/main.controller.ts" />
 
+/// <reference path="index.model.ts" />
+/// <reference path="index.controller.ts" />
 /// <reference path="app.ts" />

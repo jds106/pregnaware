@@ -11,8 +11,6 @@ module services {
     type FriendSelectedHandler = (friend: WrappedFriend) => void;
 
     export class UserService {
-        private frontEndService: services.FrontEndService;
-
         private user: WrappedUser;
         private selectedFriend: WrappedFriend;
 
@@ -21,14 +19,6 @@ module services {
 
         // The list of handlers called when the viewed user is changed
         private selectedFriendListeners : FriendSelectedHandler[] = [];
-
-        constructor(frontEndService: services.FrontEndService) {
-            this.frontEndService = frontEndService;
-
-            this.frontEndService.getUser()
-                .error((error) => console.error('Could not find user name', error))
-                .success((response : WrappedUser) => this.User = response);
-        }
 
         /** Allow clients to register for the user-set notification (happens once) */
         public userSetEvent(handler: UserSetHandler) {

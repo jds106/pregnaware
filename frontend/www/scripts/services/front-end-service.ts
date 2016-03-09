@@ -22,17 +22,39 @@ module services {
         private $http : ng.IHttpService;
         private $cookies : ng.cookies.ICookiesService;
         private routeService: RouteService;
+        private userService: UserService;
 
         private sessionId: string;
 
         private sessionIdKey = "sessionId";
 
-        constructor($http: ng.IHttpService, $cookies:ng.cookies.ICookiesService, routeService: RouteService) {
+        constructor(
+            $http: ng.IHttpService,
+            $cookies:ng.cookies.ICookiesService,
+            routeService: RouteService,
+            userService: UserService) {
+
             this.$http = $http;
             this.$cookies = $cookies;
+            this.userService = userService;
             this.routeService = routeService;
 
-            this.sessionId = this.$cookies.get(this.sessionIdKey);
+            /** Optimistically fetch the user - tests to see if we are logged in */
+            let headers =
+                <ng.IRequestShortcutConfig>{ headers: { "X-SessionId" : this.$cookies.get(this.sessionIdKey) } };
+
+            this.$http.get(this.getUrl('user'), headers)
+                .error((e) => {
+                    this.sessionId = null;
+                    this.$cookies.remove(this.sessionIdKey);
+                    this.userService.User = null;
+                    this.routeService.loginPage();
+                })
+                .success((user: WrappedUser) => {
+                    this.sessionId = this.$cookies.get(this.sessionIdKey);
+                    this.userService.User = user;
+                    this.routeService.mainPage();
+                })
         }
 
         private getHeaders() : ng.IRequestShortcutConfig {
@@ -50,18 +72,17 @@ module services {
 
         /* ---- Login / Logout ---- */
 
-        public login(email: string, password: string) : ng.IHttpPromise<string> {
-            var response = this.$http.post(
-                this.getUrl('login'),
-                { email: email, password: password },
-                this.getHeaders());
-
-            response.success((sessionId: string) => {
-                this.sessionId = sessionId;
-                this.$cookies.put(this.sessionIdKey, sessionId);
-            });
-
-            return response;
+        public login(email: string, password: string) {
+            this.$http.post(this.getUrl('login'), { email: email, password: password }, { })
+                .success((sessionId: string) => {
+                    this.sessionId = sessionId;
+                    this.$cookies.put(this.sessionIdKey, sessionId);
+                    this.getUser()
+                        .success((user: WrappedUser) => {
+                            this.userService.User = user;
+                            this.routeService.mainPage();
+                        })
+                });
         }
 
         public logout() {

@@ -4,11 +4,13 @@ module services {
     'use strict';
 
     export class RouteConfig {
-        constructor($routeProvider: ng.route.IRouteProvider, $locationProvider: ng.ILocationProvider) {
+        constructor(
+            $routeProvider: ng.route.IRouteProvider,
+            $locationProvider: ng.ILocationProvider) {
 
             $routeProvider.when('/login', <ng.route.IRoute>{
-                templateUrl: '/scripts/login/login.view.html',
-                controller: login.LoginController,
+                templateUrl: () => '/scripts/login/login.view.html',
+                controller: login.LoginController
             });
 
             $routeProvider.when('/main', <ng.route.IRoute>{

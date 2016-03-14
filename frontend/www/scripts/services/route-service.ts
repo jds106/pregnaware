@@ -18,6 +18,11 @@ module services {
                 controller: main.MainController
             });
 
+            $routeProvider.when('/error', <ng.route.IRoute>{
+                templateUrl: '/scripts/error/error.view.html',
+                controller: error.ErrorController
+            });
+
             $routeProvider.otherwise(<ng.route.IRoute>{
                 redirectTo: '/main'
             });
@@ -34,11 +39,19 @@ module services {
         }
 
         public mainPage() {
-            this.$location.path('/main');
+            this.$location.url('/main');
         }
 
         public loginPage() {
-            this.$location.path('/login');
+            this.$location.url('/login');
+        }
+
+        public errorPage(description: string, error: string) {
+            var uri = encodeURI(this.$location.absUrl());
+            this.$location.url('/error')
+                .search('description', encodeURI(description))
+                .search('uri', uri)
+                .search('msg', encodeURI(error));
         }
     }
 }

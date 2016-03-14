@@ -74,10 +74,12 @@ module services {
 
         public login(email: string, password: string) {
             this.$http.post(this.getUrl('login'), { email: email, password: password }, { })
+                .error(error => this.routeService.errorPage('Login failed', error))
                 .success((sessionId: string) => {
                     this.sessionId = sessionId;
                     this.$cookies.put(this.sessionIdKey, sessionId);
                     this.getUser()
+                        .error(error => this.routeService.errorPage('Login [fetch user] failed', error))
                         .success((user: WrappedUser) => {
                             this.userService.User = user;
                             this.routeService.mainPage();
@@ -97,18 +99,20 @@ module services {
             return this.$http.get(this.getUrl('user'), this.getHeaders());
         }
 
-        public newUser(displayName: string, email: string, password: string) : ng.IHttpPromise<string> {
-            var response = this.$http.post(
-                this.getUrl('user'),
-                { displayName: displayName, email: email, password: password},
-                this.getHeaders());
-
-            response.success((sessionId: string) => {
-                this.sessionId = sessionId;
-                this.$cookies.put(this.sessionIdKey, sessionId);
-            });
-
-            return response;
+        public newUser(displayName: string, email: string, password: string) {
+            this.$http.post(
+                this.getUrl('user'), { displayName: displayName, email: email, password: password}, this.getHeaders())
+                .error(error => this.routeService.errorPage('New user failed', error))
+                .success((sessionId: string) => {
+                    this.sessionId = sessionId;
+                    this.$cookies.put(this.sessionIdKey, sessionId);
+                    this.getUser()
+                        .error(error => this.routeService.errorPage('New user [fetch user] failed', error))
+                        .success((user: WrappedUser) => {
+                            this.userService.User = user;
+                            this.routeService.mainPage();
+                        })
+                });
         }
 
         public editUser(displayName: string, email: string, password: string) : ng.IHttpPromise<any> {

@@ -5,6 +5,9 @@
 /// <reference path="models/wrapped-friend.ts" />
 /// <reference path="models/wrapped-user.ts" />
 
+/// <reference path="error/error.model.ts" />
+/// <reference path="error/error.controller.ts" />
+
 /// <reference path="services/route-service.ts" />
 /// <reference path="services/front-end-service.ts" />
 /// <reference path="services/user-service.ts" />
@@ -29,6 +32,4 @@
 
 /// <reference path="main/main.controller.ts" />
 
-/// <reference path="index.model.ts" />
-/// <reference path="index.controller.ts" />
 /// <reference path="app.ts" />

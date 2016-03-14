@@ -8,16 +8,19 @@ module main.account {
     export class AccountController {
         private $scope:AccountModel;
         private $uibModalInstance: ng.ui.bootstrap.IModalServiceInstance;
+        private routeService: services.RouteService;
         private frontEndService:services.FrontEndService;
         private userService:services.UserService;
 
         constructor($scope:AccountModel,
                     $uibModalInstance: ng.ui.bootstrap.IModalServiceInstance,
+                    routeService: services.RouteService,
                     frontEndService:services.FrontEndService,
                     userService:services.UserService) {
 
             this.$scope = $scope;
             this.$uibModalInstance = $uibModalInstance;
+            this.routeService = routeService;
             this.frontEndService = frontEndService;
             this.userService = userService;
 
@@ -80,7 +83,7 @@ module main.account {
             var password = newPassword ? newPassword : null;
 
             self.frontEndService.editUser(displayName, email, password)
-                .error(error => console.error("Failed to edit user", error))
+                .error(error => self.routeService.errorPage("Failed to edit user", error))
                 .success((updatedUser:WrappedUser) => {
                     self.userService.User = updatedUser;
                     self.$uibModalInstance.close();

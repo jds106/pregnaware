@@ -1,0 +1,27 @@
+<div>
+    <div class="jumbotron">
+        <h1>Pregnaware <span class="label label-danger">ERROR</span></h1>
+    </div>
+
+
+    <div class="container">
+        <p class="text-center">
+            There has been an error. Please <a href="{{mailStr}}">e-mail</a> the below to our support team then
+            return to the <a href ng-click="loginPage()">home page</a>.
+        </p>
+        <p>
+            <label>Description:</label>
+            <pre class="text-danger">
+{{errorDescription}}
+            </pre>
+        <label>URI:</label>
+            <pre class="text-danger">
+{{errorUri}}
+            </pre>
+        <label>Error:</label>
+            <pre class="text-danger">
+{{errorMsg}}
+            </pre>
+        </p>
+    </div>
+</div>

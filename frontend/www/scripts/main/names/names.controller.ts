@@ -10,6 +10,7 @@ module main.names {
     export class NamesController {
 
         private $scope:NamesModel;
+        private routeService: services.RouteService;
         private frontEndService:services.FrontEndService;
         private userService:services.UserService;
 
@@ -17,10 +18,12 @@ module main.names {
         private selectedFriend: WrappedFriend;
 
         constructor($scope:NamesModel,
+                    routeService: services.RouteService,
                     frontEndService:services.FrontEndService,
                     userService:services.UserService) {
 
             this.$scope = $scope;
+            this.routeService = routeService;
             this.frontEndService = frontEndService;
             this.userService = userService;
 
@@ -73,7 +76,7 @@ module main.names {
         private static addCurrentNameGirl(self: NamesController, name: string) {
             var suggestedForUserId:number = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
             self.frontEndService.putName(name, false, suggestedForUserId)
-                .error(error => console.error("Failed to add girl's name", error))
+                .error(error => self.routeService.errorPage("Failed to add girl's name", error))
                 .success((response:WrappedBabyName) => {
                     self.$scope.girlsNames.push(response);
                     self.$scope.currentNameGirl = "";
@@ -83,7 +86,7 @@ module main.names {
         private static addCurrentNameBoy(self: NamesController, name: string) {
             var suggestedForUserId:number = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
             self.frontEndService.putName(name, true, suggestedForUserId)
-                .error(error => console.error("Failed to add boy's name", error))
+                .error(error => self.routeService.errorPage("Failed to add boy's name", error))
                 .success((response:WrappedBabyName) => {
                     self.$scope.boysNames.push(response);
                     self.$scope.currentNameBoy = "";
@@ -92,7 +95,7 @@ module main.names {
 
         private static deleteName(self: NamesController, entry:WrappedBabyName) {
             self.frontEndService.deleteName(entry.nameId)
-                .error(error => console.error("Failed to remove name", error))
+                .error(error => self.routeService.errorPage("Failed to remove name", error))
                 .success(response => {
                     if (entry.isBoy) {
                         self.$scope.boysNames = self.$scope.boysNames.filter(e => e != entry);

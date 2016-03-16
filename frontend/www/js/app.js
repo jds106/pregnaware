@@ -426,16 +426,20 @@ var main;
                 this.daysPassed = today.diff(conceptionDate, 'days');
                 this.daysRemaining = this.dueDate.diff(today, 'days');
             }
-            Object.defineProperty(EnhancedProgressModel.prototype, "weeksPassed", {
+            Object.defineProperty(EnhancedProgressModel.prototype, "progress", {
                 get: function () {
-                    return Math.floor(this.daysPassed / 7);
+                    var weeks = Math.floor(this.daysPassed / 7);
+                    var days = this.daysPassed % 7;
+                    return weeks + "w " + days + "d";
                 },
                 enumerable: true,
                 configurable: true
             });
-            Object.defineProperty(EnhancedProgressModel.prototype, "weeksRemaining", {
+            Object.defineProperty(EnhancedProgressModel.prototype, "remaining", {
                 get: function () {
-                    return Math.floor(this.daysRemaining / 7);
+                    var weeks = Math.floor(this.daysRemaining / 7);
+                    var days = (this.daysRemaining + 1) % 7;
+                    return weeks + "w " + days + "d";
                 },
                 enumerable: true,
                 configurable: true
@@ -557,6 +561,7 @@ var main;
                 this.$scope.addCurrentNameGirl = function (name) { return NamesController.addCurrentNameGirl(_this, name); };
                 this.$scope.addCurrentNameBoy = function (name) { return NamesController.addCurrentNameBoy(_this, name); };
                 this.$scope.deleteName = function (entry) { return NamesController.deleteName(_this, entry); };
+                this.$scope.isNameInvalid = function (name) { return _this.isNameInvalid(name); };
                 this.userService.userSetEvent(function (user) {
                     _this.user = user;
                     if (user) {
@@ -594,21 +599,37 @@ var main;
                     _this.$scope.girlsNames = babyNames.filter(function (n) { return !n.isBoy; });
                 });
             }
+            /** Basic name validation logic */
+            NamesController.prototype.isNameInvalid = function (name) {
+                if (!this.user || !name)
+                    return true;
+                name = name.trim();
+                if (name.length == 0) {
+                    return true;
+                }
+                else {
+                    return this.user.babyNames.filter(function (existingName) { return existingName.name == name; }).length > 0;
+                }
+            };
             NamesController.addCurrentNameGirl = function (self, name) {
+                name = name.trim();
                 var suggestedForUserId = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
                 self.frontEndService.putName(name, false, suggestedForUserId)
                     .error(function (error) { return self.routeService.errorPage("Failed to add girl's name", error); })
                     .success(function (response) {
                     self.$scope.girlsNames.push(response);
+                    self.user.babyNames.push(response);
                     self.$scope.currentNameGirl = "";
                 });
             };
             NamesController.addCurrentNameBoy = function (self, name) {
+                name = name.trim();
                 var suggestedForUserId = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
                 self.frontEndService.putName(name, true, suggestedForUserId)
                     .error(function (error) { return self.routeService.errorPage("Failed to add boy's name", error); })
                     .success(function (response) {
                     self.$scope.boysNames.push(response);
+                    self.user.babyNames.push(response);
                     self.$scope.currentNameBoy = "";
                 });
             };

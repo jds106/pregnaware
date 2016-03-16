@@ -92,7 +92,7 @@ def parse(filename: str):
         results = completelistparser.parse(year, gender, df_dict[key_full])
         save_to_database(results, 'NameStat')
 
-path = '/Users/james/tmp/babynames'
+path = './data/ons_babynames'
 for file in os.listdir(path):
     if file.startswith('babynames.') and file.endswith('.xls'):
         parse('{0}/{1}'.format(path, file))

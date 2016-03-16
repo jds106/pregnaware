@@ -31,6 +31,8 @@ module main.names {
             this.$scope.addCurrentNameBoy = (name: string) => NamesController.addCurrentNameBoy(this, name);
             this.$scope.deleteName = (entry: WrappedBabyName) => NamesController.deleteName(this, entry);
 
+            this.$scope.isNameInvalid = (name) => this.isNameInvalid(name);
+
             this.userService.userSetEvent(user => {
                 this.user = user;
 
@@ -73,22 +75,42 @@ module main.names {
             });
         }
 
+        /** Basic name validation logic */
+        private isNameInvalid(name: string) : boolean {
+            if (!this.user || !name)
+                return true;
+
+            name = name.trim();
+
+            if (name.length == 0) {
+                return true;
+            } else {
+                return this.user.babyNames.filter(existingName => existingName.name == name).length > 0;
+            }
+        }
+
         private static addCurrentNameGirl(self: NamesController, name: string) {
+            name = name.trim();
+
             var suggestedForUserId:number = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
             self.frontEndService.putName(name, false, suggestedForUserId)
                 .error(error => self.routeService.errorPage("Failed to add girl's name", error))
                 .success((response:WrappedBabyName) => {
                     self.$scope.girlsNames.push(response);
+                    self.user.babyNames.push(response);
                     self.$scope.currentNameGirl = "";
                 });
         }
 
         private static addCurrentNameBoy(self: NamesController, name: string) {
+            name = name.trim();
+
             var suggestedForUserId:number = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
             self.frontEndService.putName(name, true, suggestedForUserId)
                 .error(error => self.routeService.errorPage("Failed to add boy's name", error))
                 .success((response:WrappedBabyName) => {
                     self.$scope.boysNames.push(response);
+                    self.user.babyNames.push(response);
                     self.$scope.currentNameBoy = "";
                 });
         }

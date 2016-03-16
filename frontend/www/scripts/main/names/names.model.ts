@@ -21,5 +21,7 @@ module main.names {
         addCurrentNameGirl: (name:string) => void;
         addCurrentNameBoy: (name:string) => void;
         deleteName: (entry:WrappedBabyName) => void;
+
+        isNameInvalid: (string) => boolean
     }
 }

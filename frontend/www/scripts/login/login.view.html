@@ -5,11 +5,11 @@
 
     <div class="container">
       <div class="row">
-        <div class="col-xs-3 col-xs-offset-3">
-          <button ng-click="showLogin()" class="btn btn-default btn-lg btn-login">Login</button>
+        <div class="col-xs-6 text-right">
+          <button ng-click="showLogin()" class="btn btn-default btn-lg btn-login">Log in</button>
         </div>
-        <div class="col-xs-3">
-          <button ng-click="showRegister()" class="btn btn-default btn-lg btn-login">New User</button>
+        <div class="col-xs-6 text-left">
+          <button ng-click="showRegister()" class="btn btn-default btn-lg btn-login">New user</button>
         </div>
       </div>
     </div>
@@ -17,18 +17,21 @@
 
   <div class="container form-group-lg" ng-show="isRegisterVisible">
     <div class="row">
-      <div class="col-xs-6 col-xs-offset-3">
+      <div class="col-xs-12">
         <div class="panel panel-default">
-          <div class="panel-body">
-            <input class="form-control login-margin" required ng-model="displayName" type="text" placeholder="Display Name"/>
+          <form class="panel-body" ng-submit="register()">
+            <input class="form-control login-margin" required ng-model="displayName" type="text"
+                   placeholder="Display Name"/>
 
             <input class="form-control login-margin" required ng-model="email" type="email" placeholder="Email"/>
 
             <input class="form-control login-margin" required ng-model="password" ng-minlength="6" type="password"
                    placeholder="Password"/>
 
-            <a href ng-click="register()" class="form-control btn btn-default btn-lg login-margin">Register</a>
-          </div>
+            <div class="text-right">
+              <input type="submit" class="btn btn-primary btn-lg" value="Register">
+            </div>
+          </form>
         </div>
       </div>
     </div>
@@ -36,15 +39,17 @@
 
   <div class="container form-group-lg" ng-show="isLoginVisible">
     <div class="row">
-      <div class="col-xs-6 col-xs-offset-3">
+      <div class="col-xs-12">
         <div class="panel panel-default">
-          <div class="panel-body">
+          <form class="panel-body" ng-submit="login()">
             <input class="form-control login-margin" required ng-model="email" type="email" placeholder="Email"/>
 
             <input class="form-control login-margin" required ng-model="password" ng-minlength="6" type="password"
                    placeholder="Password"/>
 
-            <a href ng-click="login()" class="form-control btn btn-default btn-lg login-margin">Login</a>
+            <div class="text-right">
+              <input type="submit" class="btn btn-primary btn-lg" value="Login">
+            </div>
           </div>
         </div>
       </div>

@@ -14,7 +14,7 @@ trait Tables {
   import slick.jdbc.{GetResult => GR}
 
   /** DDL for all tables. Call .create to execute. */
-  lazy val schema: profile.SchemaDescription = Babyname.schema ++ Friend.schema ++ Session.schema ++ User.schema ++ Userstate.schema
+  lazy val schema: profile.SchemaDescription = Array(Babyname.schema, Friend.schema, Namestat.schema, Namestatbycountry.schema, Namestatbymonth.schema, Namestatbyregion.schema, Session.schema, User.schema, Userstate.schema).reduceLeft(_ ++ _)
   @deprecated("Use .schema instead of .ddl", "3.0")
   def ddl = schema
 
@@ -97,6 +97,143 @@ trait Tables {
   }
   /** Collection-like TableQuery object for table Friend */
   lazy val Friend = new TableQuery(tag => new Friend(tag))
+
+  /** Entity class storing rows of table Namestat
+   *  @param name Database column Name SqlType(VARCHAR), Length(50,true)
+   *  @param gender Database column Gender SqlType(VARCHAR), Length(5,true)
+   *  @param year Database column Year SqlType(INT)
+   *  @param count Database column Count SqlType(INT) */
+  case class NamestatRow(name: String, gender: String, year: Int, count: Int)
+  /** GetResult implicit for fetching NamestatRow objects using plain SQL queries */
+  implicit def GetResultNamestatRow(implicit e0: GR[String], e1: GR[Int]): GR[NamestatRow] = GR{
+    prs => import prs._
+    NamestatRow.tupled((<<[String], <<[String], <<[Int], <<[Int]))
+  }
+  /** Table description of table NameStat. Objects of this class serve as prototypes for rows in queries. */
+  class Namestat(_tableTag: Tag) extends Table[NamestatRow](_tableTag, "NameStat") {
+    def * = (name, gender, year, count) <> (NamestatRow.tupled, NamestatRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(name), Rep.Some(gender), Rep.Some(year), Rep.Some(count)).shaped.<>({r=>import r._; _1.map(_=> NamestatRow.tupled((_1.get, _2.get, _3.get, _4.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column Name SqlType(VARCHAR), Length(50,true) */
+    val name: Rep[String] = column[String]("Name", O.Length(50,varying=true))
+    /** Database column Gender SqlType(VARCHAR), Length(5,true) */
+    val gender: Rep[String] = column[String]("Gender", O.Length(5,varying=true))
+    /** Database column Year SqlType(INT) */
+    val year: Rep[Int] = column[Int]("Year")
+    /** Database column Count SqlType(INT) */
+    val count: Rep[Int] = column[Int]("Count")
+
+    /** Primary key of Namestat (database name NameStat_PK) */
+    val pk = primaryKey("NameStat_PK", (name, gender, year))
+  }
+  /** Collection-like TableQuery object for table Namestat */
+  lazy val Namestat = new TableQuery(tag => new Namestat(tag))
+
+  /** Entity class storing rows of table Namestatbycountry
+   *  @param name Database column Name SqlType(VARCHAR), Length(50,true)
+   *  @param gender Database column Gender SqlType(VARCHAR), Length(5,true)
+   *  @param year Database column Year SqlType(INT)
+   *  @param country Database column Country SqlType(VARCHAR), Length(50,true)
+   *  @param count Database column Count SqlType(INT) */
+  case class NamestatbycountryRow(name: String, gender: String, year: Int, country: String, count: Int)
+  /** GetResult implicit for fetching NamestatbycountryRow objects using plain SQL queries */
+  implicit def GetResultNamestatbycountryRow(implicit e0: GR[String], e1: GR[Int]): GR[NamestatbycountryRow] = GR{
+    prs => import prs._
+    NamestatbycountryRow.tupled((<<[String], <<[String], <<[Int], <<[String], <<[Int]))
+  }
+  /** Table description of table NameStatByCountry. Objects of this class serve as prototypes for rows in queries. */
+  class Namestatbycountry(_tableTag: Tag) extends Table[NamestatbycountryRow](_tableTag, "NameStatByCountry") {
+    def * = (name, gender, year, country, count) <> (NamestatbycountryRow.tupled, NamestatbycountryRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(name), Rep.Some(gender), Rep.Some(year), Rep.Some(country), Rep.Some(count)).shaped.<>({r=>import r._; _1.map(_=> NamestatbycountryRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column Name SqlType(VARCHAR), Length(50,true) */
+    val name: Rep[String] = column[String]("Name", O.Length(50,varying=true))
+    /** Database column Gender SqlType(VARCHAR), Length(5,true) */
+    val gender: Rep[String] = column[String]("Gender", O.Length(5,varying=true))
+    /** Database column Year SqlType(INT) */
+    val year: Rep[Int] = column[Int]("Year")
+    /** Database column Country SqlType(VARCHAR), Length(50,true) */
+    val country: Rep[String] = column[String]("Country", O.Length(50,varying=true))
+    /** Database column Count SqlType(INT) */
+    val count: Rep[Int] = column[Int]("Count")
+
+    /** Primary key of Namestatbycountry (database name NameStatByCountry_PK) */
+    val pk = primaryKey("NameStatByCountry_PK", (name, gender, year, country))
+  }
+  /** Collection-like TableQuery object for table Namestatbycountry */
+  lazy val Namestatbycountry = new TableQuery(tag => new Namestatbycountry(tag))
+
+  /** Entity class storing rows of table Namestatbymonth
+   *  @param name Database column Name SqlType(VARCHAR), Length(50,true)
+   *  @param gender Database column Gender SqlType(VARCHAR), Length(5,true)
+   *  @param year Database column Year SqlType(INT)
+   *  @param month Database column Month SqlType(VARCHAR), Length(3,true)
+   *  @param count Database column Count SqlType(INT) */
+  case class NamestatbymonthRow(name: String, gender: String, year: Int, month: String, count: Int)
+  /** GetResult implicit for fetching NamestatbymonthRow objects using plain SQL queries */
+  implicit def GetResultNamestatbymonthRow(implicit e0: GR[String], e1: GR[Int]): GR[NamestatbymonthRow] = GR{
+    prs => import prs._
+    NamestatbymonthRow.tupled((<<[String], <<[String], <<[Int], <<[String], <<[Int]))
+  }
+  /** Table description of table NameStatByMonth. Objects of this class serve as prototypes for rows in queries. */
+  class Namestatbymonth(_tableTag: Tag) extends Table[NamestatbymonthRow](_tableTag, "NameStatByMonth") {
+    def * = (name, gender, year, month, count) <> (NamestatbymonthRow.tupled, NamestatbymonthRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(name), Rep.Some(gender), Rep.Some(year), Rep.Some(month), Rep.Some(count)).shaped.<>({r=>import r._; _1.map(_=> NamestatbymonthRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column Name SqlType(VARCHAR), Length(50,true) */
+    val name: Rep[String] = column[String]("Name", O.Length(50,varying=true))
+    /** Database column Gender SqlType(VARCHAR), Length(5,true) */
+    val gender: Rep[String] = column[String]("Gender", O.Length(5,varying=true))
+    /** Database column Year SqlType(INT) */
+    val year: Rep[Int] = column[Int]("Year")
+    /** Database column Month SqlType(VARCHAR), Length(3,true) */
+    val month: Rep[String] = column[String]("Month", O.Length(3,varying=true))
+    /** Database column Count SqlType(INT) */
+    val count: Rep[Int] = column[Int]("Count")
+
+    /** Primary key of Namestatbymonth (database name NameStatByMonth_PK) */
+    val pk = primaryKey("NameStatByMonth_PK", (name, gender, year, month))
+  }
+  /** Collection-like TableQuery object for table Namestatbymonth */
+  lazy val Namestatbymonth = new TableQuery(tag => new Namestatbymonth(tag))
+
+  /** Entity class storing rows of table Namestatbyregion
+   *  @param name Database column Name SqlType(VARCHAR), Length(50,true)
+   *  @param gender Database column Gender SqlType(VARCHAR), Length(5,true)
+   *  @param year Database column Year SqlType(INT)
+   *  @param region Database column Region SqlType(VARCHAR), Length(100,true)
+   *  @param count Database column Count SqlType(INT) */
+  case class NamestatbyregionRow(name: String, gender: String, year: Int, region: String, count: Int)
+  /** GetResult implicit for fetching NamestatbyregionRow objects using plain SQL queries */
+  implicit def GetResultNamestatbyregionRow(implicit e0: GR[String], e1: GR[Int]): GR[NamestatbyregionRow] = GR{
+    prs => import prs._
+    NamestatbyregionRow.tupled((<<[String], <<[String], <<[Int], <<[String], <<[Int]))
+  }
+  /** Table description of table NameStatByRegion. Objects of this class serve as prototypes for rows in queries. */
+  class Namestatbyregion(_tableTag: Tag) extends Table[NamestatbyregionRow](_tableTag, "NameStatByRegion") {
+    def * = (name, gender, year, region, count) <> (NamestatbyregionRow.tupled, NamestatbyregionRow.unapply)
+    /** Maps whole row to an option. Useful for outer joins. */
+    def ? = (Rep.Some(name), Rep.Some(gender), Rep.Some(year), Rep.Some(region), Rep.Some(count)).shaped.<>({r=>import r._; _1.map(_=> NamestatbyregionRow.tupled((_1.get, _2.get, _3.get, _4.get, _5.get)))}, (_:Any) =>  throw new Exception("Inserting into ? projection not supported."))
+
+    /** Database column Name SqlType(VARCHAR), Length(50,true) */
+    val name: Rep[String] = column[String]("Name", O.Length(50,varying=true))
+    /** Database column Gender SqlType(VARCHAR), Length(5,true) */
+    val gender: Rep[String] = column[String]("Gender", O.Length(5,varying=true))
+    /** Database column Year SqlType(INT) */
+    val year: Rep[Int] = column[Int]("Year")
+    /** Database column Region SqlType(VARCHAR), Length(100,true) */
+    val region: Rep[String] = column[String]("Region", O.Length(100,varying=true))
+    /** Database column Count SqlType(INT) */
+    val count: Rep[Int] = column[Int]("Count")
+
+    /** Primary key of Namestatbyregion (database name NameStatByRegion_PK) */
+    val pk = primaryKey("NameStatByRegion_PK", (name, gender, year, region))
+  }
+  /** Collection-like TableQuery object for table Namestatbyregion */
+  lazy val Namestatbyregion = new TableQuery(tag => new Namestatbyregion(tag))
 
   /** Entity class storing rows of table Session
    *  @param id Database column Id SqlType(VARCHAR), PrimaryKey, Length(150,true)

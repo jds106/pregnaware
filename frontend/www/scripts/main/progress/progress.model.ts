@@ -21,17 +21,21 @@ module main.progress {
 
     export class EnhancedProgressModel {
         public dueDate:Moment;
-        public daysPassed: number;
-        public daysRemaining: number;
+        private daysPassed: number;
+        private daysRemaining: number;
 
         private gestationPeriod : moment.Duration = moment.duration({days: 280});
 
-        public get weeksPassed() {
-            return Math.floor(this.daysPassed / 7);
+        public get progress() {
+            var weeks = Math.floor(this.daysPassed / 7);
+            var days = this.daysPassed % 7;
+            return `${weeks}w ${days}d`
         }
 
-        public get weeksRemaining() {
-            return Math.floor(this.daysRemaining / 7);
+        public get remaining() {
+            var weeks = Math.floor(this.daysRemaining / 7);
+            var days = (this.daysRemaining + 1) % 7;
+            return `${weeks}w ${days}d`
         }
 
         constructor(dueDate: LocalDate) {

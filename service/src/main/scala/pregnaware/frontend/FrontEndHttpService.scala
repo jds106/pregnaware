@@ -7,9 +7,7 @@ import com.typesafe.scalalogging.StrictLogging
 import pregnaware.frontend.services.naming.{NamingServiceBackend, NamingServiceFrontEnd}
 import pregnaware.frontend.services.user.{UserServiceBackend, UserServiceFrontEnd}
 import pregnaware.utils.ExecutionWrapper
-import spray.http.{HttpResponse, HttpRequest}
 import spray.routing._
-import spray.routing.directives.LogEntry
 
 import scala.concurrent.ExecutionContext
 

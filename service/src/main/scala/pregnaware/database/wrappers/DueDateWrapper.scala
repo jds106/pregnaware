@@ -13,7 +13,7 @@ import scala.concurrent.Future
 trait DueDateWrapper extends CommonWrapper {
   /** Sets a due date (either adding a due date, or replacing an existing one) */
   def setDueDate(userId: Int, dueDate: LocalDate) : Future[LocalDate] = {
-    connection { db =>
+    connection("SetDueDate") { db =>
       val query = User.filter(_.id === userId).map(_.duedate)
       val action = query.update(Some(Date.valueOf(dueDate)))
       db.run(action).map {
@@ -25,7 +25,7 @@ trait DueDateWrapper extends CommonWrapper {
 
   /** Removes a due date */
   def deleteDueDate(userId: Int) : Future[Unit] = {
-    connection { db =>
+    connection("DeleteDueDate") { db =>
       val query = User.filter(_.id === userId).map(_.duedate)
       val action = query.update(None)
       db.run(action).map {

@@ -21,7 +21,11 @@ object ConsulWrapper extends StrictLogging {
     ID: String, Service: String, Tags: Array[String], Address: String, Port: Int)
 
   /** Non-blocking call to get the requested service address */
-  def getAddress(name: String)(implicit executor: ExecutionContext, refFactory: ActorRefFactory): Future[InetSocketAddress] = {
+  def getAddress(name: String)(implicit executor: ExecutionContext, refFactory: ActorRefFactory)
+    : Future[InetSocketAddress] = {
+
+    logger.info(s"Resolving service $name")
+
     (request ~> sendReceive)
       .map { response =>
         val responseBody = response.entity.data.asString
@@ -30,6 +34,7 @@ object ConsulWrapper extends StrictLogging {
         services \ name match {
           case json: JObject =>
             val svc = json.extract[ConsulService]
+            logger.info(s"Resolved service $name -> $svc")
             new InetSocketAddress(svc.Address, svc.Port)
 
           case _ =>

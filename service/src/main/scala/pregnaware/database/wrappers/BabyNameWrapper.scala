@@ -15,7 +15,7 @@ trait BabyNameWrapper extends NamingPersistence {
 
   /** The list of current baby names */
   def getNames(userId : Int) : Future[Seq[WrappedBabyName]] = {
-    connection { db =>
+    connection("GetBabyNames") { db =>
       val joinQuery = (Babyname join User).on(_.suggestedby === _.id).filter{ case (b, u) => b.userid === userId }
 
       db.run(joinQuery.result).map { results =>
@@ -29,7 +29,7 @@ trait BabyNameWrapper extends NamingPersistence {
 
   /** Add a baby name */
   def addName(userId: Int, suggestedById: Int, name: String, isBoy: Boolean) : Future[WrappedBabyName] = {
-    connection { db =>
+    connection("AddBabyName") { db =>
       val suggestedUserQuery = User.filter(_.id === suggestedById)
       db.run(suggestedUserQuery.result.headOption).flatMap {
         case None => throw new Exception(s"Cannot add a baby name to an unknown user: $suggestedById")
@@ -48,7 +48,7 @@ trait BabyNameWrapper extends NamingPersistence {
 
   /** Delete a baby name */
   def deleteName(userId: Int, babyNameId: Int) : Future[Unit] = {
-    connection { db =>
+    connection("DeleteBabyName") { db =>
       val deletion = Babyname.filter(_.userid === userId).filter(_.id === babyNameId)
       db.run(deletion.delete).map {
         case 1 => ()

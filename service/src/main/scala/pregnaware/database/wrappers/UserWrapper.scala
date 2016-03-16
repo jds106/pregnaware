@@ -19,7 +19,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
 
   /** Get a user (plus friends) by e-mail */
   def getUser(email: String): Future[Option[WrappedUser]] = {
-    connection { db =>
+    connection("GetUserFromEmail") { db =>
       db.run(User.filter(_.email === email).result.headOption).flatMap {
         case None => Future.successful(None)
         case Some(user) => getWrappedUser(user)
@@ -29,7 +29,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
 
   /** Get a user (plus friends) by user id */
   def getUser(userId: Int): Future[Option[WrappedUser]] = {
-    connection { db =>
+    connection("GetUserFromUserId") { db =>
       db.run(User.filter(_.id === userId).result.headOption).flatMap {
         case None => Future.successful(None)
         case Some(user) => getWrappedUser(user)
@@ -39,7 +39,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
 
   /** Add a new user */
   def addUser(displayName: String, email: String, passwordHash: String): Future[WrappedUser] = {
-    connection { db =>
+    connection("AddUser") { db =>
       val joinedDate = LocalDate.now
       val insertQuery = User returning User.map(_.id) into ((user, id) => user.copy(id = id))
       val action = insertQuery += UserRow(-1, displayName, email, passwordHash, None, Date.valueOf(joinedDate))
@@ -62,7 +62,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
 
   /** Modify an existing user */
   def updateUser(userId: Int, displayName: String, email: String, passwordHash: String): Future[WrappedUser] = {
-    connection { db =>
+    connection("UpdateUser") { db =>
       val query = User.filter(_.id === userId).map(u => (u.displayname, u.email, u.passwordhash))
       val action = query.update((displayName, email, passwordHash))
       db.run(action).flatMap {
@@ -74,7 +74,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
 
   /** Remove an existing user */
   def deleteUser(userId : Int): Future[Unit] = {
-    connection { db =>
+    connection("DeleteUser") { db =>
       val deletion = User.filter(_.id === userId)
       db.run(deletion.delete).map {
         case 1 => ()
@@ -84,7 +84,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
   }
 
   def getUserState(userId: Int) : Future[String] = {
-    connection { db =>
+    connection("GetUserState") { db =>
       db.run(Userstate.filter(_.userid === userId).map(_.state).result.headOption).map {
         case None => "{ }"
         case Some(data) => data
@@ -94,7 +94,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
 
   /** Stores user data (treated as an un-processed blob of JSON */
   def setUserState(userId: Int, data: String) : Future[Unit] = {
-    connection { db =>
+    connection("SetUserState") { db =>
       db.run(Userstate.filter(_.userid === userId).map(_.state).result.headOption).flatMap {
         case Some(_) =>
           db.run(Userstate.filter(_.userid === userId).map(_.state).update(data)).map(_ => ())
@@ -107,12 +107,15 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
 
   /** Gets the user for the specified user row (used by the getUser methods) */
   private def getWrappedUser(user: UserRow): Future[Option[WrappedUser]] = {
-    connection { db =>
+    logger.info("[Wrapped User] Starting fetch...")
+    connection("WrappedUser") { db =>
       val friendsQuery = getWrappedFriends(user.id)
       val babyNamesQuery = getWrappedBabyNames(user.id)
       val friendRequestsSentFut = getFriendRequestsSent(user.id)
       val friendRequestsReceivedFut = getFriendRequestsReceived(user.id)
       val sessionFut = db.run(Session.filter(_.userid === user.id).map(_.accesstime).result.headOption)
+
+      logger.info("[Wrapped User] Got database connection - running queries")
 
       for {
         babyNames <- babyNamesQuery
@@ -124,6 +127,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
         val dueDate = user.duedate.map(_.toLocalDate)
         val lastAccessTime = session.getOrElse(Instant.now.toEpochMilli)
 
+        logger.info("[Wrapped User] Got wrapped user")
         Some(WrappedUser(
           user.id, user.displayname, user.email, dueDate, user.joindate.toLocalDate,
           lastAccessTime, babyNames, user.passwordhash, friends, friendRequestsSent, friendRequestsReceived))
@@ -157,7 +161,7 @@ trait UserWrapper extends UserPersistence with CommonWrapper {
   private def getFriendRequests(userId: Int)(filter: FriendRow => Option[(Int, LocalDate)])
     : Future[Seq[WrappedFriend]] = {
 
-    connection { db =>
+    connection("FriendRequests") { db =>
       // The list of non-blocked unconfirmed friends
       val friendsQuery = (Friend join User)
         .on((f, u) => u.id === f.senderid || u.id === f.receiverid)

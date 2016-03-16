@@ -15,7 +15,7 @@ trait CommonWrapper extends ExecutionWrapper with StrictLogging {
 
   /** Gets the friend row for the user <-> friend relationship (includes blocked & unconfirmed rows) */
   protected def getFriendRow(userId: Int, friendId: Int): Future[Option[FriendRow]] = {
-    connection { db =>
+    connection("GetFriendRow") { db =>
       // Friends are bi-directional, so compare the friend id to user1 and user2
       val existingFriendQuery = Friend.filter { f =>
         (f.senderid === userId && f.receiverid === friendId) || (f.receiverid === userId && f.senderid === friendId)
@@ -28,7 +28,7 @@ trait CommonWrapper extends ExecutionWrapper with StrictLogging {
 
   /** For the userId, builds a single wrapped friend for the specified friend id  */
   protected def getWrappedFriend(userId: Int, friendId: Int): Future[WrappedFriend] = {
-    connection { db =>
+    connection("GetWrappedFriends") { db =>
       val friendRowFut = getFriendRow(userId, friendId)
       val friendFut = db.run(User.filter(_.id === friendId).result.head)
       val babyNamesFut = getWrappedBabyNames(friendId)
@@ -64,7 +64,7 @@ trait CommonWrapper extends ExecutionWrapper with StrictLogging {
 
   /** Returns non-blocked confirmed friends of the userId */
   protected def getWrappedFriends(userId: Int): Future[Seq[WrappedFriend]] = {
-    connection { db =>
+    connection("WrappedFriends") { db =>
       val friendsQuery = (Friend join User)
         .on((f, u) => u.id === f.senderid || u.id === f.receiverid)
         .filter { case (f, u) => u.id === userId }
@@ -87,11 +87,12 @@ trait CommonWrapper extends ExecutionWrapper with StrictLogging {
           .on(_.suggestedby === _.id)
           .filter { case (b, u) => b.userid inSet friendIds }
 
-        val friendUsersQuery = User.filter(row => row.id inSet friendIds)
+        val babyNamesQueryFut = db.run(babyNamesQuery.result)
+        val friendUsersQueryFut = db.run(User.filter(row => row.id inSet friendIds).result)
 
         for {
-          babyNames <- db.run(babyNamesQuery.result)
-          friendUsers <- db.run(friendUsersQuery.result)
+          babyNames <- babyNamesQueryFut
+          friendUsers <- friendUsersQueryFut
         } yield {
 
           val babyNamesById = babyNames.map {
@@ -115,7 +116,7 @@ trait CommonWrapper extends ExecutionWrapper with StrictLogging {
 
   /** Returns the list of baby names for the specified user */
   protected def getWrappedBabyNames(userId: Int): Future[Seq[WrappedBabyName]] = {
-    connection { db =>
+    connection("WrappedBabyNames") { db =>
       val joinQuery = (Babyname join User).on(_.suggestedby === _.id).filter { case (b, u) => b.userid === userId }
 
       db.run(joinQuery.result).map { results =>

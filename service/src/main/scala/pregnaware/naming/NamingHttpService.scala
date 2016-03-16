@@ -1,6 +1,7 @@
 package pregnaware.naming
 
 import akka.actor.{ActorContext, ActorRefFactory}
+import akka.event.Logging._
 import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
 import com.wordnik.swagger.annotations.{ApiResponse, ApiResponses, ApiOperation, Api}
@@ -37,7 +38,11 @@ abstract class NamingHttpService(persistence: NamingPersistence)
 
   /** The routes defined by this service */
   val routes = pathPrefix(NamingHttpService.serviceName) {
-    getNames ~ putName ~ deleteName
+    logRequest("REST API", InfoLevel) {
+      logResponse("REST API", InfoLevel) {
+        getNames ~ putName ~ deleteName
+      }
+    }
   }
 
   @ApiOperation(value = "Gets the current list of names", nickname = "getNames", httpMethod = "GET")

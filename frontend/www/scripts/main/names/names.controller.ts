@@ -27,9 +27,9 @@ module main.names {
             this.frontEndService = frontEndService;
             this.userService = userService;
 
-            this.$scope.addCurrentNameGirl = (name: string) => NamesController.addCurrentNameGirl(this, name);
-            this.$scope.addCurrentNameBoy = (name: string) => NamesController.addCurrentNameBoy(this, name);
-            this.$scope.deleteName = (entry: WrappedBabyName) => NamesController.deleteName(this, entry);
+            this.$scope.addCurrentNameGirl = (name: string) => this.addCurrentNameGirl(name);
+            this.$scope.addCurrentNameBoy = (name: string) => this.addCurrentNameBoy(name);
+            this.$scope.deleteName = (entry: WrappedBabyName) => this.deleteName(entry);
 
             this.$scope.isNameInvalid = (name) => this.isNameInvalid(name);
 
@@ -89,40 +89,42 @@ module main.names {
             }
         }
 
-        private static addCurrentNameGirl(self: NamesController, name: string) {
+        private addCurrentNameGirl(name: string) {
             name = name.trim();
 
-            var suggestedForUserId:number = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
-            self.frontEndService.putName(name, false, suggestedForUserId)
-                .error(error => self.routeService.errorPage("Failed to add girl's name", error))
+            var suggestedForUserId:number = this.selectedFriend ? this.selectedFriend.userId : this.user.userId;
+            this.frontEndService.putName(name, false, suggestedForUserId)
+                .error(error => this.routeService.errorPage("Failed to add girl's name", error))
                 .success((response:WrappedBabyName) => {
-                    self.$scope.girlsNames.push(response);
-                    self.user.babyNames.push(response);
-                    self.$scope.currentNameGirl = "";
+                    this.$scope.girlsNames.push(response);
+                    this.user.babyNames.push(response);
+                    this.$scope.currentNameGirl = "";
                 });
         }
 
-        private static addCurrentNameBoy(self: NamesController, name: string) {
+        private addCurrentNameBoy(name: string) {
             name = name.trim();
 
-            var suggestedForUserId:number = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
-            self.frontEndService.putName(name, true, suggestedForUserId)
-                .error(error => self.routeService.errorPage("Failed to add boy's name", error))
+            var suggestedForUserId:number = this.selectedFriend ? this.selectedFriend.userId : this.user.userId;
+            this.frontEndService.putName(name, true, suggestedForUserId)
+                .error(error => this.routeService.errorPage("Failed to add boy's name", error))
                 .success((response:WrappedBabyName) => {
-                    self.$scope.boysNames.push(response);
-                    self.user.babyNames.push(response);
-                    self.$scope.currentNameBoy = "";
+                    this.$scope.boysNames.push(response);
+                    this.user.babyNames.push(response);
+                    this.$scope.currentNameBoy = "";
                 });
         }
 
-        private static deleteName(self: NamesController, entry:WrappedBabyName) {
-            self.frontEndService.deleteName(entry.nameId)
-                .error(error => self.routeService.errorPage("Failed to remove name", error))
+        private deleteName(entry:WrappedBabyName) {
+            this.frontEndService.deleteName(entry.nameId)
+                .error(error => this.routeService.errorPage("Failed to remove name", error))
                 .success(response => {
+                    this.user.babyNames = this.user.babyNames.filter(e => e != entry);
+
                     if (entry.isBoy) {
-                        self.$scope.boysNames = self.$scope.boysNames.filter(e => e != entry);
+                        this.$scope.boysNames = this.$scope.boysNames.filter(e => e != entry);
                     } else {
-                        self.$scope.girlsNames = self.$scope.girlsNames.filter(e => e != entry);
+                        this.$scope.girlsNames = this.$scope.girlsNames.filter(e => e != entry);
                     }
                 });
         }

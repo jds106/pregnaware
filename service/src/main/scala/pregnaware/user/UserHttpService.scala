@@ -3,6 +3,7 @@ package pregnaware.user
 import java.time.LocalDate
 
 import akka.actor.{ActorContext, ActorRefFactory}
+import akka.event.Logging._
 import akka.util.Timeout
 import com.typesafe.scalalogging.StrictLogging
 import spray.routing.{HttpService, Route}
@@ -37,10 +38,14 @@ abstract class UserHttpService(persistence: UserPersistence)
   /** The routes defined by this service */
   val routes =
     pathPrefix(UserHttpService.serviceName) {
-      getUser ~ findUser ~ postUser ~ putUser ~
-        putFriend ~ blockFriend ~ deleteFriend ~
-        putDueDate ~ deleteDueDate ~
-        getUserState ~ putUserState
+      logRequest("REST API", InfoLevel) {
+        logResponse("REST API", InfoLevel) {
+          getUser ~ findUser ~ postUser ~ putUser ~
+            putFriend ~ blockFriend ~ deleteFriend ~
+            putDueDate ~ deleteDueDate ~
+            getUserState ~ putUserState
+        }
+      }
     }
 
   /** userId -> WrappedUser */

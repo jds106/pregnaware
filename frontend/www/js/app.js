@@ -558,9 +558,9 @@ var main;
                 this.routeService = routeService;
                 this.frontEndService = frontEndService;
                 this.userService = userService;
-                this.$scope.addCurrentNameGirl = function (name) { return NamesController.addCurrentNameGirl(_this, name); };
-                this.$scope.addCurrentNameBoy = function (name) { return NamesController.addCurrentNameBoy(_this, name); };
-                this.$scope.deleteName = function (entry) { return NamesController.deleteName(_this, entry); };
+                this.$scope.addCurrentNameGirl = function (name) { return _this.addCurrentNameGirl(name); };
+                this.$scope.addCurrentNameBoy = function (name) { return _this.addCurrentNameBoy(name); };
+                this.$scope.deleteName = function (entry) { return _this.deleteName(entry); };
                 this.$scope.isNameInvalid = function (name) { return _this.isNameInvalid(name); };
                 this.userService.userSetEvent(function (user) {
                     _this.user = user;
@@ -611,37 +611,41 @@ var main;
                     return this.user.babyNames.filter(function (existingName) { return existingName.name == name; }).length > 0;
                 }
             };
-            NamesController.addCurrentNameGirl = function (self, name) {
+            NamesController.prototype.addCurrentNameGirl = function (name) {
+                var _this = this;
                 name = name.trim();
-                var suggestedForUserId = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
-                self.frontEndService.putName(name, false, suggestedForUserId)
-                    .error(function (error) { return self.routeService.errorPage("Failed to add girl's name", error); })
+                var suggestedForUserId = this.selectedFriend ? this.selectedFriend.userId : this.user.userId;
+                this.frontEndService.putName(name, false, suggestedForUserId)
+                    .error(function (error) { return _this.routeService.errorPage("Failed to add girl's name", error); })
                     .success(function (response) {
-                    self.$scope.girlsNames.push(response);
-                    self.user.babyNames.push(response);
-                    self.$scope.currentNameGirl = "";
+                    _this.$scope.girlsNames.push(response);
+                    _this.user.babyNames.push(response);
+                    _this.$scope.currentNameGirl = "";
                 });
             };
-            NamesController.addCurrentNameBoy = function (self, name) {
+            NamesController.prototype.addCurrentNameBoy = function (name) {
+                var _this = this;
                 name = name.trim();
-                var suggestedForUserId = self.selectedFriend ? self.selectedFriend.userId : self.user.userId;
-                self.frontEndService.putName(name, true, suggestedForUserId)
-                    .error(function (error) { return self.routeService.errorPage("Failed to add boy's name", error); })
+                var suggestedForUserId = this.selectedFriend ? this.selectedFriend.userId : this.user.userId;
+                this.frontEndService.putName(name, true, suggestedForUserId)
+                    .error(function (error) { return _this.routeService.errorPage("Failed to add boy's name", error); })
                     .success(function (response) {
-                    self.$scope.boysNames.push(response);
-                    self.user.babyNames.push(response);
-                    self.$scope.currentNameBoy = "";
+                    _this.$scope.boysNames.push(response);
+                    _this.user.babyNames.push(response);
+                    _this.$scope.currentNameBoy = "";
                 });
             };
-            NamesController.deleteName = function (self, entry) {
-                self.frontEndService.deleteName(entry.nameId)
-                    .error(function (error) { return self.routeService.errorPage("Failed to remove name", error); })
+            NamesController.prototype.deleteName = function (entry) {
+                var _this = this;
+                this.frontEndService.deleteName(entry.nameId)
+                    .error(function (error) { return _this.routeService.errorPage("Failed to remove name", error); })
                     .success(function (response) {
+                    _this.user.babyNames = _this.user.babyNames.filter(function (e) { return e != entry; });
                     if (entry.isBoy) {
-                        self.$scope.boysNames = self.$scope.boysNames.filter(function (e) { return e != entry; });
+                        _this.$scope.boysNames = _this.$scope.boysNames.filter(function (e) { return e != entry; });
                     }
                     else {
-                        self.$scope.girlsNames = self.$scope.girlsNames.filter(function (e) { return e != entry; });
+                        _this.$scope.girlsNames = _this.$scope.girlsNames.filter(function (e) { return e != entry; });
                     }
                 });
             };

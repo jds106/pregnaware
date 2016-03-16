@@ -12,11 +12,24 @@ trait FrontEndDirectives extends Directives with CustomDirectives with StrictLog
   def getSessionPersistence : SessionPersistence
   def getUserService : UserServiceBackend
 
+  private val sessionIdMap = new scala.collection.concurrent.TrieMap[String, Int]
+
   def getUserId(name: String)(handler: Int => Route): Route = {
     headerValueByName("X-SessionId") { sessionId =>
-      routeFuture(name, getSessionPersistence.getUserIdFromSession(sessionId)) {
-        case None => complete(ResponseCodes.NotFound -> s"No session found for session id $sessionId")
+      sessionIdMap.get(sessionId) match {
         case Some(userId) => handler(userId)
+
+        case None =>
+          logger.info(s"[$name] Got session id, routing...")
+          routeFuture(name, getSessionPersistence.getUserIdFromSession(sessionId)) {
+            case None =>
+              complete(ResponseCodes.NotFound -> s"No session found for session id $sessionId")
+
+            case Some(userId) =>
+              logger.info(s"[$name] Got user id: $userId")
+              sessionIdMap.put(sessionId, userId)
+              handler(userId)
+          }
       }
     }
   }

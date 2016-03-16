@@ -24,7 +24,7 @@ trait FriendWrapper extends CommonWrapper {
         Future.successful(row)
 
       case None =>
-        connection { db =>
+        connection("AddFriend1") { db =>
           val insertQuery = Friend returning Friend.map(_.id) into ((friend, id) => friend.copy(id = id))
           val row = FriendRow(
             -1, userId, friendId, isconfirmed = false, isblocked = false, Date.valueOf(LocalDate.now))
@@ -45,7 +45,7 @@ trait FriendWrapper extends CommonWrapper {
 
       } else if (userId == friendRow.receiverid) {
         // The user is confirming the friendship sent by their friend
-        connection { db =>
+        connection("AddFriend2") { db =>
           db.run(Friend.filter(_.id === friendRow.id).map(_.isconfirmed).update(true)).flatMap {
             case 1 => getWrappedFriend(userId, friendId)
             case n => throw new Exception(s"Confirmed $n friends for userId $userId and friendId $friendId")
@@ -80,7 +80,7 @@ trait FriendWrapper extends CommonWrapper {
           getWrappedFriend(userId, friendId)
 
         } else {
-          connection { db =>
+          connection("ConfirmFriend") { db =>
             val action = Friend.filter(_.id === row.id).map(f => f.isconfirmed).update(true)
             db.run(action).flatMap {
               case 1 => getWrappedFriend(userId, friendId)
@@ -101,7 +101,7 @@ trait FriendWrapper extends CommonWrapper {
         throw new Exception(s"No friend request found for user $userId and friend $friendId")
 
       case Some(row) =>
-        connection { db =>
+        connection("BlockFriend") { db =>
           val query = Friend.filter(_.id === row.id).map(_.isblocked)
           val action = query.update(true)
           db.run(action).map {
@@ -114,7 +114,7 @@ trait FriendWrapper extends CommonWrapper {
 
   /** Delete a friend linkage */
   def deleteFriend(userId: Int, friendId: Int): Future[Unit] = {
-    connection { db =>
+    connection("DeleteFriend") { db =>
       val existingFriendQuery = Friend.filter { f =>
         (f.senderid === userId && f.receiverid === friendId) || (f.senderid === friendId && f.receiverid === userId)
       }

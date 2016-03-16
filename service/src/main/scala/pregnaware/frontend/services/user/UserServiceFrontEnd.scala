@@ -49,7 +49,7 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
   /** () -> WrappedUser */
   def getUser: Route = get {
     path("user") {
-      getUser("putUser[fetch]") { user =>
+      getUser("getUser[fetch]") { user =>
         complete(user)
       }
     }

@@ -22,6 +22,10 @@ module main.names {
         addCurrentNameBoy: (name:string) => void;
         deleteName: (entry:WrappedBabyName) => void;
 
+        // Functions to show naming stats
+        showGeneralNameStats: () => void
+        showSpecificNameStats: (name: string) => void
+
         isNameInvalid: (string) => boolean
     }
 }

@@ -24,6 +24,12 @@
 /// <reference path="main/progress/progress.model.ts" />
 /// <reference path="main/progress/progress.controller.ts" />
 
+/// <reference path="main/names/stats/general/generalstats.model.ts" />
+/// <reference path="main/names/stats/general/generalstats.controller.ts" />
+
+/// <reference path="main/names/stats/specific/specificstats.model.ts" />
+/// <reference path="main/names/stats/specific/specificstats.controller.ts" />
+
 /// <reference path="main/names/names.model.ts" />
 /// <reference path="main/names/names.controller.ts" />
 

@@ -10,6 +10,7 @@ module main.names {
     export class NamesController {
 
         private $scope:NamesModel;
+        private $uibModal: ng.ui.bootstrap.IModalService;
         private routeService: services.RouteService;
         private frontEndService:services.FrontEndService;
         private userService:services.UserService;
@@ -18,11 +19,13 @@ module main.names {
         private selectedFriend: WrappedFriend;
 
         constructor($scope:NamesModel,
+                    $uibModal: ng.ui.bootstrap.IModalService,
                     routeService: services.RouteService,
                     frontEndService:services.FrontEndService,
                     userService:services.UserService) {
 
             this.$scope = $scope;
+            this.$uibModal = $uibModal;
             this.routeService = routeService;
             this.frontEndService = frontEndService;
             this.userService = userService;
@@ -73,6 +76,29 @@ module main.names {
                 this.$scope.boysNames = babyNames.filter(n => n.isBoy);
                 this.$scope.girlsNames = babyNames.filter(n => !n.isBoy);
             });
+
+            // Pop-up the general name stats page
+            this.$scope.showGeneralNameStats = () => {
+                this.$uibModal.open({
+                    animation: true,
+                    templateUrl: '/scripts/main/names/stats/general/generalstats.view.html',
+                    controller: main.names.stats.general.GeneralStatsController,
+                    controllerAs: 'vm',
+                    size: 'lg',
+                });
+            };
+
+            // Pop-up the specific name stats page
+            this.$scope.showSpecificNameStats = (name) => {
+                this.$uibModal.open({
+                    animation: true,
+                    templateUrl: `/scripts/main/names/stats/specific/specificstats.view.html`,
+                    controller: main.names.stats.specific.SpecificStatsController,
+                    controllerAs: 'vm',
+                    size: 'lg',
+                    resolve: {name: () => name}
+                });
+            };
         }
 
         /** Basic name validation logic */

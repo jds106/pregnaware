@@ -161,5 +161,15 @@ module services {
         public putUserState(state: string) : ng.IHttpPromise<any> {
             return this.$http.put(this.getUrl('user/state'), state, this.getHeaders())
         }
+
+        /* --- Name stats --- */
+
+        public getGeneralNameStats() : ng.IHttpPromise<string> {
+            return this.$http.get(this.getUrl('namestats'))
+        }
+
+        public getSpecificNameStats(name: string) : ng.IHttpPromise<string> {
+            return this.$http.get(this.getUrl(`namestats/${name}`))
+        }
     }
 }

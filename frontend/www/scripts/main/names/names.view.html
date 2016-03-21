@@ -14,23 +14,33 @@
         <div class="col-md-6">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title text-center">Girls</h3>
+              <h3 class="panel-title text-center">Girls <a href ng-click="showGeneralNameStats()"><span class="glyphicon glyphicon-stats"></span></a></h3>
             </div>
             <div class="panel-body">
-              <form class="text-center" ng-submit="addCurrentNameGirl(currentNameGirl)">
-                <input type="text" placeholder="Girls name" ng-model="currentNameGirl">
-                <button type="submit" class="btn btn-primary btn-sm" ng-disabled="isNameInvalid(currentNameGirl)">Add</button>
-
-                <div ng-show="currentNameGirl.length > 0 && isNameInvalid(currentNameGirl)">
+              <div style="margin-bottom: 15px">
+                <form class="form-inline text-center" ng-submit="addCurrentNameGirl(currentNameGirl)">
+                  <div class="input-group">
+                    <input class=" form-control" type="text" placeholder="Girls name" ng-model="currentNameGirl">
+                    <span class="input-group-btn">
+                      <button type="submit" class="btn btn-primary" ng-disabled="isNameInvalid(currentNameGirl)">Add
+                      </button>
+                    </span>
+                  </div>
+                </form>
+                <div class="text-center" ng-show="currentNameGirl.length > 0 && isNameInvalid(currentNameGirl)">
                   <label class="label label-danger">Duplicate</label>
                 </div>
-              </form>
+              </div>
+
               <table class="table table-striped">
                 <tbody>
                 <tr ng-repeat="entry in girlsNames">
                   <th class="text-center">{{entry.name}}</th>
                   <td class="text-center">
                     <small><em>{{entry.suggestedByName}}</em></small>
+                  </td>
+                  <td class="text-center">
+                    <a href ng-click="showSpecificNameStats(entry.name)"><span class="glyphicon glyphicon-resize-small glyphicon-stats"></span></a>
                   </td>
                   <td class="text-center">
                     <small ng-show="canEdit"><a ng-click="deleteName(entry)"><span
@@ -47,23 +57,33 @@
         <div class="col-md-6">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title text-center">Boys</h3>
+              <h3 class="panel-title text-center">Boys <span class="glyphicon glyphicon-stats"></span></h3>
             </div>
             <div class="panel-body">
-              <form class="text-center" ng-submit="addCurrentNameBoy(currentNameBoy)">
-                <input type="text" placeholder="Boys name" ng-model="currentNameBoy">
-                <button type="submit" class="btn btn-primary btn-sm" ng-disabled="isNameInvalid(currentNameBoy)">Add</button>
-
-                <div ng-show="currentNameBoy.length > 0 && isNameInvalid(currentNameBoy)">
+              <div style="margin-bottom: 15px">
+                <form class="form-inline text-center" ng-submit="addCurrentNameBoy(currentNameBoy)">
+                  <div class="input-group">
+                    <input class=" form-control" type="text" placeholder="Boys name" ng-model="currentNameBoy">
+                    <span class="input-group-btn">
+                      <button type="submit" class="btn btn-primary" ng-disabled="isNameInvalid(currentNameBoy)">Add
+                      </button>
+                    </span>
+                  </div>
+                </form>
+                <div class="text-center" ng-show="currentNameBoy.length > 0 && isNameInvalid(currentNameBoy)">
                   <label class="label label-danger">Duplicate</label>
                 </div>
-              </form>
+              </div>
+
               <table class="table table-striped">
                 <tbody>
                 <tr ng-repeat="entry in boysNames">
                   <th class="text-center">{{entry.name}}</th>
                   <td class="text-center">
                     <small><em>{{entry.suggestedByName}}</em></small>
+                  </td>
+                  <td class="text-center">
+                    <a href ng-click="showSpecificNameStats(entry.name)"><span class="glyphicon glyphicon-resize-small glyphicon-stats"></span></a>
                   </td>
                   <td class="text-center">
                     <small ng-show="canEdit"><a href ng-click="deleteName(entry)"><span

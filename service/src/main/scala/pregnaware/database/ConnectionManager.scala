@@ -37,7 +37,7 @@ object ConnectionManager extends StrictLogging {
     future.onComplete {
       case t =>
         val runTime = (System.currentTimeMillis() - startTime) / 1000.0
-        logger.info(f"[$label] Query took ${runTime%.2d}s")
+        logger.info(f"[$label] Query took $runTime%.2fs")
         db.close()
     }
 

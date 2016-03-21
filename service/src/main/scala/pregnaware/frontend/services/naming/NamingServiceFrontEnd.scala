@@ -10,7 +10,7 @@ trait NamingServiceFrontEnd extends FrontEndDirectives {
   def getNamingService: NamingServiceBackend
 
   // The routes provided by this service
-  val namingServiceRoutes : Route = putName ~ deleteName
+  val namingServiceRoutes : Route = putName ~ deleteName ~ getNameStats ~ getNameStatsForName
 
   def putName: Route = put {
     path("names" / IntNumber) { suggestedForUserId =>
@@ -33,6 +33,18 @@ trait NamingServiceFrontEnd extends FrontEndDirectives {
       getUserId("deleteName") { userId =>
         completeFuture("deleteName", getNamingService.deleteName(userId, babyNameId))
       }
+    }
+  }
+
+  def getNameStats: Route = get {
+    path("namestats" / "meta" / "categories") {
+      completeFuture("nameStats", getNamingService.getNameStats)
+    }
+  }
+
+  def getNameStatsForName: Route = get {
+    path("namestats" / Segment) { name =>
+      completeFuture("nameStatsForName", getNamingService.getNameStats(name))
     }
   }
 }

@@ -191,6 +191,13 @@ var services;
         FrontEndService.prototype.putUserState = function (state) {
             return this.$http.put(this.getUrl('user/state'), state, this.getHeaders());
         };
+        /* --- Name stats --- */
+        FrontEndService.prototype.getGeneralNameStats = function () {
+            return this.$http.get(this.getUrl('namestats'));
+        };
+        FrontEndService.prototype.getSpecificNameStats = function (name) {
+            return this.$http.get(this.getUrl("namestats/" + name));
+        };
         return FrontEndService;
     })();
     services.FrontEndService = FrontEndService;
@@ -437,7 +444,7 @@ var main;
             });
             Object.defineProperty(EnhancedProgressModel.prototype, "remaining", {
                 get: function () {
-                    var weeks = Math.floor(this.daysRemaining / 7);
+                    var weeks = Math.ceil(this.daysRemaining / 7);
                     var days = (this.daysRemaining + 1) % 7;
                     return weeks + "w " + days + "d";
                 },
@@ -471,8 +478,8 @@ var main;
                 this.userService = userService;
                 this.$scope.dueDatePickerOpen = false;
                 this.$scope.dueDate = Date.now();
-                this.$scope.updateDueDate = function (dueDate) { return ProgressController.updateDueDate(_this, dueDate); };
-                this.$scope.changeDueDate = function () { return ProgressController.changeDueDate(_this); };
+                this.$scope.updateDueDate = function (dueDate) { return _this.updateDueDate(dueDate); };
+                this.$scope.changeDueDate = function () { return _this.changeDueDate(); };
                 this.userService.userSetEvent(function (user) {
                     _this.user = user;
                     if (user) {
@@ -512,30 +519,102 @@ var main;
                     }
                 });
             }
-            ProgressController.updateDueDate = function (self, dueDate) {
+            ProgressController.prototype.updateDueDate = function (dueDate) {
+                var _this = this;
                 var parsedDueDate = moment(dueDate);
                 var asLocalDate = {
                     year: parsedDueDate.year(),
                     month: parsedDueDate.month() + 1,
                     day: parsedDueDate.date()
                 };
-                self.frontEndService.putDueDate(asLocalDate)
-                    .error(function (error) { return self.routeService.errorPage('Could not put due date', error); })
-                    .success(function (response) {
-                    self.$scope.progress = new progress.EnhancedProgressModel(response);
-                });
+                this.frontEndService.putDueDate(asLocalDate)
+                    .error(function (error) { return _this.routeService.errorPage('Could not put due date', error); })
+                    .success(function (response) { return _this.$scope.progress = new progress.EnhancedProgressModel(response); });
             };
-            ProgressController.changeDueDate = function (self) {
-                self.frontEndService.deleteDueDate()
-                    .error(function (error) { return self.routeService.errorPage('Could not put due date', error); })
-                    .success(function (response) {
-                    self.$scope.progress = null;
-                });
+            ProgressController.prototype.changeDueDate = function () {
+                var _this = this;
+                this.frontEndService.deleteDueDate()
+                    .error(function (error) { return _this.routeService.errorPage('Could not put due date', error); })
+                    .success(function () { return _this.$scope.progress = null; });
             };
             return ProgressController;
         })();
         progress.ProgressController = ProgressController;
     })(progress = main.progress || (main.progress = {}));
+})(main || (main = {}));
+/// <reference path="../../../../references.ts" />
+var main;
+(function (main) {
+    var names;
+    (function (names) {
+        var stats;
+        (function (stats) {
+            var general;
+            (function (general) {
+                'use strict';
+            })(general = stats.general || (stats.general = {}));
+        })(stats = names.stats || (names.stats = {}));
+    })(names = main.names || (main.names = {}));
+})(main || (main = {}));
+/// <reference path="../../../../references.ts" />
+var main;
+(function (main) {
+    var names;
+    (function (names) {
+        var stats;
+        (function (stats) {
+            var general;
+            (function (general) {
+                'use strict';
+                var GeneralStatsController = (function () {
+                    function GeneralStatsController($scope, $uibModalInstance, frontEndService) {
+                        this.$scope = $scope;
+                        this.$uibModalInstance = $uibModalInstance;
+                        this.frontEndService = frontEndService;
+                    }
+                    return GeneralStatsController;
+                })();
+                general.GeneralStatsController = GeneralStatsController;
+            })(general = stats.general || (stats.general = {}));
+        })(stats = names.stats || (names.stats = {}));
+    })(names = main.names || (main.names = {}));
+})(main || (main = {}));
+/// <reference path="../../../../references.ts" />
+var main;
+(function (main) {
+    var names;
+    (function (names) {
+        var stats;
+        (function (stats) {
+            var specific;
+            (function (specific) {
+                'use strict';
+            })(specific = stats.specific || (stats.specific = {}));
+        })(stats = names.stats || (names.stats = {}));
+    })(names = main.names || (main.names = {}));
+})(main || (main = {}));
+/// <reference path="../../../../references.ts" />
+var main;
+(function (main) {
+    var names;
+    (function (names) {
+        var stats;
+        (function (stats) {
+            var specific;
+            (function (specific) {
+                'use strict';
+                var SpecificStatsController = (function () {
+                    function SpecificStatsController($scope, name, frontEndService) {
+                        this.$scope = $scope;
+                        this.frontEndService = frontEndService;
+                        this.$scope.name = name;
+                    }
+                    return SpecificStatsController;
+                })();
+                specific.SpecificStatsController = SpecificStatsController;
+            })(specific = stats.specific || (stats.specific = {}));
+        })(stats = names.stats || (names.stats = {}));
+    })(names = main.names || (main.names = {}));
 })(main || (main = {}));
 /// <reference path="../../references.ts" />
 var main;
@@ -552,9 +631,10 @@ var main;
     (function (names) {
         'use strict';
         var NamesController = (function () {
-            function NamesController($scope, routeService, frontEndService, userService) {
+            function NamesController($scope, $uibModal, routeService, frontEndService, userService) {
                 var _this = this;
                 this.$scope = $scope;
+                this.$uibModal = $uibModal;
                 this.routeService = routeService;
                 this.frontEndService = frontEndService;
                 this.userService = userService;
@@ -598,6 +678,27 @@ var main;
                     _this.$scope.boysNames = babyNames.filter(function (n) { return n.isBoy; });
                     _this.$scope.girlsNames = babyNames.filter(function (n) { return !n.isBoy; });
                 });
+                // Pop-up the general name stats page
+                this.$scope.showGeneralNameStats = function () {
+                    _this.$uibModal.open({
+                        animation: true,
+                        templateUrl: '/scripts/main/names/stats/general/generalstats.view.html',
+                        controller: main.names.stats.general.GeneralStatsController,
+                        controllerAs: 'vm',
+                        size: 'lg',
+                    });
+                };
+                // Pop-up the specific name stats page
+                this.$scope.showSpecificNameStats = function (name) {
+                    _this.$uibModal.open({
+                        animation: true,
+                        templateUrl: "/scripts/main/names/stats/specific/specificstats.view.html",
+                        controller: main.names.stats.specific.SpecificStatsController,
+                        controllerAs: 'vm',
+                        size: 'lg',
+                        resolve: { name: function () { return name; } }
+                    });
+                };
             }
             /** Basic name validation logic */
             NamesController.prototype.isNameInvalid = function (name) {
@@ -798,6 +899,10 @@ var main;
 /// <reference path="main/account/account.controller.ts" />
 /// <reference path="main/progress/progress.model.ts" />
 /// <reference path="main/progress/progress.controller.ts" />
+/// <reference path="main/names/stats/general/generalstats.model.ts" />
+/// <reference path="main/names/stats/general/generalstats.controller.ts" />
+/// <reference path="main/names/stats/specific/specificstats.model.ts" />
+/// <reference path="main/names/stats/specific/specificstats.controller.ts" />
 /// <reference path="main/names/names.model.ts" />
 /// <reference path="main/names/names.controller.ts" />
 /// <reference path="main/nav/nav.model.ts" />

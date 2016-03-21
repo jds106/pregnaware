@@ -33,7 +33,7 @@ module main.progress {
         }
 
         public get remaining() {
-            var weeks = Math.floor(this.daysRemaining / 7);
+            var weeks = Math.ceil(this.daysRemaining / 7);
             var days = (this.daysRemaining + 1) % 7;
             return `${weeks}w ${days}d`
         }

@@ -27,6 +27,14 @@ abstract class NamingServiceBackend(namingServiceName: String) extends BackEndFu
   def deleteName(userId: Int, babyNameId: Int) : Future[Unit] = {
     send(DELETE, s"names/$userId/$babyNameId").map (_ => ())
   }
+
+  def getNameStats : Future[Unit] = {
+    send(GET, s"namestats").map (_ => ())
+  }
+
+  def getNameStats(name: String) : Future[Unit] = {
+    send(GET, s"namestats/$name").map (_ => ())
+  }
 }
 
 object NamingServiceBackend {

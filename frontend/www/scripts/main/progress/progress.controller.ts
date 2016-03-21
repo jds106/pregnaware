@@ -30,8 +30,8 @@ module main.progress {
             this.$scope.dueDatePickerOpen = false;
             this.$scope.dueDate = Date.now();
 
-            this.$scope.updateDueDate = (dueDate: number) => ProgressController.updateDueDate(this, dueDate);
-            this.$scope.changeDueDate = () => ProgressController.changeDueDate(this);
+            this.$scope.updateDueDate = (dueDate: number) => this.updateDueDate(dueDate);
+            this.$scope.changeDueDate = () => this.changeDueDate();
 
             this.userService.userSetEvent((user:WrappedUser) => {
                 this.user = user;
@@ -74,7 +74,7 @@ module main.progress {
             });
         }
 
-        private static updateDueDate(self: ProgressController, dueDate:number) {
+        private updateDueDate(dueDate:number) {
             var parsedDueDate = moment(dueDate);
             var asLocalDate:LocalDate = {
                 year: parsedDueDate.year(),
@@ -82,19 +82,15 @@ module main.progress {
                 day: parsedDueDate.date()
             };
 
-            self.frontEndService.putDueDate(asLocalDate)
-                .error(error => self.routeService.errorPage('Could not put due date', error))
-                .success((response:LocalDate) => {
-                    self.$scope.progress = new EnhancedProgressModel(response);
-                });
+            this.frontEndService.putDueDate(asLocalDate)
+                .error(error => this.routeService.errorPage('Could not put due date', error))
+                .success((response:LocalDate) => this.$scope.progress = new EnhancedProgressModel(response));
         }
 
-        private static changeDueDate(self: ProgressController) {
-            self.frontEndService.deleteDueDate()
-                .error(error => self.routeService.errorPage('Could not put due date', error))
-                .success((response) => {
-                    self.$scope.progress = null;
-                });
+        private changeDueDate() {
+            this.frontEndService.deleteDueDate()
+                .error(error => this.routeService.errorPage('Could not put due date', error))
+                .success(() => this.$scope.progress = null);
         }
     }
 }

@@ -426,6 +426,9 @@ var main;
         var EnhancedProgressModel = (function () {
             function EnhancedProgressModel(dueDate) {
                 this.gestationPeriod = moment.duration({ days: 280 });
+                this.daysInTrimester1 = 14 * 7;
+                this.daysInTrimester2 = 14 * 7;
+                this.daysInTrimester3 = 12 * 7;
                 // Note handling of zero-index months
                 this.dueDate = moment().year(dueDate.year).month(dueDate.month - 1).date(dueDate.day);
                 var conceptionDate = this.dueDate.clone().subtract(this.gestationPeriod);
@@ -447,6 +450,81 @@ var main;
                     var weeks = Math.ceil(this.daysRemaining / 7);
                     var days = (this.daysRemaining + 1) % 7;
                     return weeks + "w " + days + "d";
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EnhancedProgressModel.prototype, "daysPassedTrimester1", {
+                get: function () {
+                    return Math.max(0, Math.min(this.daysInTrimester1, this.daysPassed));
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EnhancedProgressModel.prototype, "daysPassedTrimester2", {
+                get: function () {
+                    return Math.max(0, Math.min(this.daysInTrimester2, this.daysPassed - this.daysInTrimester1));
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EnhancedProgressModel.prototype, "daysPassedTrimester3", {
+                get: function () {
+                    return Math.max(0, Math.min(this.daysInTrimester3, this.daysPassed - this.daysInTrimester1 - this.daysInTrimester2));
+                },
+                enumerable: true,
+                configurable: true
+            });
+            Object.defineProperty(EnhancedProgressModel.prototype, "babySize", {
+                get: function () {
+                    var sizes = [
+                        // First trimester
+                        "Microscopic",
+                        "Microscopic",
+                        "Microscopic",
+                        "Microscopic",
+                        "Poppy seed (2mm)",
+                        "Sesame seed (3mm)",
+                        "Lentil (5mm)",
+                        "Blueberry (1.2cm)",
+                        "Kidney bean (1.6cm / 1g)",
+                        "Grape (2.3cm / 2g)",
+                        "Green olive (3.1cm / 4g)",
+                        "Fig (4.1cm / 7g)",
+                        "Lime (5.4cm / 14g)",
+                        "Pea pod (7.4cm / 23g)",
+                        // Second trimester
+                        "As big as a lemon (8.7cm / 43g)",
+                        "As big as an apple (10.1cm / 70g)",
+                        "As big as an avocado (11.6cm / 100g)",
+                        "As heavy as a turnip (13cm / 140g)",
+                        "As big as a bell pepper (14.2cm / 190g)",
+                        "As big as an heirloom tomato (15.3cm / 240g)",
+                        "As long as a small banana (16.4cm head-to-bottom, 25.6cm head-to-heel / 300g)",
+                        "As long as a carrot (26.7cm head-to-heel / 360g)",
+                        "As big as a spaghetti squash (27.8cm head-to-heel / 430g)",
+                        "As heavy as a large mango (28.9cm head-to-heel / 500g)",
+                        // Third trimester
+                        "As long as an ear of corn (30cm head-to-heel / 600g)",
+                        "As heavy as a swede (34.6cm head-to-heel / 660g)",
+                        "As heavy as a red cabbage (35.6cm head-to-heel / 760g)",
+                        "As heavy as a head of cauliflower (36.6cm head-to-heel / 875g)",
+                        "As heavy as an aubergine (37.6cm head-to-heel / 1kg)",
+                        "As big Butternut squash (38.6cm head-to-heel / 1.2kg)",
+                        "As big as a good-sized cabbage (39.9cm head-to-heel / 1.3kg)",
+                        "As heavy as a coconut (41.1cm head-to-heel / 1.5kg)",
+                        "As long as a kale (42.4cm head-to-heel / 1.7kg)",
+                        "As heavy as a pineapple (43.7cm head-to-heel / 1.9kg)",
+                        "As big as a cantaloupe melon (45cm head-to-heel / 2.1kg)",
+                        "As heavy as a honeydew melon (46.2cm head-to-heel / 2.4kg)",
+                        "As big as a romaine lettuce (47.4cm head-to-heel / 2.6kg)",
+                        "As long as a stalk of Swiss chard (48.6cm head-to-heel / 2.9kg)",
+                        "As long as a leek (49.8cm head-to-heel / 3kg)",
+                        "As heavy as a mini-watermelon (50.7cm head-to-heel / 3.3kg)",
+                        "As big as a small pumpkin (51.2cm head-to-heel / 3.5kg)",
+                    ];
+                    var weeks = Math.min(40, Math.floor(this.daysPassed / 7));
+                    return sizes[weeks];
                 },
                 enumerable: true,
                 configurable: true

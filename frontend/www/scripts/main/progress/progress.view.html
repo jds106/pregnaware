@@ -5,7 +5,8 @@
       <h3 class="panel-title">
         Progress <span ng-hide="canEdit" class="label label-success">{{viewedUser}}</span>
         <span class="pull-right">&nbsp;&nbsp;</span>
-        <button ng-show="canEdit && progress" class="btn btn-xs btn-success pull-right" ng-click="changeDueDate()">Change due
+        <button ng-show="canEdit && progress" class="btn btn-xs btn-success pull-right" ng-click="changeDueDate()">
+          Change due
           date
         </button>
       </h3>
@@ -16,8 +17,23 @@
       <div ng-show="progress">
         <div class="row">
           <div class="col-xs-12">
-            <uib-progressbar animate="false" type="success" value="progress.daysPassed"
-                             max="280"></uib-progressbar>
+            <uib-progress animate="true" max="280">
+              <!-- Trimester 1 -  0 -> 14 weeks = 98 days -->
+              <uib-bar value="progress.daysPassedTrimester1" type="warning">
+                <span ng-hide="progress.daysPassedTrimester1 < 20">0w &raquo; 14w</span>
+              </uib-bar>
+
+              <!-- Trimester 2 - 14 -> 28 weeks = 98 days -->
+              <uib-bar value="progress.daysPassedTrimester2" type="info">
+                <span ng-hide="progress.daysPassedTrimester2 < 20">14w &raquo; 28w</span>
+              </uib-bar>
+
+              <!-- Trimester 3 - 28 -> 40 weeks = 84 days -->
+              <uib-bar value="progress.daysPassedTrimester3" type="success">
+                <span ng-hide="progress.daysPassedTrimester3 < 20">28w &raquo; 40w</span>
+              </uib-bar>
+            </uib-progress>
+
           </div>
         </div>
         <div class="row">
@@ -29,6 +45,11 @@
           </div>
           <div class="col-xs-4">
             <p class="pull-right">{{progress.remaining}}</p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-xs-12 text-center">
+            <em>{{progress.babySize}}</em>
           </div>
         </div>
       </div> <!-- End known due date -->

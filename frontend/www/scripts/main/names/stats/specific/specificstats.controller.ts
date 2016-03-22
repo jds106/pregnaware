@@ -8,12 +8,14 @@ module main.names.stats.specific {
         private frontEndService:services.FrontEndService;
 
         constructor($scope:SpecificStatsModel,
+                    isBoy: boolean,
                     name: string,
                     frontEndService:services.FrontEndService) {
 
             this.$scope = $scope;
             this.frontEndService = frontEndService;
 
+            this.$scope.isBoy = isBoy;
             this.$scope.name = name;
         }
     }

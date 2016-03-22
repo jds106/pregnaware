@@ -14,7 +14,7 @@
         <div class="col-md-6">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title text-center">Girls <a href ng-click="showGeneralNameStats()"><span class="glyphicon glyphicon-stats"></span></a></h3>
+              <h3 class="panel-title text-center">Girls <a href ng-click="showGeneralNameStats(false)"><span class="glyphicon glyphicon-stats"></span></a></h3>
             </div>
             <div class="panel-body">
               <div style="margin-bottom: 15px">
@@ -40,7 +40,7 @@
                     <small><em>{{entry.suggestedByName}}</em></small>
                   </td>
                   <td class="text-center">
-                    <a href ng-click="showSpecificNameStats(entry.name)"><span class="glyphicon glyphicon-resize-small glyphicon-stats"></span></a>
+                    <a href ng-click="showSpecificNameStats(entry.name, false)"><span class="glyphicon glyphicon-resize-small glyphicon-stats"></span></a>
                   </td>
                   <td class="text-center">
                     <small ng-show="canEdit"><a ng-click="deleteName(entry)"><span
@@ -57,7 +57,7 @@
         <div class="col-md-6">
           <div class="panel panel-default">
             <div class="panel-heading">
-              <h3 class="panel-title text-center">Boys <span class="glyphicon glyphicon-stats"></span></h3>
+              <h3 class="panel-title text-center">Boys <a href ng-click="showGeneralNameStats(true)"><span class="glyphicon glyphicon-stats"></span></a></h3>
             </div>
             <div class="panel-body">
               <div style="margin-bottom: 15px">
@@ -83,7 +83,7 @@
                     <small><em>{{entry.suggestedByName}}</em></small>
                   </td>
                   <td class="text-center">
-                    <a href ng-click="showSpecificNameStats(entry.name)"><span class="glyphicon glyphicon-resize-small glyphicon-stats"></span></a>
+                    <a href ng-click="showSpecificNameStats(entry.name, true)"><span class="glyphicon glyphicon-resize-small glyphicon-stats"></span></a>
                   </td>
                   <td class="text-center">
                     <small ng-show="canEdit"><a href ng-click="deleteName(entry)"><span

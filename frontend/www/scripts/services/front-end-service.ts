@@ -1,11 +1,18 @@
 /// <reference path="../references.ts" />
 module services {
+
     'use strict';
 
     import WrappedUser = models.WrappedUser;
     import WrappedFriend = models.WrappedFriend;
     import WrappedBabyName = models.WrappedBabyName;
     import LocalDate = models.LocalDate;
+
+    import NameStat = models.NameStat;
+    import NameSummaryStat = models.NameSummaryStat;
+    import NameStatByCountry = models.NameStatByCountry;
+    import NameStatByMonth = models.NameStatByMonth;
+    import NameStatByRegion = models.NameStatByRegion;
 
     // These are the ONLY status codes returned by the app
     export class StatusCodeHandler {
@@ -164,12 +171,54 @@ module services {
 
         /* --- Name stats --- */
 
-        public getGeneralNameStats() : ng.IHttpPromise<string> {
-            return this.$http.get(this.getUrl('namestats'))
+        private toGender(isBoy: boolean) { return isBoy ? 'boy' : 'girl'; }
+
+        public getNameStatsYears() : ng.IHttpPromise<number[]> {
+            return this.$http.get(this.getUrl('namestats/meta/years'), this.getHeaders())
         }
 
-        public getSpecificNameStats(name: string) : ng.IHttpPromise<string> {
-            return this.$http.get(this.getUrl(`namestats/${name}`))
+        public getNameStatsCount() : ng.IHttpPromise<NameSummaryStat[]> {
+            return this.$http.get(this.getUrl('namestats/meta/count'), this.getHeaders())
+        }
+
+        public getNameStatsCompleteForName(name: string, isBoy: boolean) : ng.IHttpPromise<NameStat[]> {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl(`namestats/data/${gender}/complete/name/${name}`), this.getHeaders())
+        }
+
+        public getNameStatsCompleteForYear(year: number, isBoy: boolean) : ng.IHttpPromise<NameStat[]> {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl(`namestats/data/${gender}/complete/summary/${year}`), this.getHeaders())
+        }
+
+        public getNameStatsByCountryForName(name: string, isBoy: boolean) : ng.IHttpPromise<NameStatByCountry[]> {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl(`namestats/data/${gender}/country/name/${name}`), this.getHeaders())
+        }
+
+        public getNameStatsByCountryForYear(year: number, isBoy: boolean) : ng.IHttpPromise<NameStatByCountry[]> {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl(`namestats/data/${gender}/country/summary/${year}`), this.getHeaders())
+        }
+
+        public getNameStatsByMonthForName(name: string, isBoy: boolean) : ng.IHttpPromise<NameStatByMonth[]> {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl(`namestats/data/${gender}/month/name/${name}`), this.getHeaders())
+        }
+
+        public getNameStatsByMonthForYear(year: number, isBoy: boolean) : ng.IHttpPromise<NameStatByMonth[]> {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl(`namestats/data/${gender}/month/summary/${year}`), this.getHeaders())
+        }
+
+        public getNameStatsByRegionForName(name: string, isBoy: boolean) : ng.IHttpPromise<NameStatByRegion[]> {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl(`namestats/data/${gender}/region/name/${name}`), this.getHeaders())
+        }
+
+        public getNameStatsByRegionForYear(year: number, isBoy: boolean) : ng.IHttpPromise<NameStatByRegion[]> {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl(`namestats/data/${gender}/region/summary/${year}`), this.getHeaders())
         }
     }
 }

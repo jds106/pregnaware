@@ -4,6 +4,7 @@
 /// <reference path="models/wrapped-baby-name.ts" />
 /// <reference path="models/wrapped-friend.ts" />
 /// <reference path="models/wrapped-user.ts" />
+/// <reference path="models/name-stat-models.ts" />
 
 /// <reference path="error/error.model.ts" />
 /// <reference path="error/error.controller.ts" />

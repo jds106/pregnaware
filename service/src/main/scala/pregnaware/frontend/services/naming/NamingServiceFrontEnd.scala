@@ -10,7 +10,7 @@ trait NamingServiceFrontEnd extends FrontEndDirectives {
   def getNamingService: NamingServiceBackend
 
   // The routes provided by this service
-  val namingServiceRoutes : Route = putName ~ deleteName ~ getNameStats ~ getNameStatsForName
+  val namingServiceRoutes: Route = putName ~ deleteName ~ getNameStats ~ getNameStats
 
   def putName: Route = put {
     path("names" / IntNumber) { suggestedForUserId =>
@@ -37,14 +37,38 @@ trait NamingServiceFrontEnd extends FrontEndDirectives {
   }
 
   def getNameStats: Route = get {
-    path("namestats" / "meta" / "categories") {
-      completeFuture("nameStats", getNamingService.getNameStats)
-    }
-  }
+    // The end points are gender-specific
+    val genderMap = Map("boy" -> "boy", "girl" -> "girl")
 
-  def getNameStatsForName: Route = get {
-    path("namestats" / Segment) { name =>
-      completeFuture("nameStatsForName", getNamingService.getNameStats(name))
+    path("namestats" / "meta" / "years") {
+      dynamic { routeFuture("nameStatsYears", getNamingService.getNameStatsYears) { r => complete(r) } }
+    } ~
+      path("namestats" / "meta" / "count") {
+        dynamic { routeFuture("nameStatsCount", getNamingService.getNameStatsCount) { r => complete(r) } }
+      } ~
+      path("namestats" / "data" / genderMap / "complete" / "name" / Segment) { (gender, name) =>
+        routeFuture("nameStats01", getNamingService.getNameStatsComplete(name, gender)) { r => complete(r) }
+      } ~
+      path("namestats" / "data" / genderMap / "complete" / "summary" / IntNumber) { (gender, year) =>
+        routeFuture("nameStats02", getNamingService.getNameStatsComplete(year, gender)) { r => complete(r) }
+      } ~
+      path("namestats" / "data" / genderMap / "country" / "name" / Segment) { (gender, name) =>
+        routeFuture("nameStats03", getNamingService.getNameStatsByCountry(name, gender)) { r => complete(r) }
+      } ~
+      path("namestats" / "data" / genderMap / "country" / "summary" / IntNumber) { (gender, year) =>
+        routeFuture("nameStats04", getNamingService.getNameStatsByCountry(year, gender)) { r => complete(r) }
+      } ~
+      path("namestats" / "data" / genderMap / "month" / "name" / Segment) { (gender, name) =>
+        routeFuture("nameStats05", getNamingService.getNameStatsByMonth(name, gender)) { r => complete(r) }
+      } ~
+      path("namestats" / "data" / genderMap / "month" / "summary" / IntNumber) { (gender, year) =>
+        routeFuture("nameStats06", getNamingService.getNameStatsByMonth(year, gender)) { r => complete(r) }
+      } ~
+      path("namestats" / "data" / genderMap / "region" / "name" / Segment) { (gender, name) =>
+        routeFuture("nameStats07", getNamingService.getNameStatsByRegion(name, gender)) { r => complete(r) }
+      } ~
+      path("namestats" / "data" / genderMap / "region" / "summary" / IntNumber) { (gender, year) =>
+        routeFuture("nameStats08", getNamingService.getNameStatsByRegion(year, gender)) { r => complete(r) }
+      }
     }
-  }
 }

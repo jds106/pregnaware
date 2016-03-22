@@ -23,8 +23,8 @@ module main.names {
         deleteName: (entry:WrappedBabyName) => void;
 
         // Functions to show naming stats
-        showGeneralNameStats: () => void
-        showSpecificNameStats: (name: string) => void
+        showGeneralNameStats: (isBoy: boolean) => void
+        showSpecificNameStats: (name: string, isBoy: boolean) => void
 
         isNameInvalid: (string) => boolean
     }

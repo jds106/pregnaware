@@ -78,25 +78,31 @@ module main.names {
             });
 
             // Pop-up the general name stats page
-            this.$scope.showGeneralNameStats = () => {
+            this.$scope.showGeneralNameStats = (isBoy: boolean) => {
                 this.$uibModal.open({
                     animation: true,
                     templateUrl: '/scripts/main/names/stats/general/generalstats.view.html',
                     controller: main.names.stats.general.GeneralStatsController,
                     controllerAs: 'vm',
                     size: 'lg',
+                    resolve: {
+                        isBoy: () => isBoy
+                    }
                 });
             };
 
             // Pop-up the specific name stats page
-            this.$scope.showSpecificNameStats = (name) => {
+            this.$scope.showSpecificNameStats = (name, isBoy) => {
                 this.$uibModal.open({
                     animation: true,
                     templateUrl: `/scripts/main/names/stats/specific/specificstats.view.html`,
                     controller: main.names.stats.specific.SpecificStatsController,
                     controllerAs: 'vm',
                     size: 'lg',
-                    resolve: {name: () => name}
+                    resolve: {
+                        name: () => name,
+                        isBoy: () => isBoy
+                    }
                 });
             };
         }

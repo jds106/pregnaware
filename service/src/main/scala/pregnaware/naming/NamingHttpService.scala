@@ -41,7 +41,7 @@ abstract class NamingHttpService(persistence: NamingPersistence)
   // The max number of names to return in one request
   private val maxNamesResponse = 100
 
-  // The comversion between the gender (as a string) and whether that gender represents a boy or a girl
+  // The conversion between the gender (as a string) and whether that gender represents a boy or a girl
   private val genderMap = Map("boy" -> true, "girl" -> false)
 
   /** The routes defined by this service */
@@ -49,7 +49,7 @@ abstract class NamingHttpService(persistence: NamingPersistence)
     logRequest("REST API", InfoLevel) {
       logResponse("REST API", InfoLevel) {
         getNames ~ putName ~ deleteName ~
-          getNameStatsCategories ~ getNameMetaStats ~ getNameStats
+        getNameMetaStats ~ getNameStats
       }
     }
   }
@@ -86,14 +86,6 @@ abstract class NamingHttpService(persistence: NamingPersistence)
     }
   }
 
-  /* Meta data: The set of naming categories */
-  def getNameStatsCategories: Route = get {
-    path("namestats" / "meta" / "categories") {
-      val list = Array("NameStat", "NameStatByCountry", "NameStatByMonth", "NameStatByRegion")
-      complete(ResponseCodes.OK -> list)
-    }
-  }
-
   /* Meta data: The set of years for which data is available */
   def getNameMetaStats: Route = get {
     pathPrefix("namestats" / "meta") {
@@ -103,7 +95,7 @@ abstract class NamingHttpService(persistence: NamingPersistence)
         }
       } ~
         path("count") {
-          routeFuture("getNumBabiesForYear", persistence.getNumBabies) { numBabies =>
+          routeFuture("getNameStatsCount", persistence.getNumBabies) { numBabies =>
             complete(ResponseCodes.OK -> numBabies)
           }
         }

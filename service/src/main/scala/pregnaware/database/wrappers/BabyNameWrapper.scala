@@ -148,7 +148,7 @@ trait BabyNameWrapper extends NamingPersistence {
   /** The years with data */
   def getAvailableYears : Future[Seq[Int]] = {
     connection("GetAvailableYears") { db =>
-      val query = Namestat.map(_.year).distinct.sortBy(r => r)
+      val query = Namestat.map(_.year).distinct.sortBy(_.desc)
       db.run(query.result)
     }
   }

@@ -192,11 +192,44 @@ var services;
             return this.$http.put(this.getUrl('user/state'), state, this.getHeaders());
         };
         /* --- Name stats --- */
-        FrontEndService.prototype.getGeneralNameStats = function () {
-            return this.$http.get(this.getUrl('namestats'));
+        FrontEndService.prototype.toGender = function (isBoy) { return isBoy ? 'boy' : 'girl'; };
+        FrontEndService.prototype.getNameStatsYears = function () {
+            return this.$http.get(this.getUrl('namestats/meta/years'), this.getHeaders());
         };
-        FrontEndService.prototype.getSpecificNameStats = function (name) {
-            return this.$http.get(this.getUrl("namestats/" + name));
+        FrontEndService.prototype.getNameStatsCount = function () {
+            return this.$http.get(this.getUrl('namestats/meta/count'), this.getHeaders());
+        };
+        FrontEndService.prototype.getNameStatsCompleteForName = function (name, isBoy) {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl("namestats/data/" + gender + "/complete/name/" + name), this.getHeaders());
+        };
+        FrontEndService.prototype.getNameStatsCompleteForYear = function (year, isBoy) {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl("namestats/data/" + gender + "/complete/summary/" + year), this.getHeaders());
+        };
+        FrontEndService.prototype.getNameStatsByCountryForName = function (name, isBoy) {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl("namestats/data/" + gender + "/country/name/" + name), this.getHeaders());
+        };
+        FrontEndService.prototype.getNameStatsByCountryForYear = function (year, isBoy) {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl("namestats/data/" + gender + "/country/summary/" + year), this.getHeaders());
+        };
+        FrontEndService.prototype.getNameStatsByMonthForName = function (name, isBoy) {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl("namestats/data/" + gender + "/month/name/" + name), this.getHeaders());
+        };
+        FrontEndService.prototype.getNameStatsByMonthForYear = function (year, isBoy) {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl("namestats/data/" + gender + "/month/summary/" + year), this.getHeaders());
+        };
+        FrontEndService.prototype.getNameStatsByRegionForName = function (name, isBoy) {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl("namestats/data/" + gender + "/region/name/" + name), this.getHeaders());
+        };
+        FrontEndService.prototype.getNameStatsByRegionForYear = function (year, isBoy) {
+            var gender = this.toGender(isBoy);
+            return this.$http.get(this.getUrl("namestats/data/" + gender + "/region/summary/" + year), this.getHeaders());
         };
         return FrontEndService;
     })();
@@ -640,20 +673,36 @@ var main;
     var names;
     (function (names) {
         var stats;
-        (function (stats) {
+        (function (stats_1) {
             var general;
             (function (general) {
                 'use strict';
                 var GeneralStatsController = (function () {
-                    function GeneralStatsController($scope, $uibModalInstance, frontEndService) {
+                    function GeneralStatsController($scope, isBoy, $uibModalInstance, frontEndService) {
+                        var _this = this;
                         this.$scope = $scope;
                         this.$uibModalInstance = $uibModalInstance;
                         this.frontEndService = frontEndService;
+                        this.$scope.isBoy = isBoy;
+                        this.frontEndService.getNameStatsYears().success(function (years) { return _this.$scope.availableYears = years; });
+                        this.frontEndService.getNameStatsCount().success(function (stats) { return _this.nameSummary = stats; });
+                        this.$scope.selectYear = function (year) { return _this.yearSelected(year, isBoy); };
                     }
+                    GeneralStatsController.prototype.yearSelected = function (year, isBoy) {
+                        var _this = this;
+                        var forCountry = this.frontEndService.getNameStatsByCountryForYear(year, isBoy);
+                        var forMonth = this.frontEndService.getNameStatsByMonthForYear(year, isBoy);
+                        var forRegion = this.frontEndService.getNameStatsByRegionForYear(year, isBoy);
+                        var forAll = this.frontEndService.getNameStatsCompleteForYear(year, isBoy);
+                        forCountry.success(function (results) { return _this.$scope.nameStatsByCountry = results; });
+                        forMonth.success(function (results) { return _this.$scope.nameStatsByMonth = results; });
+                        forRegion.success(function (results) { return _this.$scope.nameStatsByRegion = results; });
+                        forAll.success(function (results) { return _this.$scope.nameStats = results; });
+                    };
                     return GeneralStatsController;
                 })();
                 general.GeneralStatsController = GeneralStatsController;
-            })(general = stats.general || (stats.general = {}));
+            })(general = stats_1.general || (stats_1.general = {}));
         })(stats = names.stats || (names.stats = {}));
     })(names = main.names || (main.names = {}));
 })(main || (main = {}));
@@ -682,9 +731,10 @@ var main;
             (function (specific) {
                 'use strict';
                 var SpecificStatsController = (function () {
-                    function SpecificStatsController($scope, name, frontEndService) {
+                    function SpecificStatsController($scope, isBoy, name, frontEndService) {
                         this.$scope = $scope;
                         this.frontEndService = frontEndService;
+                        this.$scope.isBoy = isBoy;
                         this.$scope.name = name;
                     }
                     return SpecificStatsController;
@@ -757,24 +807,30 @@ var main;
                     _this.$scope.girlsNames = babyNames.filter(function (n) { return !n.isBoy; });
                 });
                 // Pop-up the general name stats page
-                this.$scope.showGeneralNameStats = function () {
+                this.$scope.showGeneralNameStats = function (isBoy) {
                     _this.$uibModal.open({
                         animation: true,
                         templateUrl: '/scripts/main/names/stats/general/generalstats.view.html',
                         controller: main.names.stats.general.GeneralStatsController,
                         controllerAs: 'vm',
                         size: 'lg',
+                        resolve: {
+                            isBoy: function () { return isBoy; }
+                        }
                     });
                 };
                 // Pop-up the specific name stats page
-                this.$scope.showSpecificNameStats = function (name) {
+                this.$scope.showSpecificNameStats = function (name, isBoy) {
                     _this.$uibModal.open({
                         animation: true,
                         templateUrl: "/scripts/main/names/stats/specific/specificstats.view.html",
                         controller: main.names.stats.specific.SpecificStatsController,
                         controllerAs: 'vm',
                         size: 'lg',
-                        resolve: { name: function () { return name; } }
+                        resolve: {
+                            name: function () { return name; },
+                            isBoy: function () { return isBoy; }
+                        }
                     });
                 };
             }
@@ -964,6 +1020,7 @@ var main;
 /// <reference path="models/wrapped-baby-name.ts" />
 /// <reference path="models/wrapped-friend.ts" />
 /// <reference path="models/wrapped-user.ts" />
+/// <reference path="models/name-stat-models.ts" />
 /// <reference path="error/error.model.ts" />
 /// <reference path="error/error.controller.ts" />
 /// <reference path="services/route-service.ts" />

@@ -3,7 +3,7 @@ package pregnaware.frontend.services.naming
 import akka.actor.ActorContext
 import akka.util.Timeout
 import pregnaware.frontend.services.BackEndFuncs
-import pregnaware.naming.entities.{AddNameRequest, WrappedBabyName}
+import pregnaware.naming.entities._
 import spray.http.HttpMethods._
 import spray.httpx.ResponseTransformation._
 import pregnaware.utils.Json4sSupport._
@@ -28,12 +28,44 @@ abstract class NamingServiceBackend(namingServiceName: String) extends BackEndFu
     send(DELETE, s"names/$userId/$babyNameId").map (_ => ())
   }
 
-  def getNameStats : Future[Unit] = {
-    send(GET, s"namestats").map (_ => ())
+  def getNameStatsYears : Future[Seq[Int]] = {
+    send(GET, s"namestats/meta/years").map( r => r ~> unmarshal[Seq[Int]])
   }
 
-  def getNameStats(name: String) : Future[Unit] = {
-    send(GET, s"namestats/$name").map (_ => ())
+  def getNameStatsCount : Future[Seq[NameSummaryStat]] = {
+    send(GET, s"namestats/meta/count").map( r => r ~> unmarshal[Seq[NameSummaryStat]])
+  }
+
+  def getNameStatsComplete(name: String, gender: String) : Future[Seq[NameStat]] = {
+    send(GET, s"namestats/data/$gender/complete/name/$name").map( r => r ~> unmarshal[Seq[NameStat]])
+  }
+
+  def getNameStatsComplete(year: Int, gender: String) : Future[Seq[NameStat]] = {
+    send(GET, s"namestats/data/$gender/complete/summary/$year").map( r => r ~> unmarshal[Seq[NameStat]])
+  }
+
+  def getNameStatsByCountry(name: String, gender: String) : Future[Seq[NameStatByCountry]] = {
+    send(GET, s"namestats/data/$gender/country/name/$name").map( r => r ~> unmarshal[Seq[NameStatByCountry]])
+  }
+
+  def getNameStatsByCountry(year: Int, gender: String) : Future[Seq[NameStatByCountry]] = {
+    send(GET, s"namestats/data/$gender/country/summary/$year").map( r => r ~> unmarshal[Seq[NameStatByCountry]])
+  }
+
+  def getNameStatsByMonth(name: String, gender: String) : Future[Seq[NameStatByMonth]] = {
+    send(GET, s"namestats/data/$gender/month/name/$name").map( r => r ~> unmarshal[Seq[NameStatByMonth]])
+  }
+
+  def getNameStatsByMonth(year: Int, gender: String) : Future[Seq[NameStatByCountry]] = {
+    send(GET, s"namestats/data/$gender/month/summary/$year").map( r => r ~> unmarshal[Seq[NameStatByCountry]])
+  }
+
+  def getNameStatsByRegion(name: String, gender: String) : Future[Seq[NameStatByRegion]] = {
+    send(GET, s"namestats/data/$gender/region/name/$name").map( r => r ~> unmarshal[Seq[NameStatByRegion]])
+  }
+
+  def getNameStatsByRegion(year: Int, gender: String) : Future[Seq[NameStatByRegion]] = {
+    send(GET, s"namestats/data/$gender/region/summary/$year").map( r => r ~> unmarshal[Seq[NameStatByRegion]])
   }
 }
 

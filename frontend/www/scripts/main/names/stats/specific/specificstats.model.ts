@@ -5,5 +5,6 @@ module main.names.stats.specific {
 
     export interface SpecificStatsModel extends ng.IScope {
         name: string
+        isBoy: boolean
     }
 }

@@ -38,13 +38,18 @@ object NamingHttpService {
 abstract class NamingHttpService(persistence: NamingPersistence)
   extends HttpService with CustomDirectives with StrictLogging {
 
+  // The max number of names to return in one request
+  private val maxNamesResponse = 100
+
+  // The comversion between the gender (as a string) and whether that gender represents a boy or a girl
+  private val genderMap = Map("boy" -> true, "girl" -> false)
+
   /** The routes defined by this service */
   val routes = pathPrefix(NamingHttpService.serviceName) {
     logRequest("REST API", InfoLevel) {
       logResponse("REST API", InfoLevel) {
         getNames ~ putName ~ deleteName ~
-          getNameStatsCategories ~ getNameStatsYears ~
-          getNameStatsByCountry ~ getNameStatsByMonth ~ getNameStatsByRegion
+          getNameStatsCategories ~ getNameMetaStats ~ getNameStats
       }
     }
   }
@@ -82,7 +87,7 @@ abstract class NamingHttpService(persistence: NamingPersistence)
   }
 
   /* Meta data: The set of naming categories */
-  def getNameStatsCategories : Route = get {
+  def getNameStatsCategories: Route = get {
     path("namestats" / "meta" / "categories") {
       val list = Array("NameStat", "NameStatByCountry", "NameStatByMonth", "NameStatByRegion")
       complete(ResponseCodes.OK -> list)
@@ -90,61 +95,70 @@ abstract class NamingHttpService(persistence: NamingPersistence)
   }
 
   /* Meta data: The set of years for which data is available */
-  def getNameStatsYears : Route = get {
-    path("namestats" / "meta" / "years") {
-      val list = Range(1996, 2015)
-      complete(ResponseCodes.OK -> list)
-    }
-  }
-
-  def getNameStats : Route = get {
-    path("namestats" / "data" / "NameStat") {
-      // Returns the position & percentage for the specified name for each year
-      path(Segment) { name =>
-        complete(ResponseCodes.OK)
+  def getNameMetaStats: Route = get {
+    pathPrefix("namestats" / "meta") {
+      path("years") {
+        routeFuture("getNameStatsYears", persistence.getAvailableYears) { years =>
+          complete(ResponseCodes.OK -> years)
+        }
       } ~
-      // Returns the top 100 names for the specified year & gender
-      path(IntNumber / Segment) { (year, gender) =>
-        complete(ResponseCodes.OK)
-      }
-    }
-  }
-
-  def getNameStatsByCountry : Route = get {
-    path("namestats" / "data" / "NameStatByCountry") {
-      // Returns the position for the specified name in each region for each year (if it is in the top 10)
-      path(Segment) { name =>
-        complete(ResponseCodes.OK)
-      } ~
-        // Returns all of the top-10 information for the specified year & gender
-        path(IntNumber / Segment) { (year, gender) =>
-          complete(ResponseCodes.OK)
+        path("count") {
+          routeFuture("getNumBabiesForYear", persistence.getNumBabies) { numBabies =>
+            complete(ResponseCodes.OK -> numBabies)
+          }
         }
     }
   }
 
-  def getNameStatsByMonth : Route = get {
-    path("namestats" / "data" / "NameStatByMonth") {
-      // Returns the position for the specified name for month each year (if it is in the top 10)
-      path(Segment) { name =>
-        complete(ResponseCodes.OK)
+  def getNameStats: Route = get {
+    pathPrefix("namestats" / "data" / genderMap) { isBoy =>
+      pathPrefix("complete") {
+        path("name" / Segment) { name =>
+          routeFuture("getNameStats", persistence.getNameStats(name, isBoy)) { stats =>
+            complete(ResponseCodes.OK -> stats)
+          }
+        } ~
+          path("summary" / IntNumber) { year =>
+            routeFuture("getNameStats", persistence.getNameStats(year, isBoy, maxNamesResponse)) { stats =>
+              complete(ResponseCodes.OK -> stats)
+            }
+          }
       } ~
-        // Returns all of the top-10 information for the specified year & gender
-        path(IntNumber / Segment) { (year, gender) =>
-          complete(ResponseCodes.OK)
-        }
-    }
-  }
-
-  def getNameStatsByRegion : Route = get {
-    path("namestats" / "data" / "NameStatByRegion") {
-      // Returns the position & percentage for the specified name for each year (if it is in the top 10)
-      path(Segment) { name =>
-        complete(ResponseCodes.OK)
-      } ~
-        // Returns all of the top-10 information for the specified year & gender
-        path(IntNumber / Segment) { (year, gender) =>
-          complete(ResponseCodes.OK)
+        pathPrefix("country") {
+          path("name" / Segment) { name =>
+            routeFuture("getNameStatsByCountry", persistence.getNameStatsByCountry(name, isBoy)) { stats =>
+              complete(ResponseCodes.OK -> stats)
+            }
+          } ~
+            path("summary" / IntNumber) { year =>
+              routeFuture("getNameStatsByCountry", persistence.getTop10NameStatsByCountry(year, isBoy)) { stats =>
+                complete(ResponseCodes.OK -> stats)
+              }
+            }
+        } ~
+        pathPrefix("month") {
+          path("name" / Segment) { name =>
+            routeFuture("getNameStatsByMonth", persistence.getNameStatsByMonth(name, isBoy)) { stats =>
+              complete(ResponseCodes.OK -> stats)
+            }
+          } ~
+            path("summary" / IntNumber) { year =>
+              routeFuture("getNameStatsByMonth", persistence.getTop10NameStatsByMonth(year, isBoy)) { stats =>
+                complete(ResponseCodes.OK -> stats)
+              }
+            }
+        } ~
+        pathPrefix("region") {
+          path("name" / Segment) { name =>
+            routeFuture("getNameStatsByRegion", persistence.getNameStatsByRegion(name, isBoy)) { stats =>
+              complete(ResponseCodes.OK -> stats)
+            }
+          } ~
+            path("summary" / IntNumber) { year =>
+              routeFuture("getNameStatsByRegion", persistence.getTop10NameStatsByRegion(year, isBoy)) { stats =>
+                complete(ResponseCodes.OK -> stats)
+              }
+            }
         }
     }
   }

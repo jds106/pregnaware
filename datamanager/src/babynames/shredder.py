@@ -22,13 +22,13 @@ def save_to_database(df: pd.DataFrame, table_name: str):
 
 
 # Parses the data from the specified Excel workbook
-def parse(filename: str):
+def parse(filepath: str, filename: str):
     tokens = filename.split('.')
     year = int(tokens[1])
     gender = tokens[2].lower()
 
     print('Parsing file: {0}'.format(filename))
-    df_dict = pd.read_excel(filename, sheetname=None)
+    df_dict = pd.read_excel('{0}/{1}'.format(filepath, filename), sheetname=None)
     assert(isinstance(df_dict, dict))
 
     # Top 100 names ranked by country
@@ -68,31 +68,31 @@ def parse(filename: str):
         elif key not in ['Contents', 'Metadata', 'Terms and Conditions', 'Related Publications']:
             print('Unknown table: {0}'.format(key))
 
-    if key_top_100_ew:
-        results = countryparser.parse(year, gender, 'England and Wales', df_dict[key_top_100_ew])
-        save_to_database(results, 'NameStatByCountry')
-
-    if key_top_100_e:
-        results = countryparser.parse(year, gender, 'England', df_dict[key_top_100_e])
-        save_to_database(results, 'NameStatByCountry')
-
-    if key_top_100_w:
-        results = countryparser.parse(year, gender, 'Wales', df_dict[key_top_100_w])
-        save_to_database(results, 'NameStatByCountry')
-
-    if key_top_10_region:
-        results = regionparser.parse(year, gender, df_dict[key_top_10_region])
-        save_to_database(results, 'NameStatByRegion')
-
-    if key_top_10_month:
-        results = monthparser.parse(year, gender, df_dict[key_top_10_month])
-        save_to_database(results, 'NameStatByMonth')
+    # if key_top_100_ew:
+    #     results = countryparser.parse(year, gender, 'England and Wales', df_dict[key_top_100_ew])
+    #     save_to_database(results, 'NameStatByCountry')
+    #
+    # if key_top_100_e:
+    #     results = countryparser.parse(year, gender, 'England', df_dict[key_top_100_e])
+    #     save_to_database(results, 'NameStatByCountry')
+    #
+    # if key_top_100_w:
+    #     results = countryparser.parse(year, gender, 'Wales', df_dict[key_top_100_w])
+    #     save_to_database(results, 'NameStatByCountry')
+    #
+    # if key_top_10_region:
+    #     results = regionparser.parse(year, gender, df_dict[key_top_10_region])
+    #     save_to_database(results, 'NameStatByRegion')
+    #
+    # if key_top_10_month:
+    #     results = monthparser.parse(year, gender, df_dict[key_top_10_month])
+    #     save_to_database(results, 'NameStatByMonth')
 
     if key_full:
         results = completelistparser.parse(year, gender, df_dict[key_full])
         save_to_database(results, 'NameStat')
 
-path = './data/ons_babynames'
+path = '../../data/ons_babynames'
 for file in os.listdir(path):
     if file.startswith('babynames.') and file.endswith('.xls'):
-        parse('{0}/{1}'.format(path, file))
+        parse(path, file)

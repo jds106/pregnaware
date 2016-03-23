@@ -16,13 +16,13 @@ trait NamingPersistence extends ExecutionWrapper {
   def deleteName(userId: Int, babyNameId: Int) : Future[Unit]
 
   /** Gets the top _limit_ of baby names for the specified year */
-  def getNameStats(year: Int, isBoy: Boolean, limit : Int) : Future[Seq[NameStat]]
+  def getNameStats(year: Int, isBoy: Boolean, limit: Int) : Future[Seq[NameStat]]
 
   /** Gets all of the information on the specified name */
   def getNameStats(name: String, isBoy: Boolean) : Future[Seq[NameStat]]
 
-  /** Gets the top 10 baby names for the specified year */
-  def getTop10NameStatsByCountry(year: Int, isBoy: Boolean) : Future[Seq[NameStatByCountry]]
+  /** Gets the baby names for the specified year */
+  def getNameStatsByCountry(year: Int, isBoy: Boolean) : Future[Seq[NameStatByCountry]]
 
   /** Gets all of the information on the specified name */
   def getNameStatsByCountry(name: String, isBoy: Boolean) : Future[Seq[NameStatByCountry]]
@@ -41,7 +41,4 @@ trait NamingPersistence extends ExecutionWrapper {
 
   /** The number of babies born in this year (a slight understatement as babies given unique names are not counted) */
   def getNumBabies : Future[Seq[NameSummaryStat]]
-
-  /** The years with data */
-  def getAvailableYears : Future[Seq[Int]]
 }

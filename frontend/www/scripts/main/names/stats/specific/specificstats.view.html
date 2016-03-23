@@ -1,3 +1,148 @@
-<div class="container">
-  <h1>Specific stats = {{name}}. IsBoy = {{isBoy}}</h1>
+<div class="'modal-dialog">
+  <div class="modal-content">
+    <div class="modal-body">
+
+      <div class="row">
+        <a class="pull-right" style="margin-right: 10px" href ng-click="close()"><span
+            class="glyphicon glyphicon-remove"></span></a>
+      </div>
+
+      <div class="text-center"><h1><label class="label label-info">{{name}}</label></h1></div>
+
+      <div ng-show="nameStats && nameStats.length == 0" class="row">
+        <h3 class="text-center">No stats available</h3>
+      </div>
+
+      <div ng-show="nameStats && nameStats.length > 0" class="row">
+        <h3 class="text-center">Annual</h3>
+        <div ng-repeat="nameSubsetIdx in [0, 1, 2, 3]">
+          <div class="col-md-3">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th>Year</th>
+                <th>#Babies</th>
+                <th>%Babies</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="stat in nameStats.slice(nameSubsetIdx * floor(nameStats.length / 4), (nameSubsetIdx + 1) * floor(nameStats.length / 4))">
+                <td>{{stat.year}}</td>
+                <td class="text-center">{{stat.count | number}}</td>
+                <td class="text-center">{{stat.percent | number:2}}%</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div ng-show="nameStatsByMonth && nameStatsByMonth.length > 0">
+        <h3 class="text-center">Monthly
+          <sup><a
+              uib-popover="Monthly data is only available if the name was in the top-10 names that month"
+              popover-trigger="focus"
+              popover-placement="bottom-right"
+              href>
+            <span class="glyphicon glyphicon-question-sign"></span>
+          </a></sup>
+        </h3>
+
+
+        <div class="row">
+          <div class="col-md-12 table-responsive">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th>Year</th>
+                <th class="text-center" ng-repeat="month in orderedMonths">{{month}}</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="year in availableYears">
+                <th>{{year}}</th>
+                <td class="text-center" ng-repeat="month in orderedMonths">{{getNameCountForYearMonth(year, month) |
+                  number}}
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div ng-show="nameStatsByRegion && nameStatsByRegion.length > 0">
+        <h3 class="text-center">Regional
+          <sup><a
+              uib-popover="Regional data is only available if the name was in the top-10 names in that region"
+              popover-trigger="focus"
+              popover-placement="bottom-right"
+              href>
+            <span class="glyphicon glyphicon-question-sign"></span>
+          </a></sup>
+        </h3>
+
+        <div class="row">
+          <div class="col-md-12 table-responsive">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th>Year</th>
+                <th class="text-center" ng-repeat="region in orderedRegions">{{region}}</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="year in availableYears">
+                <th>{{year}}</th>
+                <td class="text-center" ng-repeat="region in orderedRegions">{{getNameCountForYearRegion(year, region) | number}}
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div ng-show="nameStatsByCountry && nameStatsByCountry.length > 0">
+        <h3 class="text-center">England & Wales</h3>
+
+        <div class="row">
+          <div class="col-md-12 table-responsive">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th>Year</th>
+                <th class="text-center" ng-repeat="country in orderedCountries">{{country}}</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="year in availableYears">
+                <th>{{year}}</th>
+                <td class="text-center" ng-repeat="country in orderedCountries">{{getNameCountForYearCountry(year, country) | number}}
+                </td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="panel">
+      <div class="panel-body text-center">
+        <small>
+          <p>
+            This data is sourced from the <a
+              href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/livebirths/datasets/birthsummarytables">Office
+            of National Statistics</a>, and covers England and Wales only.
+          </p>
+          <p>
+            Yearly data is released in August of the following year (e.g. 2015 will be available in August 2016).
+          </p>
+        </small>
+      </div>
+    </div>
+  </footer>
 </div>

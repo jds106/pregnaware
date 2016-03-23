@@ -11,6 +11,7 @@ module main.names.stats.general {
     export interface GeneralStatsModel extends ng.IScope {
         isBoy: boolean
         availableYears: number[]
+        selectedYear : number
 
         nameStats : NameStat[]
         nameStatsByCountry : NameStatByCountry[]
@@ -18,5 +19,8 @@ module main.names.stats.general {
         nameStatsByRegion : NameStatByRegion[]
 
         selectYear: (year: number) => void
+        babiesBornInYear: (selectedYear: number) => number
+
+        close: () => void
     }
 }

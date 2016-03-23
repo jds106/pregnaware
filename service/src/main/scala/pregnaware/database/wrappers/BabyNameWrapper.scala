@@ -9,7 +9,7 @@ import pregnaware.naming.NamingPersistence
 import pregnaware.naming.entities._
 import slick.driver.MySQLDriver.api._
 
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 trait BabyNameWrapper extends NamingPersistence {
 
@@ -62,7 +62,9 @@ trait BabyNameWrapper extends NamingPersistence {
     connection("GetNameStats") { db =>
       val gender = toGender(isBoy)
       val query = Namestat.filter(_.year === year).filter(_.gender === gender).sortBy(_.count.desc).take(limit)
-      db.run(query.result).map(rows => rows.map(r => NameStat(r.name, isBoyFromGender(r.gender), r.year, r.count)))
+
+      db.run(query.result).map(rows => rows.map(r =>
+        NameStat(capitaliseName(r.name), isBoyFromGender(r.gender), r.year, r.count)))
     }
   }
 
@@ -70,18 +72,20 @@ trait BabyNameWrapper extends NamingPersistence {
   def getNameStats(name: String, isBoy: Boolean) : Future[Seq[NameStat]] = {
     connection(s"GetNameStatsFor_$name") { db =>
       val gender = toGender(isBoy)
-      val query = Namestat.filter(_.name === name).filter(_.gender === gender)
-      db.run(query.result).map(rows => rows.map(r => NameStat(r.name, isBoyFromGender(r.gender), r.year, r.count)))
+      val query = Namestat.filter(_.name === name).filter(_.gender === gender).sortBy(_.year.desc)
+
+      db.run(query.result).map(rows =>
+        rows.map(r => NameStat(capitaliseName(r.name), isBoyFromGender(r.gender), r.year, r.count)))
     }
   }
 
-  /** Gets the top 10 baby names for the specified year */
-  def getTop10NameStatsByCountry(year: Int, isBoy: Boolean) : Future[Seq[NameStatByCountry]] = {
+  /** Gets the top 100 baby names for the specified year */
+  def getNameStatsByCountry(year: Int, isBoy: Boolean) : Future[Seq[NameStatByCountry]] = {
     connection("GetTop10NameStatsByCountry") { db =>
       val gender = toGender(isBoy)
-      val query = Namestatbycountry.filter(_.year === year).filter(_.gender === gender)
-      db.run(query.result)
-        .map(rows => rows.map(r => NameStatByCountry(r.name, isBoyFromGender(r.gender), r.year, r.country, r.count)))
+      val query = Namestatbycountry.filter(_.year === year).filter(_.gender === gender).sortBy(_.count.desc)
+      db.run(query.result).map(rows => rows.map(r =>
+        NameStatByCountry(capitaliseName(r.name), isBoyFromGender(r.gender), r.year, r.country, r.count)))
     }
   }
 
@@ -89,9 +93,9 @@ trait BabyNameWrapper extends NamingPersistence {
   def getNameStatsByCountry(name: String, isBoy: Boolean) : Future[Seq[NameStatByCountry]] = {
     connection(s"GetNameStatsByCountryFor_$name") { db =>
       val gender = toGender(isBoy)
-      val query = Namestatbycountry.filter(_.name === name).filter(_.gender === gender)
-      db.run(query.result)
-        .map(rows => rows.map(r => NameStatByCountry(r.name, isBoyFromGender(r.gender), r.year, r.country, r.count)))
+      val query = Namestatbycountry.filter(_.name === name).filter(_.gender === gender).sortBy(_.year.desc)
+      db.run(query.result).map(rows => rows.map(r =>
+        NameStatByCountry(capitaliseName(r.name), isBoyFromGender(r.gender), r.year, r.country, r.count)))
     }
   }
 
@@ -99,9 +103,9 @@ trait BabyNameWrapper extends NamingPersistence {
   def getTop10NameStatsByRegion(year: Int, isBoy: Boolean) : Future[Seq[NameStatByRegion]] = {
     connection("GetTop10NameStatsByRegion") { db =>
       val gender = toGender(isBoy)
-      val query = Namestatbyregion.filter(_.year === year).filter(_.gender === gender)
-      db.run(query.result)
-        .map(rows => rows.map(r => NameStatByRegion(r.name, isBoyFromGender(r.gender), r.year, r.region, r.count)))
+      val query = Namestatbyregion.filter(_.year === year).filter(_.gender === gender).sortBy(_.count.desc)
+      db.run(query.result).map(rows => rows.map(r =>
+        NameStatByRegion(capitaliseName(r.name), isBoyFromGender(r.gender), r.year, r.region, r.count)))
     }
   }
 
@@ -109,9 +113,9 @@ trait BabyNameWrapper extends NamingPersistence {
   def getNameStatsByRegion(name: String, isBoy: Boolean) : Future[Seq[NameStatByRegion]] = {
     connection(s"GetNameStatsByRegionFor_$name") { db =>
       val gender = toGender(isBoy)
-      val query = Namestatbyregion.filter(_.name === name).filter(_.gender === gender)
-      db.run(query.result)
-        .map(rows => rows.map(r => NameStatByRegion(r.name, isBoyFromGender(r.gender), r.year, r.region, r.count)))
+      val query = Namestatbyregion.filter(_.name === name).filter(_.gender === gender).sortBy(_.year.desc)
+      db.run(query.result).map(rows => rows.map(r =>
+        NameStatByRegion(capitaliseName(r.name), isBoyFromGender(r.gender), r.year, r.region, r.count)))
     }
   }
 
@@ -119,9 +123,9 @@ trait BabyNameWrapper extends NamingPersistence {
   def getTop10NameStatsByMonth(year: Int, isBoy: Boolean) : Future[Seq[NameStatByMonth]] = {
     connection("GetTop10NameStatsByMonth") { db =>
       val gender = toGender(isBoy)
-      val query = Namestatbymonth.filter(_.year === year).filter(_.gender === gender)
-      db.run(query.result)
-        .map(rows => rows.map(r => NameStatByMonth(r.name, isBoyFromGender(r.gender), r.year, r.month, r.count)))
+      val query = Namestatbymonth.filter(_.year === year).filter(_.gender === gender).sortBy(_.count.desc)
+      db.run(query.result).map(rows => rows.map(r =>
+        NameStatByMonth(capitaliseName(r.name), isBoyFromGender(r.gender), r.year, r.month, r.count)))
     }
   }
 
@@ -129,9 +133,9 @@ trait BabyNameWrapper extends NamingPersistence {
   def getNameStatsByMonth(name: String, isBoy: Boolean) : Future[Seq[NameStatByMonth]] = {
     connection(s"GetNameStatsByMonthFor_$name") { db =>
       val gender = toGender(isBoy)
-      val query = Namestatbymonth.filter(_.name === name).filter(_.gender === gender)
-      db.run(query.result)
-        .map(rows => rows.map(r => NameStatByMonth(r.name, isBoyFromGender(r.gender), r.year, r.month, r.count)))
+      val query = Namestatbymonth.filter(_.name === name).filter(_.gender === gender).sortBy(_.year.desc)
+      db.run(query.result).map(rows => rows.map(r =>
+        NameStatByMonth(capitaliseName(r.name), isBoyFromGender(r.gender), r.year, r.month, r.count)))
     }
   }
 
@@ -145,14 +149,19 @@ trait BabyNameWrapper extends NamingPersistence {
     }
   }
 
-  /** The years with data */
-  def getAvailableYears : Future[Seq[Int]] = {
-    connection("GetAvailableYears") { db =>
-      val query = Namestat.map(_.year).distinct.sortBy(_.desc)
-      db.run(query.result)
-    }
+  private def isBoyFromGender(gender: String) = {
+    "boys" == gender
   }
 
-  private def isBoyFromGender(gender: String) = "boys" == gender
-  private def toGender(isBoy: Boolean) = if (isBoy) "boys" else "girls"
+  private def toGender(isBoy: Boolean) = {
+    if (isBoy) "boys" else "girls"
+  }
+
+  private def capitaliseName(name: String) = {
+    if (name.length < 2) {
+      name
+    } else {
+      s"${name.charAt(0).toUpper}${name.substring(1).toLowerCase}"
+    }
+  }
 }

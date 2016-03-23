@@ -40,10 +40,7 @@ trait NamingServiceFrontEnd extends FrontEndDirectives {
     // The end points are gender-specific
     val genderMap = Map("boy" -> "boy", "girl" -> "girl")
 
-    path("namestats" / "meta" / "years") {
-      dynamic { routeFuture("nameStatsYears", getNamingService.getNameStatsYears) { r => complete(r) } }
-    } ~
-      path("namestats" / "meta" / "count") {
+    path("namestats" / "meta" / "count") {
         dynamic { routeFuture("nameStatsCount", getNamingService.getNameStatsCount) { r => complete(r) } }
       } ~
       path("namestats" / "data" / genderMap / "complete" / "name" / Segment) { (gender, name) =>

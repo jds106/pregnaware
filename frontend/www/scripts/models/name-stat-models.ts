@@ -4,6 +4,7 @@ module models {
         isBoy: boolean
         year: number
         count: number
+        percent: number
     }
 
     export interface NameStatByCountry extends NameStat {

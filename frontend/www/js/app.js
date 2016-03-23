@@ -193,9 +193,6 @@ var services;
         };
         /* --- Name stats --- */
         FrontEndService.prototype.toGender = function (isBoy) { return isBoy ? 'boy' : 'girl'; };
-        FrontEndService.prototype.getNameStatsYears = function () {
-            return this.$http.get(this.getUrl('namestats/meta/years'), this.getHeaders());
-        };
         FrontEndService.prototype.getNameStatsCount = function () {
             return this.$http.get(this.getUrl('namestats/meta/count'), this.getHeaders());
         };
@@ -684,20 +681,62 @@ var main;
                         this.$uibModalInstance = $uibModalInstance;
                         this.frontEndService = frontEndService;
                         this.$scope.isBoy = isBoy;
-                        this.frontEndService.getNameStatsYears().success(function (years) { return _this.$scope.availableYears = years; });
-                        this.frontEndService.getNameStatsCount().success(function (stats) { return _this.nameSummary = stats; });
+                        this.frontEndService.getNameStatsCount()
+                            .success(function (stats) {
+                            _this.nameSummary = stats;
+                            var years = [];
+                            stats.forEach(function (stat) {
+                                if (years.indexOf(stat.year) == -1)
+                                    years.push(stat.year);
+                            });
+                            _this.$scope.availableYears = years.sort(function (l, r) { return r - l; });
+                            _this.$scope.selectedYear = _this.$scope.availableYears[0];
+                            _this.yearSelected(_this.$scope.selectedYear, isBoy);
+                        });
                         this.$scope.selectYear = function (year) { return _this.yearSelected(year, isBoy); };
+                        this.$scope.babiesBornInYear = function (year) { return _this.babiesBornInYear(year, isBoy); };
+                        this.$scope.close = function () { return _this.$uibModalInstance.dismiss(); };
                     }
                     GeneralStatsController.prototype.yearSelected = function (year, isBoy) {
                         var _this = this;
+                        this.$scope.nameStatsByCountry = [];
+                        this.$scope.nameStatsByMonth = [];
+                        this.$scope.nameStatsByRegion = [];
+                        this.$scope.nameStats = [];
                         var forCountry = this.frontEndService.getNameStatsByCountryForYear(year, isBoy);
                         var forMonth = this.frontEndService.getNameStatsByMonthForYear(year, isBoy);
                         var forRegion = this.frontEndService.getNameStatsByRegionForYear(year, isBoy);
                         var forAll = this.frontEndService.getNameStatsCompleteForYear(year, isBoy);
-                        forCountry.success(function (results) { return _this.$scope.nameStatsByCountry = results; });
-                        forMonth.success(function (results) { return _this.$scope.nameStatsByMonth = results; });
-                        forRegion.success(function (results) { return _this.$scope.nameStatsByRegion = results; });
-                        forAll.success(function (results) { return _this.$scope.nameStats = results; });
+                        forCountry.success(function (results) {
+                            _this.addPercent(results, year, isBoy);
+                            _this.$scope.nameStatsByCountry = results;
+                        });
+                        forMonth.success(function (results) {
+                            _this.addPercent(results, year, isBoy);
+                            _this.$scope.nameStatsByMonth = results;
+                        });
+                        forRegion.success(function (results) {
+                            _this.addPercent(results, year, isBoy);
+                            _this.$scope.nameStatsByRegion = results;
+                        });
+                        forAll.success(function (results) {
+                            _this.addPercent(results, year, isBoy);
+                            _this.$scope.nameStats = results;
+                        });
+                    };
+                    GeneralStatsController.prototype.addPercent = function (stats, year, isBoy) {
+                        if (!this.nameSummary)
+                            return;
+                        var summary = this.nameSummary.filter(function (s) { return s.year == year && s.isBoy == isBoy; });
+                        if (summary.length == 0)
+                            return;
+                        stats.forEach(function (s) { return s.percent = 100 * s.count / summary[0].count; });
+                    };
+                    GeneralStatsController.prototype.babiesBornInYear = function (year, isBoy) {
+                        if (!this.nameSummary)
+                            return 0;
+                        var summary = this.nameSummary.filter(function (s) { return s.year == year && s.isBoy == isBoy; });
+                        return summary.length == 0 ? 0 : summary[0].count;
                     };
                     return GeneralStatsController;
                 })();
@@ -726,21 +765,85 @@ var main;
     var names;
     (function (names) {
         var stats;
-        (function (stats) {
+        (function (stats_2) {
             var specific;
             (function (specific) {
                 'use strict';
                 var SpecificStatsController = (function () {
-                    function SpecificStatsController($scope, isBoy, name, frontEndService) {
+                    function SpecificStatsController($scope, isBoy, name, $uibModalInstance, frontEndService) {
+                        var _this = this;
                         this.$scope = $scope;
+                        this.$uibModalInstance = $uibModalInstance;
                         this.frontEndService = frontEndService;
                         this.$scope.isBoy = isBoy;
                         this.$scope.name = name;
+                        this.$scope.orderedMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                        this.$scope.orderedRegions = [
+                            'North West', 'North East', 'South East', 'South West', 'East Midlands', 'West Midlands',
+                            'East', 'Wales', 'London', 'Yorkshire and The Humber'
+                        ];
+                        this.$scope.orderedCountries = ['England', 'Wales'];
+                        this.frontEndService.getNameStatsCount()
+                            .success(function (stats) {
+                            _this.nameSummary = stats;
+                        });
+                        this.frontEndService.getNameStatsCompleteForName(name, isBoy)
+                            .success(function (stats) {
+                            _this.addPercent(stats);
+                            _this.$scope.nameStats = stats;
+                            var years = [];
+                            stats.forEach(function (stat) {
+                                if (years.indexOf(stat.year) == -1)
+                                    years.push(stat.year);
+                            });
+                            _this.$scope.availableYears = years.sort(function (l, r) { return r - l; });
+                        });
+                        this.frontEndService.getNameStatsByCountryForName(name, isBoy)
+                            .success(function (stats) { return _this.$scope.nameStatsByCountry = stats; });
+                        this.frontEndService.getNameStatsByMonthForName(name, isBoy)
+                            .success(function (stats) { return _this.$scope.nameStatsByMonth = stats; });
+                        this.frontEndService.getNameStatsByRegionForName(name, isBoy)
+                            .success(function (stats) { return _this.$scope.nameStatsByRegion = stats; });
+                        this.$scope.getNameCountForYearMonth = function (year, month) { return _this.getNameCountForYearMonth(year, month); };
+                        this.$scope.getNameCountForYearRegion = function (year, region) { return _this.getNameCountForYearRegion(year, region); };
+                        this.$scope.getNameCountForYearCountry = function (year, country) { return _this.getNameCountForYearCountry(year, country); };
+                        this.$scope.floor = function (x) { return Math.floor(x); };
+                        this.$scope.close = function () { return _this.$uibModalInstance.dismiss(); };
                     }
+                    SpecificStatsController.prototype.addPercent = function (stats) {
+                        var _this = this;
+                        if (!this.nameSummary)
+                            return;
+                        stats.forEach(function (stat) {
+                            var summary = _this.nameSummary.filter(function (s) { return s.year == stat.year && s.isBoy == stat.isBoy; });
+                            if (summary.length == 0)
+                                stat.percent = 100;
+                            else
+                                stat.percent = 100 * stat.count / summary[0].count;
+                        });
+                    };
+                    SpecificStatsController.prototype.getNameCountForYearMonth = function (year, month) {
+                        if (!this.$scope.nameStatsByMonth)
+                            return NaN;
+                        var stat = this.$scope.nameStatsByMonth.filter(function (s) { return s.year == year && s.month == month; });
+                        return stat.length > 0 ? stat[0].count : NaN;
+                    };
+                    SpecificStatsController.prototype.getNameCountForYearRegion = function (year, region) {
+                        if (!this.$scope.nameStatsByRegion)
+                            return NaN;
+                        var stat = this.$scope.nameStatsByRegion.filter(function (s) { return s.year == year && s.region == region; });
+                        return stat.length > 0 ? stat[0].count : null;
+                    };
+                    SpecificStatsController.prototype.getNameCountForYearCountry = function (year, country) {
+                        if (!this.$scope.nameStatsByCountry)
+                            return NaN;
+                        var stat = this.$scope.nameStatsByCountry.filter(function (s) { return s.year == year && s.country == country; });
+                        return stat.length > 0 ? stat[0].count : NaN;
+                    };
                     return SpecificStatsController;
                 })();
                 specific.SpecificStatsController = SpecificStatsController;
-            })(specific = stats.specific || (stats.specific = {}));
+            })(specific = stats_2.specific || (stats_2.specific = {}));
         })(stats = names.stats || (names.stats = {}));
     })(names = main.names || (main.names = {}));
 })(main || (main = {}));

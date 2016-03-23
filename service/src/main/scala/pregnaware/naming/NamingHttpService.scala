@@ -86,19 +86,12 @@ abstract class NamingHttpService(persistence: NamingPersistence)
     }
   }
 
-  /* Meta data: The set of years for which data is available */
+  /* Meta data: The number of babies born in each year */
   def getNameMetaStats: Route = get {
-    pathPrefix("namestats" / "meta") {
-      path("years") {
-        routeFuture("getNameStatsYears", persistence.getAvailableYears) { years =>
-          complete(ResponseCodes.OK -> years)
-        }
-      } ~
-        path("count") {
-          routeFuture("getNameStatsCount", persistence.getNumBabies) { numBabies =>
-            complete(ResponseCodes.OK -> numBabies)
-          }
-        }
+    pathPrefix("namestats" / "meta" / "count") {
+      routeFuture("getNameStatsCount", persistence.getNumBabies) { numBabies =>
+        complete(ResponseCodes.OK -> numBabies)
+      }
     }
   }
 
@@ -123,7 +116,7 @@ abstract class NamingHttpService(persistence: NamingPersistence)
             }
           } ~
             path("summary" / IntNumber) { year =>
-              routeFuture("getNameStatsByCountry", persistence.getTop10NameStatsByCountry(year, isBoy)) { stats =>
+              routeFuture("getNameStatsByCountry", persistence.getNameStatsByCountry(year, isBoy)) { stats =>
                 complete(ResponseCodes.OK -> stats)
               }
             }

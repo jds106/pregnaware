@@ -28,10 +28,6 @@ abstract class NamingServiceBackend(namingServiceName: String) extends BackEndFu
     send(DELETE, s"names/$userId/$babyNameId").map (_ => ())
   }
 
-  def getNameStatsYears : Future[Seq[Int]] = {
-    send(GET, s"namestats/meta/years").map( r => r ~> unmarshal[Seq[Int]])
-  }
-
   def getNameStatsCount : Future[Seq[NameSummaryStat]] = {
     send(GET, s"namestats/meta/count").map( r => r ~> unmarshal[Seq[NameSummaryStat]])
   }
@@ -56,8 +52,8 @@ abstract class NamingServiceBackend(namingServiceName: String) extends BackEndFu
     send(GET, s"namestats/data/$gender/month/name/$name").map( r => r ~> unmarshal[Seq[NameStatByMonth]])
   }
 
-  def getNameStatsByMonth(year: Int, gender: String) : Future[Seq[NameStatByCountry]] = {
-    send(GET, s"namestats/data/$gender/month/summary/$year").map( r => r ~> unmarshal[Seq[NameStatByCountry]])
+  def getNameStatsByMonth(year: Int, gender: String) : Future[Seq[NameStatByMonth]] = {
+    send(GET, s"namestats/data/$gender/month/summary/$year").map( r => r ~> unmarshal[Seq[NameStatByMonth]])
   }
 
   def getNameStatsByRegion(name: String, gender: String) : Future[Seq[NameStatByRegion]] = {

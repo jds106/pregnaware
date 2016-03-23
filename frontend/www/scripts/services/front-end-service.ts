@@ -173,10 +173,6 @@ module services {
 
         private toGender(isBoy: boolean) { return isBoy ? 'boy' : 'girl'; }
 
-        public getNameStatsYears() : ng.IHttpPromise<number[]> {
-            return this.$http.get(this.getUrl('namestats/meta/years'), this.getHeaders())
-        }
-
         public getNameStatsCount() : ng.IHttpPromise<NameSummaryStat[]> {
             return this.$http.get(this.getUrl('namestats/meta/count'), this.getHeaders())
         }

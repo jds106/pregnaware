@@ -1,13 +1,137 @@
-<div class="container">
-  <h1>General stats - IsBoy: {{isBoy}}</h1>
+<div class="'modal-dialog">
+  <div class="modal-content">
+    <div class="modal-body">
 
+      <div class="row">
+        <a class="pull-right" style="margin-right: 10px" href ng-click="close()"><span
+            class="glyphicon glyphicon-remove"></span></a>
+      </div>
 
-  <div class="btn-group" uib-dropdown is-open="status.isopen">
-    <button id="single-button" type="button" class="btn btn-primary" uib-dropdown-toggle ng-disabled="disabled">
-      Select year <span class="caret"></span>
-    </button>
-    <ul uib-dropdown-menu role="menu">
-      <li role="menuitem" ng-repeat="year in availableYears"><a href ng-click="selectYear(year)">{{year}}</a></li>
-    </ul>
+      <div class="row">
+        <form class="form form-inline">
+          <div class="col-xs-4 text-center">
+            <select class="form-control text-center" style="width: 150px" ng-model="selectedYear"
+                    ng-options="year for year in availableYears"
+                    ng-change="selectYear(selectedYear)">
+            </select>
+          </div>
+          <div class="col-xs-4 text-center">
+            <select class="form-control" style="width: 150px;" ng-init="resultView = 'Summary'"
+                    ng-model="resultView"
+                    ng-options="view for view in ['Summary','By Month','By Region','England / Wales',]"></select>
+          </div>
+          <div class="col-xs-4 text-center">
+            <input type="text" readonly="true" class="form-control text-center"
+                   value="{{babiesBornInYear(selectedYear) | number}} babies">
+          </div>
+        </form>
+      </div>
+
+      <hr>
+
+      <div ng-show="selectedYear && resultView == 'Summary'" class="row">
+        <div ng-repeat="slice in [0,1,2,3]">
+          <div class="col-md-6">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th colspan="4" class="text-center">Names {{1+slice*25}} &raquo; {{slice*25+25}}</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="stat in nameStats.slice(slice*25,slice*25+25)">
+                <td>{{$index+1 + slice*25}}</td>
+                <td>{{stat.name}}</td>
+                <td>{{stat.count | number}}</td>
+                <td>{{stat.percent | number:1 }}%</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div ng-show="selectedYear && resultView == 'By Month'" class="row">
+        <div ng-repeat="monthVal in ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec']">
+          <div class="col-md-4">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th colspan="3" class="text-center">{{monthVal}}</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="stat in nameStatsByMonth | filter:{ month: monthVal }">
+                <td>{{$index+1}}</td>
+                <td>{{stat.name}}</td>
+                <td>{{stat.count | number}}</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div ng-show="selectedYear && resultView == 'By Region'" class="row">
+        <div
+            ng-repeat="regionVal in ['North West', 'North East', 'South East', 'South West', 'East Midlands', 'West Midlands', 'East', 'Wales', 'London', 'Yorkshire and The Humber']">
+          <div class="col-md-3">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th colspan="3" class="text-center">{{regionVal}}</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="stat in nameStatsByRegion | filter:{ region: regionVal }:true">
+                <td>{{$index+1}}</td>
+                <td>{{stat.name}}</td>
+                <td>{{stat.count | number}}</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div ng-show="selectedYear && resultView == 'England / Wales'" class="row">
+        <div ng-repeat="countryVal in ['England and Wales', 'England', 'Wales']">
+          <div class="col-md-4">
+            <table class="table table-striped">
+              <thead>
+              <tr>
+                <th colspan="3" class="text-center">{{countryVal}}</th>
+              </tr>
+              </thead>
+              <tbody>
+              <tr ng-repeat="stat in nameStatsByCountry | filter:{ country: countryVal }:true | limitTo:100">
+                <td>{{$index+1}}</td>
+                <td>{{stat.name}}</td>
+                <td>{{stat.count | number}}</td>
+              </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
+
+  <footer>
+    <div class="panel">
+      <div class="panel-body text-center">
+        <small>
+          <p>
+            This data is sourced from the
+            Office of National Statistics (<a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/livebirths/datasets/babynamesenglandandwalesbabynamesstatisticsgirls">Girls</a>,
+            <a href="https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/livebirths/datasets/babynamesenglandandwalesbabynamesstatisticsboys">Boys</a>), and covers England and Wales only.
+          </p>
+          <p>
+            Yearly data is released in August of the following year (e.g. 2015 will be available in August 2016).
+          </p>
+        </small>
+      </div>
+    </div>
+  </footer>
 </div>

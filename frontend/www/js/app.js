@@ -1,77 +1,29 @@
-var error;
-(function (error) {
-    'use strict';
-})(error || (error = {}));
-/// <reference path="../references.ts" />
-var error;
-(function (error) {
-    'use strict';
-    var ErrorController = (function () {
-        function ErrorController($scope, $location, routeService) {
-            var _this = this;
-            this.$scope = $scope;
-            this.$location = $location;
-            this.routeService = routeService;
-            this.$scope.loginPage = function () { return _this.routeService.loginPage(); };
-            this.$scope.errorDescription = decodeURI($location.search().description);
-            this.$scope.errorUri = decodeURI($location.search().uri);
-            this.$scope.errorMsg = decodeURI($location.search().msg);
-            var subject = "[ERROR] Pregnaware UI Failure";
-            var body = "\nDescription:\n" + this.$scope.errorDescription + "\n\nURI:\n" + this.$scope.errorUri + "\n\nDetail:\n" + this.$scope.errorMsg + "\n            ";
-            this.$scope.mailStr =
-                "mailto:support@pregnaware.co.uk?subject=" + encodeURI(subject) + "&body=" + encodeURI(body);
-        }
-        return ErrorController;
-    })();
-    error.ErrorController = ErrorController;
-})(error || (error = {}));
 /// <reference path="../references.ts" />
 var services;
 (function (services) {
     'use strict';
-    var RouteConfig = (function () {
-        function RouteConfig($routeProvider, $locationProvider) {
-            $routeProvider.when('/login', {
-                templateUrl: function () { return '/scripts/login/login.view.html'; },
-                controller: login.LoginController
-            });
-            $routeProvider.when('/main', {
-                templateUrl: '/scripts/main/main.view.html',
-                controller: main.MainController
-            });
-            $routeProvider.when('/error', {
-                templateUrl: '/scripts/error/error.view.html',
-                controller: error.ErrorController
-            });
-            $routeProvider.otherwise({
-                redirectTo: '/main'
-            });
-            // The server rewrites all URLs to point at the index.html, so enable HTML5 for pretty URLs
-            $locationProvider.html5Mode({ enabled: true });
-        }
-        return RouteConfig;
-    })();
-    services.RouteConfig = RouteConfig;
-    var RouteService = (function () {
-        function RouteService($location) {
+    var ErrorService = (function () {
+        function ErrorService($location) {
+            // The list of error handlers
+            this.errorListeners = [];
             this.$location = $location;
         }
-        RouteService.prototype.mainPage = function () {
-            this.$location.url('/main');
+        /** Allow clients to register for the error notification */
+        ErrorService.prototype.errorEvent = function (handler) {
+            this.errorListeners.push(handler);
         };
-        RouteService.prototype.loginPage = function () {
-            this.$location.url('/login');
+        /** Broadcast the error to all listeners */
+        ErrorService.prototype.raiseError = function (description, error) {
+            var _this = this;
+            this.errorListeners.forEach(function (h) { return h.onErrorSet(_this.$location.absUrl(), description, error); });
         };
-        RouteService.prototype.errorPage = function (description, error) {
-            var uri = encodeURI(this.$location.absUrl());
-            this.$location.url('/error')
-                .search('description', encodeURI(description))
-                .search('uri', uri)
-                .search('msg', encodeURI(error));
+        /** Clear the error event */
+        ErrorService.prototype.clearError = function () {
+            this.errorListeners.forEach(function (h) { return h.onErrorClear(); });
         };
-        return RouteService;
+        return ErrorService;
     })();
-    services.RouteService = RouteService;
+    services.ErrorService = ErrorService;
 })(services || (services = {}));
 /// <reference path="../references.ts" />
 var services;
@@ -90,26 +42,24 @@ var services;
     })();
     services.StatusCodeHandler = StatusCodeHandler;
     var FrontEndService = (function () {
-        function FrontEndService($http, $cookies, routeService, userService) {
+        function FrontEndService($http, $cookies, userService, errorService) {
             var _this = this;
             this.sessionIdKey = "sessionId";
             this.$http = $http;
             this.$cookies = $cookies;
             this.userService = userService;
-            this.routeService = routeService;
+            this.errorService = errorService;
             /** Optimistically fetch the user - tests to see if we are logged in */
             var headers = { headers: { "X-SessionId": this.$cookies.get(this.sessionIdKey) } };
             this.$http.get(this.getUrl('user'), headers)
-                .error(function (e) {
+                .error(function () {
                 _this.sessionId = null;
                 _this.$cookies.remove(_this.sessionIdKey);
                 _this.userService.User = null;
-                _this.routeService.loginPage();
             })
                 .success(function (user) {
                 _this.sessionId = _this.$cookies.get(_this.sessionIdKey);
                 _this.userService.User = user;
-                _this.routeService.mainPage();
             });
         }
         FrontEndService.prototype.getHeaders = function () {
@@ -125,22 +75,22 @@ var services;
         FrontEndService.prototype.login = function (email, password) {
             var _this = this;
             this.$http.post(this.getUrl('login'), { email: email, password: password }, {})
-                .error(function (error) { return _this.routeService.errorPage('Login failed', error); })
+                .error(function (error) { return _this.errorService.raiseError('Login failed', error); })
                 .success(function (sessionId) {
                 _this.sessionId = sessionId;
                 _this.$cookies.put(_this.sessionIdKey, sessionId);
                 _this.getUser()
-                    .error(function (error) { return _this.routeService.errorPage('Login [fetch user] failed', error); })
+                    .error(function (error) { return _this.errorService.raiseError('Login [fetch user] failed', error); })
                     .success(function (user) {
                     _this.userService.User = user;
-                    _this.routeService.mainPage();
                 });
             });
         };
         FrontEndService.prototype.logout = function () {
             this.sessionId = null;
             this.$cookies.remove(this.sessionIdKey);
-            this.routeService.loginPage();
+            this.userService.User = null;
+            this.userService.Friend = null;
         };
         /* ---- User ---- */
         FrontEndService.prototype.getUser = function () {
@@ -149,15 +99,15 @@ var services;
         FrontEndService.prototype.newUser = function (displayName, email, password) {
             var _this = this;
             this.$http.post(this.getUrl('user'), { displayName: displayName, email: email, password: password }, this.getHeaders())
-                .error(function (error) { return _this.routeService.errorPage('New user failed', error); })
+                .error(function (error) { return _this.errorService.raiseError('New user failed', error); })
                 .success(function (sessionId) {
                 _this.sessionId = sessionId;
                 _this.$cookies.put(_this.sessionIdKey, sessionId);
                 _this.getUser()
-                    .error(function (error) { return _this.routeService.errorPage('New user [fetch user] failed', error); })
+                    .error(function (error) { return _this.errorService.raiseError('New user [fetch user] failed', error); })
                     .success(function (user) {
                     _this.userService.User = user;
-                    _this.routeService.mainPage();
+                    //TODO this.routeService.mainPage();
                 });
             });
         };
@@ -250,6 +200,10 @@ var services;
                 handler(this.user);
         };
         Object.defineProperty(UserService.prototype, "User", {
+            /** Returns the current user */
+            get: function () {
+                return this.user;
+            },
             /** Update the current user (and broadcast to all listeners) */
             set: function (user) {
                 this.user = user;
@@ -265,6 +219,10 @@ var services;
                 handler(this.selectedFriend);
         };
         Object.defineProperty(UserService.prototype, "Friend", {
+            /** Returns the currently selected friend */
+            get: function () {
+                return this.selectedFriend;
+            },
             /** Update the current user (and broadcast to all listeners) */
             set: function (friend) {
                 this.selectedFriend = friend;
@@ -277,6 +235,83 @@ var services;
     })();
     services.UserService = UserService;
 })(services || (services = {}));
+/// <reference path="../references.ts" />
+var services;
+(function (services) {
+    'use strict';
+    var StateService = (function () {
+        function StateService(frontEndService, userService, errorService) {
+            var _this = this;
+            this.stateListeners = [];
+            this.currentState = {};
+            this.frontEndService = frontEndService;
+            userService.userSetEvent(function (user) {
+                _this.currentState = {};
+                if (user) {
+                    _this.frontEndService.getUserState()
+                        .error(function (error) { return errorService.raiseError('Could not fetch user state', error); })
+                        .success(function (response) {
+                        _this.currentState = JSON.parse(response);
+                        _this.stateListeners.forEach(function (h) { return h(_this.currentState); });
+                    });
+                }
+            });
+        }
+        /** Allow clients to register for the state-change notification */
+        StateService.prototype.stateChangedEvent = function (handler) {
+            this.stateListeners.push(handler);
+            if (this.currentState)
+                handler(this.currentState);
+        };
+        /** Broadcast the state change to all listeners, and persist */
+        StateService.prototype.changeState = function (stateChanger) {
+            var _this = this;
+            // Get the state changer to change the state
+            this.currentState = stateChanger(this.currentState);
+            // Publish the change
+            this.stateListeners.forEach(function (h) { return h(_this.currentState); });
+            // Store the state on the server
+            this.frontEndService.putUserState(this.currentState);
+        };
+        return StateService;
+    })();
+    services.StateService = StateService;
+})(services || (services = {}));
+var error;
+(function (error) {
+    'use strict';
+})(error || (error = {}));
+/// <reference path="../references.ts" />
+var error;
+(function (error_1) {
+    'use strict';
+    var ErrorController = (function () {
+        function ErrorController($scope, $location, errorService) {
+            // Clear the error when the user clicks "return to home"
+            $scope.clearError = function () { return errorService.clearError(); };
+            // Set and clear the error message
+            errorService.errorEvent({
+                onErrorClear: function () {
+                    $scope.errorDescription = null;
+                    $scope.errorUri = null;
+                    $scope.errorMsg = null;
+                    $scope.mailStr = null;
+                },
+                onErrorSet: function (url, description, error) {
+                    $scope.errorDescription = description;
+                    $scope.errorUri = url;
+                    $scope.errorMsg = error;
+                    var subject = "[ERROR] Pregnaware UI Failure";
+                    var body = "\nDescription:\n" + $scope.errorDescription + "\n\nURI:\n" + $scope.errorUri + "\n\nDetail:\n" + $scope.errorMsg + "\n            ";
+                    $scope.mailStr =
+                        "mailto:support@pregnaware.co.uk?subject=" + encodeURI(subject) + "&body=" + encodeURI(body);
+                }
+            });
+        }
+        return ErrorController;
+    })();
+    error_1.ErrorController = ErrorController;
+})(error || (error = {}));
 var login;
 (function (login) {
     'use strict';
@@ -384,13 +419,13 @@ var main;
     (function (account) {
         'use strict';
         var AccountController = (function () {
-            function AccountController($scope, $uibModalInstance, routeService, frontEndService, userService) {
+            function AccountController($scope, $uibModalInstance, frontEndService, userService, errorService) {
                 var _this = this;
                 this.$scope = $scope;
                 this.$uibModalInstance = $uibModalInstance;
-                this.routeService = routeService;
                 this.frontEndService = frontEndService;
                 this.userService = userService;
+                this.errorService = errorService;
                 this.$scope.newPassword = "";
                 this.$scope.confirmPassword = "";
                 this.$scope.passwordMatch = false;
@@ -400,11 +435,11 @@ var main;
                 // Handle the persistence of the changes
                 this.$scope.saveChanges =
                     function (newDisplayName, originalDisplayName, newEmail, originalEmail, newPassword) {
-                        AccountController.saveChanges(_this, newDisplayName, originalDisplayName, newEmail, originalEmail, newPassword);
+                        return _this.saveChanges(newDisplayName, originalDisplayName, newEmail, originalEmail, newPassword);
                     };
                 // Warn when the user's passwords do not match
-                this.$scope.$watch('password', function () { return AccountController.handlePasswordChange($scope); });
-                this.$scope.$watch('confirmPassword', function () { return AccountController.handlePasswordChange($scope); });
+                this.$scope.$watch('password', function () { return _this.handlePasswordChange(); });
+                this.$scope.$watch('confirmPassword', function () { return _this.handlePasswordChange(); });
                 // Detect changes to the user
                 this.userService.userSetEvent(function (user) {
                     if (user) {
@@ -421,25 +456,26 @@ var main;
                     }
                 });
             }
-            AccountController.handlePasswordChange = function (scope) {
-                if (scope.newPassword != "") {
-                    scope.passwordMatch = scope.newPassword == scope.confirmPassword;
-                    scope.passwordMismatch = scope.newPassword != scope.confirmPassword;
+            AccountController.prototype.handlePasswordChange = function () {
+                if (this.$scope.newPassword != "") {
+                    this.$scope.passwordMatch = this.$scope.newPassword == this.$scope.confirmPassword;
+                    this.$scope.passwordMismatch = this.$scope.newPassword != this.$scope.confirmPassword;
                 }
                 else {
-                    scope.passwordMatch = false;
-                    scope.passwordMismatch = false;
+                    this.$scope.passwordMatch = false;
+                    this.$scope.passwordMismatch = false;
                 }
             };
-            AccountController.saveChanges = function (self, newDisplayName, originalDisplayName, newEmail, originalEmail, newPassword) {
+            AccountController.prototype.saveChanges = function (newDisplayName, originalDisplayName, newEmail, originalEmail, newPassword) {
+                var _this = this;
                 var displayName = (newDisplayName != originalDisplayName) ? newDisplayName : null;
                 var email = (newEmail != originalEmail) ? newEmail : null;
                 var password = newPassword ? newPassword : null;
-                self.frontEndService.editUser(displayName, email, password)
-                    .error(function (error) { return self.routeService.errorPage("Failed to edit user", error); })
+                this.frontEndService.editUser(displayName, email, password)
+                    .error(function (error) { return _this.errorService.raiseError("Failed to edit user", error); })
                     .success(function (updatedUser) {
-                    self.userService.User = updatedUser;
-                    self.$uibModalInstance.close();
+                    _this.userService.User = updatedUser;
+                    _this.$uibModalInstance.close();
                 });
             };
             return AccountController;
@@ -578,12 +614,12 @@ var main;
     (function (progress) {
         'use strict';
         var ProgressController = (function () {
-            function ProgressController($scope, routeService, frontEndService, userService) {
+            function ProgressController($scope, frontEndService, userService, errorService) {
                 var _this = this;
                 this.$scope = $scope;
-                this.routeService = routeService;
                 this.frontEndService = frontEndService;
                 this.userService = userService;
+                this.errorService = errorService;
                 this.$scope.dueDatePickerOpen = false;
                 this.$scope.dueDate = Date.now();
                 this.$scope.updateDueDate = function (dueDate) { return _this.updateDueDate(dueDate); };
@@ -636,13 +672,13 @@ var main;
                     day: parsedDueDate.date()
                 };
                 this.frontEndService.putDueDate(asLocalDate)
-                    .error(function (error) { return _this.routeService.errorPage('Could not put due date', error); })
+                    .error(function (error) { return _this.errorService.raiseError('Could not put due date', error); })
                     .success(function (response) { return _this.$scope.progress = new progress.EnhancedProgressModel(response); });
             };
             ProgressController.prototype.changeDueDate = function () {
                 var _this = this;
                 this.frontEndService.deleteDueDate()
-                    .error(function (error) { return _this.routeService.errorPage('Could not put due date', error); })
+                    .error(function (error) { return _this.errorService.raiseError('Could not put due date', error); })
                     .success(function () { return _this.$scope.progress = null; });
             };
             return ProgressController;
@@ -862,13 +898,13 @@ var main;
     (function (names) {
         'use strict';
         var NamesController = (function () {
-            function NamesController($scope, $uibModal, routeService, frontEndService, userService) {
+            function NamesController($scope, $uibModal, frontEndService, userService, errorService) {
                 var _this = this;
                 this.$scope = $scope;
                 this.$uibModal = $uibModal;
-                this.routeService = routeService;
                 this.frontEndService = frontEndService;
                 this.userService = userService;
+                this.errorService = errorService;
                 this.$scope.addCurrentNameGirl = function (name) { return _this.addCurrentNameGirl(name); };
                 this.$scope.addCurrentNameBoy = function (name) { return _this.addCurrentNameBoy(name); };
                 this.$scope.deleteName = function (entry) { return _this.deleteName(entry); };
@@ -954,7 +990,7 @@ var main;
                 name = name.trim();
                 var suggestedForUserId = this.selectedFriend ? this.selectedFriend.userId : this.user.userId;
                 this.frontEndService.putName(name, false, suggestedForUserId)
-                    .error(function (error) { return _this.routeService.errorPage("Failed to add girl's name", error); })
+                    .error(function (error) { return _this.errorService.raiseError("Failed to add girl's name", error); })
                     .success(function (response) {
                     _this.$scope.girlsNames.push(response);
                     _this.user.babyNames.push(response);
@@ -966,7 +1002,7 @@ var main;
                 name = name.trim();
                 var suggestedForUserId = this.selectedFriend ? this.selectedFriend.userId : this.user.userId;
                 this.frontEndService.putName(name, true, suggestedForUserId)
-                    .error(function (error) { return _this.routeService.errorPage("Failed to add boy's name", error); })
+                    .error(function (error) { return _this.errorService.raiseError("Failed to add boy's name", error); })
                     .success(function (response) {
                     _this.$scope.boysNames.push(response);
                     _this.user.babyNames.push(response);
@@ -976,7 +1012,6 @@ var main;
             NamesController.prototype.deleteName = function (entry) {
                 var _this = this;
                 this.frontEndService.deleteName(entry.nameId)
-                    .error(function (error) { return _this.routeService.errorPage("Failed to remove name", error); })
                     .success(function (response) {
                     _this.user.babyNames = _this.user.babyNames.filter(function (e) { return e != entry; });
                     if (entry.isBoy) {
@@ -1007,31 +1042,46 @@ var main;
     (function (nav) {
         'use strict';
         var NavController = (function () {
-            function NavController($scope, $uibModal, $locale, routeService, frontEndService, userService) {
+            function NavController($scope, $uibModal, $locale, frontEndService, userService, stateService, errorService) {
                 var _this = this;
                 this.$scope = $scope;
-                this.$uibModal = $uibModal;
-                this.$locale = $locale;
-                this.routeService = routeService;
                 this.frontEndService = frontEndService;
                 this.userService = userService;
+                this.errorService = errorService;
                 this.userService.userSetEvent(function (user) { return _this.$scope.user = user; });
-                this.$scope.locale = this.$locale.id;
+                this.$scope.locale = $locale.id;
                 this.$scope.confirmFriendRequest = function (friend) { return _this.confirmFriendRequest(friend); };
                 this.$scope.ignoreFriendRequest = function (friend) { return _this.ignoreFriendRequest(friend); };
                 this.$scope.logout = function () {
-                    _this.userService.User = null;
-                    _this.userService.Friend = null;
                     _this.frontEndService.logout();
                 };
                 this.$scope.viewFriend = function (friend) {
-                    _this.userService.Friend = friend;
+                    console.log("Changing to friend", friend);
+                    stateService.changeState(function (s) { s.selectedUserId = friend.userId; return s; });
                 };
                 this.$scope.viewUser = function () {
-                    _this.userService.Friend = null;
+                    console.log("Changing to user");
+                    stateService.changeState(function (s) { s.selectedUserId = _this.userService.User.userId; return s; });
                 };
+                stateService.stateChangedEvent(function (state) {
+                    console.log("State changed", state);
+                    if (_this.userService.User) {
+                        if (state.selectedUserId == _this.userService.User.userId) {
+                            _this.userService.Friend = null;
+                        }
+                        else {
+                            for (var i = 0; i < _this.userService.User.friends.length; i++) {
+                                if (_this.userService.User.friends[i].userId == state.selectedUserId) {
+                                    _this.userService.Friend = _this.userService.User.friends[i];
+                                }
+                            }
+                        }
+                    }
+                });
+                this.$scope.isUserSelected = function () { return _this.userService.Friend == null; };
+                this.$scope.isFriendSelected = function (friend) { return _this.userService.Friend == friend; };
                 this.$scope.addFriend = function () {
-                    _this.$uibModal.open({
+                    $uibModal.open({
                         animation: true,
                         templateUrl: '/scripts/main/share/share.view.html',
                         controller: main.share.ShareController,
@@ -1041,7 +1091,7 @@ var main;
                 };
                 // Pop-up the account settings screen
                 this.$scope.updateAccountSettings = function () {
-                    _this.$uibModal.open({
+                    $uibModal.open({
                         animation: true,
                         templateUrl: '/scripts/main/account/account.view.html',
                         controller: main.account.AccountController,
@@ -1053,20 +1103,20 @@ var main;
             NavController.prototype.confirmFriendRequest = function (friend) {
                 var _this = this;
                 this.frontEndService.addFriend(friend.email)
-                    .error(function (e) { return _this.routeService.errorPage('Failed to confirm friend', e); })
+                    .error(function (error) { return _this.errorService.raiseError('Failed to confirm friend', error); })
                     .success(function () {
                     _this.frontEndService.getUser()
-                        .error(function (e) { return _this.routeService.errorPage('Failed to fetch user after friend confirmation', e); })
+                        .error(function (error) { return _this.errorService.raiseError('Failed to fetch user after friend confirmation', error); })
                         .success(function (user) { return _this.userService.User = user; });
                 });
             };
             NavController.prototype.ignoreFriendRequest = function (friend) {
                 var _this = this;
                 this.frontEndService.deleteFriend(friend.userId)
-                    .error(function (e) { return _this.routeService.errorPage('Failed to ignore friend', e); })
+                    .error(function (error) { return _this.errorService.raiseError('Failed to ignore friend', error); })
                     .success(function () {
                     _this.frontEndService.getUser()
-                        .error(function (e) { return _this.routeService.errorPage('Failed to fetch user after ignoring friend', e); })
+                        .error(function (error) { return _this.errorService.raiseError('Failed to fetch user after ignoring friend', error); })
                         .success(function (user) { return _this.userService.User = user; });
                 });
             };
@@ -1075,17 +1125,30 @@ var main;
         nav.NavController = NavController;
     })(nav = main.nav || (main.nav = {}));
 })(main || (main = {}));
+var main;
+(function (main) {
+    'use strict';
+})(main || (main = {}));
 /// <reference path="../references.ts" />
 var main;
 (function (main) {
     'use strict';
     var MainController = (function () {
-        function MainController() {
+        function MainController($scope, userService, errorService) {
+            $scope.isLoggedIn = false;
+            $scope.isError = false;
+            // Successfully fetching a user implies the logged-in state is true
+            userService.userSetEvent(function (user) { return $scope.isLoggedIn = (user != null); });
+            // Set and clear the error message
+            errorService.errorEvent({
+                onErrorSet: function (url, description, error) { return $scope.isError = true; },
+                onErrorClear: function () { return $scope.isError = false; }
+            });
         }
+        // Sub-components of the "Main" view
         MainController.navDirective = {
             name: 'navBar',
             controller: main.nav.NavController,
-            controllerAs: 'vm',
             scope: {},
             restrict: 'E',
             replace: true,
@@ -1094,7 +1157,6 @@ var main;
         MainController.progressDirective = {
             name: 'pregnancyProgress',
             controller: main.progress.ProgressController,
-            controllerAs: 'vm',
             scope: {},
             restrict: 'E',
             replace: true,
@@ -1103,16 +1165,35 @@ var main;
         MainController.namesDirective = {
             name: 'names',
             controller: main.names.NamesController,
-            controllerAs: 'vm',
             scope: {},
             restrict: 'E',
             replace: true,
             templateUrl: '/scripts/main/names/names.view.html'
         };
+        // Login
+        MainController.loginDirective = {
+            name: 'login',
+            controller: login.LoginController,
+            scope: {},
+            restrict: 'E',
+            replace: true,
+            templateUrl: '/scripts/login/login.view.html'
+        };
+        // Error
+        MainController.errorDirective = {
+            name: 'error',
+            controller: error.ErrorController,
+            scope: {},
+            restrict: 'E',
+            replace: true,
+            templateUrl: '/scripts/error/error.view.html'
+        };
         MainController.directives = [
             MainController.navDirective,
             MainController.progressDirective,
             MainController.namesDirective,
+            MainController.loginDirective,
+            MainController.errorDirective
         ];
         return MainController;
     })();
@@ -1124,11 +1205,12 @@ var main;
 /// <reference path="models/wrapped-friend.ts" />
 /// <reference path="models/wrapped-user.ts" />
 /// <reference path="models/name-stat-models.ts" />
-/// <reference path="error/error.model.ts" />
-/// <reference path="error/error.controller.ts" />
-/// <reference path="services/route-service.ts" />
+/// <reference path="services/error-service.ts" />
 /// <reference path="services/front-end-service.ts" />
 /// <reference path="services/user-service.ts" />
+/// <reference path="services/state-service.ts" />
+/// <reference path="error/error.model.ts" />
+/// <reference path="error/error.controller.ts" />
 /// <reference path="login/login.model.ts" />
 /// <reference path="login/login.controller.ts" />
 /// <reference path="main/share/share.model.ts" />
@@ -1145,18 +1227,60 @@ var main;
 /// <reference path="main/names/names.controller.ts" />
 /// <reference path="main/nav/nav.model.ts" />
 /// <reference path="main/nav/nav.controller.ts" />
+/// <reference path="main/main.model.ts" />
 /// <reference path="main/main.controller.ts" />
 /// <reference path="app.ts" /> 
 /// <reference path="references.ts" />
 var App;
 (function (App) {
-    var app = angular.module('pregnaware', ['ngRoute', 'ngCookies', 'ngAnimate', 'ui.bootstrap']);
+    var app = angular.module('pregnaware', ['ngCookies', 'ngAnimate', 'ui.bootstrap']);
+    app.service('errorService', services.ErrorService);
     app.service('frontEndService', services.FrontEndService);
-    app.service('routeService', services.RouteService);
     app.service('userService', services.UserService);
-    // Configure the application routes
-    app.config(services.RouteConfig);
+    app.service('stateService', services.StateService);
+    // The root directive to launch the app
+    app.directive('root', function () { return {
+        controller: main.MainController,
+        restrict: 'E',
+        replace: true,
+        templateUrl: '/scripts/main/main.view.html'
+    }; });
     // Add the directives required by the main view
     main.MainController.directives.forEach(function (d) { return app.directive(d.name, function () { return d; }); });
 })(App || (App = {}));
+///// <reference path="../references.ts" />
+//
+//module services {
+//    'use strict';
+//
+//    export class RouteConfig {
+//        constructor($locationProvider: ng.ILocationProvider) {
+//            // The server rewrites all URLs to point at the index.html, so enable HTML5 for pretty URLs
+//            $locationProvider.html5Mode({enabled: true});
+//        }
+//    }
+//
+//    export class RouteService {
+//        private $location: ng.ILocationService;
+//        constructor($location: ng.ILocationService) {
+//            this.$location = $location;
+//        }
+//
+//        public mainPage() {
+//            this.$location.url('/main');
+//        }
+//
+//        public loginPage() {
+//            this.$location.url('/login');
+//        }
+//
+//        public errorPage(description: string, error: string) {
+//            var uri = encodeURI(this.$location.absUrl());
+//            this.$location.url('/error')
+//                .search('description', encodeURI(description))
+//                .search('uri', uri)
+//                .search('msg', encodeURI(error));
+//        }
+//    }
+//} 
 //# sourceMappingURL=app.js.map

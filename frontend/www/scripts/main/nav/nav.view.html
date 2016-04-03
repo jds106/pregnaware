@@ -43,12 +43,14 @@
             <a href="#" class="dropdown-toggle" data-toggle="dropdown">
               <span class="glyphicon glyphicon-user"></span><span class="caret"></span></a>
             <ul class="dropdown-menu">
-              <li><a href ng-click="viewUser()">Me</a></li>
+              <li><a href ng-click="viewUser()">
+                <span ng-show="isUserSelected()" class="glyphicon glyphicon-asterisk"></span> Me</a></li>
               <li class="divider"></li>
 
               <!-- Shown when friends available -->
               <li ng-show="user.friends.length > 0" ng-repeat="friend in user.friends">
-                <a href ng-click="viewFriend(friend)">{{friend.displayName}}</a>
+                <a href ng-click="viewFriend(friend)">
+                  <span ng-show="isFriendSelected(friend)" class="glyphicon glyphicon-asterisk"></span> {{friend.displayName}}</a>
               </li>
 
               <!-- Shown if no friends -->

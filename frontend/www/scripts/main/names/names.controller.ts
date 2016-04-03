@@ -11,24 +11,24 @@ module main.names {
 
         private $scope:NamesModel;
         private $uibModal: ng.ui.bootstrap.IModalService;
-        private routeService: services.RouteService;
         private frontEndService:services.FrontEndService;
         private userService:services.UserService;
+        private errorService: services.ErrorService;
 
         private user:WrappedUser;
         private selectedFriend: WrappedFriend;
 
         constructor($scope:NamesModel,
                     $uibModal: ng.ui.bootstrap.IModalService,
-                    routeService: services.RouteService,
                     frontEndService:services.FrontEndService,
-                    userService:services.UserService) {
+                    userService:services.UserService,
+                    errorService: services.ErrorService) {
 
             this.$scope = $scope;
             this.$uibModal = $uibModal;
-            this.routeService = routeService;
             this.frontEndService = frontEndService;
             this.userService = userService;
+            this.errorService = errorService;
 
             this.$scope.addCurrentNameGirl = (name: string) => this.addCurrentNameGirl(name);
             this.$scope.addCurrentNameBoy = (name: string) => this.addCurrentNameBoy(name);
@@ -126,7 +126,7 @@ module main.names {
 
             var suggestedForUserId:number = this.selectedFriend ? this.selectedFriend.userId : this.user.userId;
             this.frontEndService.putName(name, false, suggestedForUserId)
-                .error(error => this.routeService.errorPage("Failed to add girl's name", error))
+                .error(error => this.errorService.raiseError("Failed to add girl's name", error))
                 .success((response:WrappedBabyName) => {
                     this.$scope.girlsNames.push(response);
                     this.user.babyNames.push(response);
@@ -139,7 +139,7 @@ module main.names {
 
             var suggestedForUserId:number = this.selectedFriend ? this.selectedFriend.userId : this.user.userId;
             this.frontEndService.putName(name, true, suggestedForUserId)
-                .error(error => this.routeService.errorPage("Failed to add boy's name", error))
+                .error(error => this.errorService.raiseError("Failed to add boy's name", error))
                 .success((response:WrappedBabyName) => {
                     this.$scope.boysNames.push(response);
                     this.user.babyNames.push(response);
@@ -149,7 +149,7 @@ module main.names {
 
         private deleteName(entry:WrappedBabyName) {
             this.frontEndService.deleteName(entry.nameId)
-                .error(error => this.routeService.errorPage("Failed to remove name", error))
+                //TODO .error(error => this.routeService.errorPage("Failed to remove name", error))
                 .success(response => {
                     this.user.babyNames = this.user.babyNames.filter(e => e != entry);
 

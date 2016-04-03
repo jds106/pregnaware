@@ -8,6 +8,6 @@ module error {
 
         mailStr: string
 
-        loginPage: () => void
+        clearError: () => void
     }
 }

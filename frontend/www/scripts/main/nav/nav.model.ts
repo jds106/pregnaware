@@ -33,5 +33,9 @@ module main.nav {
 
         /* Ignore a friend request */
         ignoreFriendRequest: (friend: WrappedFriend) => void;
+
+        /* Support marking the currently selected user in the template */
+        isUserSelected: () => boolean;
+        isFriendSelected: (friend: WrappedFriend) => boolean;
     }
 }

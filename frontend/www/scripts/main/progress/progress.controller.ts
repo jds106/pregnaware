@@ -11,21 +11,21 @@ module main.progress {
 
     export class ProgressController {
         private $scope:ProgressModel;
-        private routeService: services.RouteService;
         private frontEndService:services.FrontEndService;
         private userService:services.UserService;
+        private errorService: services.ErrorService;
 
         private user:WrappedUser;
 
         constructor($scope:ProgressModel,
-                    routeService: services.RouteService,
                     frontEndService:services.FrontEndService,
-                    userService:services.UserService) {
+                    userService:services.UserService,
+                    errorService: services.ErrorService) {
 
             this.$scope = $scope;
-            this.routeService = routeService;
             this.frontEndService = frontEndService;
             this.userService = userService;
+            this.errorService = errorService;
 
             this.$scope.dueDatePickerOpen = false;
             this.$scope.dueDate = Date.now();
@@ -83,13 +83,13 @@ module main.progress {
             };
 
             this.frontEndService.putDueDate(asLocalDate)
-                .error(error => this.routeService.errorPage('Could not put due date', error))
+                .error((error) => this.errorService.raiseError('Could not put due date', error))
                 .success((response:LocalDate) => this.$scope.progress = new EnhancedProgressModel(response));
         }
 
         private changeDueDate() {
             this.frontEndService.deleteDueDate()
-                .error(error => this.routeService.errorPage('Could not put due date', error))
+                .error((error) => this.errorService.raiseError('Could not put due date', error))
                 .success(() => this.$scope.progress = null);
         }
     }

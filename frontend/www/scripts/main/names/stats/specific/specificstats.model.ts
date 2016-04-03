@@ -3,6 +3,11 @@
 module main.names.stats.specific {
     'use strict';
 
+    import NameStat = models.NameStat;
+    import NameStatByCountry = models.NameStatByCountry;
+    import NameStatByMonth = models.NameStatByMonth;
+    import NameStatByRegion = models.NameStatByRegion;
+
     export interface SpecificStatsModel extends ng.IScope {
         name: string
         isBoy: boolean

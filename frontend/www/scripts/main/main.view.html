@@ -1,5 +1,17 @@
 <div>
-  <nav-bar></nav-bar>
-  <pregnancy-progress></pregnancy-progress>
-  <names></names>
+  <div ng-hide="isError">
+    <div ng-hide="isLoggedIn">
+      <login></login>
+    </div>
+
+    <div ng-show="isLoggedIn">
+      <nav-bar></nav-bar>
+      <pregnancy-progress></pregnancy-progress>
+      <names></names>
+    </div>
+  </div>
+
+  <div ng-show="isError">
+    <error></error>
+  </div>
 </div>

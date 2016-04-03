@@ -154,10 +154,14 @@ trait UserServiceFrontEnd extends FrontEndDirectives {
 
   /** state -> () */
   def putUserState: Route = put {
+    def payLoadStr = extract(_.request.entity)
+
     path("user" / "state") {
-      entity(as[String]) { state =>
-        getUserId("putUserState") { userId =>
-          completeFuture("putUserState", getUserService.petUserState(userId, state))
+      getUserId("putUserState") { userId =>
+        logger.info(s"Found user: $userId - loading payload...")
+        payLoadStr { state =>
+          logger.info(s"Found user: $userId - loaded payload: $state")
+          completeFuture("putUserState", getUserService.putUserState(userId, state))
         }
       }
     }

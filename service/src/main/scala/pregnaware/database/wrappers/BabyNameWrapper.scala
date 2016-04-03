@@ -16,7 +16,9 @@ trait BabyNameWrapper extends NamingPersistence {
   /** The list of current baby names */
   def getNames(userId : Int) : Future[Seq[WrappedBabyName]] = {
     connection("GetBabyNames") { db =>
-      val joinQuery = (Babyname join User).on(_.suggestedby === _.id).filter{ case (b, u) => b.userid === userId }
+      val joinQuery =
+        (Babyname join User).on(_.suggestedby === _.id)
+        .filter{ case (b, u) => b.userid === userId }
 
       db.run(joinQuery.result).map { results =>
         results.map {

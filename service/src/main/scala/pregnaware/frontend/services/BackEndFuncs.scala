@@ -23,6 +23,14 @@ abstract class BackEndFuncs(serviceName: String) extends ExecutionActorWrapper {
     requestPath: String,
     buildRequest: (RequestBuilder, Uri) => HttpRequest): Future[HttpResponse] = {
 
+    send(requestPath, uri => buildRequest(new RequestBuilder(method), uri))
+  }
+
+  /* Sends the content request to the server (supporting specific HTTP Request construction) */
+  def send[T](
+    requestPath: String,
+    buildRequest: (Uri) => HttpRequest): Future[HttpResponse] = {
+
     getAddress(serviceName).flatMap { address =>
       val requestUri = Uri(
         scheme = "http",
@@ -30,7 +38,7 @@ abstract class BackEndFuncs(serviceName: String) extends ExecutionActorWrapper {
         path = Path(s"/$serviceName/$requestPath")
       )
 
-      buildRequest(new RequestBuilder(method), requestUri) ~> sendReceive
+      buildRequest(requestUri) ~> sendReceive
     }
   }
 }

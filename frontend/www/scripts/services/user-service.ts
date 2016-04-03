@@ -47,5 +47,15 @@ module services {
             this.selectedFriend = friend;
             this.selectedFriendListeners.forEach(h => h(friend));
         }
+
+        /** Returns the current user */
+        public get User(): WrappedUser {
+            return this.user;
+        }
+
+        /** Returns the currently selected friend */
+        public get Friend(): WrappedFriend {
+            return this.selectedFriend;
+        }
     }
 }

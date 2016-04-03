@@ -146,8 +146,11 @@ abstract class UserHttpService(persistence: UserPersistence)
   }
 
   def putUserState: Route = put {
+    def payLoadStr = extract(_.request.entity.asString)
+
     path("user" / IntNumber / "state") { userId =>
-      entity(as[String]) { state =>
+      payLoadStr { state =>
+        logger.info(s"Back-end - storing payload: $state")
         completeFuture("putUserState", persistence.setUserState(userId, state))
       }
     }

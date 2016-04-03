@@ -10,7 +10,6 @@ module login {
         private frontEndService: services.FrontEndService;
 
         constructor($scope: LoginScope, $location: ng.ILocationService, frontEndService: services.FrontEndService) {
-
             this.$scope = $scope;
             this.$location = $location;
             this.frontEndService = frontEndService;

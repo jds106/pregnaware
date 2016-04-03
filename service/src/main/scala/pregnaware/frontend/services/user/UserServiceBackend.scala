@@ -7,6 +7,7 @@ import akka.util.Timeout
 import pregnaware.frontend.services.BackEndFuncs
 import pregnaware.user.entities._
 import pregnaware.utils.Json4sSupport._
+import spray.http.{HttpRequest, HttpEntity}
 import spray.http.HttpMethods._
 import spray.httpx.ResponseTransformation._
 
@@ -57,8 +58,8 @@ abstract class UserServiceBackend(userServiceName: String) extends BackEndFuncs(
     send(GET, s"user/$userId/state").map(r => r ~> unmarshal[String])
   }
 
-  def petUserState(userId: Int, state: String) : Future[Unit] = {
-    send(PUT, s"user/$userId/state", (b,u) => b(u, state)).map(_ => ())
+  def putUserState(userId: Int, state: HttpEntity) : Future[Unit] = {
+    send(PUT, s"user/$userId/state", (b,u) => HttpRequest(PUT, u, entity = state)).map(_ => ())
   }
 }
 

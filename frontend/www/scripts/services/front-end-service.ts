@@ -1,6 +1,5 @@
 /// <reference path="../references.ts" />
 module services {
-
     'use strict';
 
     import WrappedUser = models.WrappedUser;
@@ -28,8 +27,8 @@ module services {
     export class FrontEndService {
         private $http : ng.IHttpService;
         private $cookies : ng.cookies.ICookiesService;
-        private routeService: RouteService;
         private userService: UserService;
+        private errorService: ErrorService;
 
         private sessionId: string;
 
@@ -38,29 +37,27 @@ module services {
         constructor(
             $http: ng.IHttpService,
             $cookies:ng.cookies.ICookiesService,
-            routeService: RouteService,
-            userService: UserService) {
+            userService: UserService,
+            errorService: ErrorService) {
 
             this.$http = $http;
             this.$cookies = $cookies;
             this.userService = userService;
-            this.routeService = routeService;
+            this.errorService = errorService;
 
             /** Optimistically fetch the user - tests to see if we are logged in */
             let headers =
                 <ng.IRequestShortcutConfig>{ headers: { "X-SessionId" : this.$cookies.get(this.sessionIdKey) } };
 
             this.$http.get(this.getUrl('user'), headers)
-                .error((e) => {
+                .error(() => {
                     this.sessionId = null;
                     this.$cookies.remove(this.sessionIdKey);
                     this.userService.User = null;
-                    this.routeService.loginPage();
                 })
                 .success((user: WrappedUser) => {
                     this.sessionId = this.$cookies.get(this.sessionIdKey);
                     this.userService.User = user;
-                    this.routeService.mainPage();
                 })
         }
 
@@ -81,15 +78,14 @@ module services {
 
         public login(email: string, password: string) {
             this.$http.post(this.getUrl('login'), { email: email, password: password }, { })
-                .error(error => this.routeService.errorPage('Login failed', error))
+                .error(error => this.errorService.raiseError('Login failed', error))
                 .success((sessionId: string) => {
                     this.sessionId = sessionId;
                     this.$cookies.put(this.sessionIdKey, sessionId);
                     this.getUser()
-                        .error(error => this.routeService.errorPage('Login [fetch user] failed', error))
+                        .error(error => this.errorService.raiseError('Login [fetch user] failed', error))
                         .success((user: WrappedUser) => {
                             this.userService.User = user;
-                            this.routeService.mainPage();
                         })
                 });
         }
@@ -97,7 +93,8 @@ module services {
         public logout() {
             this.sessionId = null;
             this.$cookies.remove(this.sessionIdKey);
-            this.routeService.loginPage();
+            this.userService.User = null;
+            this.userService.Friend = null;
         }
 
         /* ---- User ---- */
@@ -109,15 +106,15 @@ module services {
         public newUser(displayName: string, email: string, password: string) {
             this.$http.post(
                 this.getUrl('user'), { displayName: displayName, email: email, password: password}, this.getHeaders())
-                .error(error => this.routeService.errorPage('New user failed', error))
+                .error(error => this.errorService.raiseError('New user failed', error))
                 .success((sessionId: string) => {
                     this.sessionId = sessionId;
                     this.$cookies.put(this.sessionIdKey, sessionId);
                     this.getUser()
-                        .error(error => this.routeService.errorPage('New user [fetch user] failed', error))
+                        .error(error => this.errorService.raiseError('New user [fetch user] failed', error))
                         .success((user: WrappedUser) => {
                             this.userService.User = user;
-                            this.routeService.mainPage();
+                            //TODO this.routeService.mainPage();
                         })
                 });
         }
@@ -165,7 +162,7 @@ module services {
             return this.$http.get(this.getUrl('user/state'), this.getHeaders())
         }
 
-        public putUserState(state: string) : ng.IHttpPromise<any> {
+        public putUserState(state: State) : ng.IHttpPromise<any> {
             return this.$http.put(this.getUrl('user/state'), state, this.getHeaders())
         }
 

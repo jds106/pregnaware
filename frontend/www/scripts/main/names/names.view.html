@@ -34,7 +34,7 @@
 
               <table class="table table-striped">
                 <tbody>
-                <tr ng-repeat="entry in girlsNames">
+                <tr ng-repeat="entry in girlsNames | orderBy:'name'">
                   <th class="text-center">{{entry.name}}</th>
                   <td class="text-center">
                     <small><em>{{entry.suggestedByName}}</em></small>
@@ -77,7 +77,7 @@
 
               <table class="table table-striped">
                 <tbody>
-                <tr ng-repeat="entry in boysNames">
+                <tr ng-repeat="entry in boysNames | orderBy:'name'">
                   <th class="text-center">{{entry.name}}</th>
                   <td class="text-center">
                     <small><em>{{entry.suggestedByName}}</em></small>

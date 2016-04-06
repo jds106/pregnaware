@@ -37,6 +37,9 @@
                 <tr ng-repeat="entry in girlsNames | orderBy:'name'">
                   <th class="text-center">{{entry.name}}</th>
                   <td class="text-center">
+                    <span ng-show="isNew(entry)" class="label label-danger"><small><em>NEW!</em></small></span>
+                  </td>
+                  <td class="text-center">
                     <small><em>{{entry.suggestedByName}}</em></small>
                   </td>
                   <td class="text-center">

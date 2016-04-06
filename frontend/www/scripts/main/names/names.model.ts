@@ -27,5 +27,7 @@ module main.names {
         showSpecificNameStats: (name: string, isBoy: boolean) => void
 
         isNameInvalid: (string) => boolean
+
+        isNew: (entry: WrappedBabyName) => boolean
     }
 }

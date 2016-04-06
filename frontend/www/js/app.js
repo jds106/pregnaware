@@ -909,6 +909,15 @@ var main;
                 this.$scope.addCurrentNameBoy = function (name) { return _this.addCurrentNameBoy(name); };
                 this.$scope.deleteName = function (entry) { return _this.deleteName(entry); };
                 this.$scope.isNameInvalid = function (name) { return _this.isNameInvalid(name); };
+                // A name is "new" if it was suggested in the last 3 days
+                this.$scope.isNew = function (entry) {
+                    var suggestedDate = moment({
+                        year: entry.suggestedDate.year,
+                        month: (entry.suggestedDate.month - 1),
+                        date: entry.suggestedDate.day,
+                    });
+                    return moment.utc().valueOf() - suggestedDate.valueOf() < 3 * 24 * 60 * 60 * 1000;
+                };
                 this.userService.userSetEvent(function (user) {
                     _this.user = user;
                     if (user) {
@@ -1248,39 +1257,4 @@ var App;
     // Add the directives required by the main view
     main.MainController.directives.forEach(function (d) { return app.directive(d.name, function () { return d; }); });
 })(App || (App = {}));
-///// <reference path="../references.ts" />
-//
-//module services {
-//    'use strict';
-//
-//    export class RouteConfig {
-//        constructor($locationProvider: ng.ILocationProvider) {
-//            // The server rewrites all URLs to point at the index.html, so enable HTML5 for pretty URLs
-//            $locationProvider.html5Mode({enabled: true});
-//        }
-//    }
-//
-//    export class RouteService {
-//        private $location: ng.ILocationService;
-//        constructor($location: ng.ILocationService) {
-//            this.$location = $location;
-//        }
-//
-//        public mainPage() {
-//            this.$location.url('/main');
-//        }
-//
-//        public loginPage() {
-//            this.$location.url('/login');
-//        }
-//
-//        public errorPage(description: string, error: string) {
-//            var uri = encodeURI(this.$location.absUrl());
-//            this.$location.url('/error')
-//                .search('description', encodeURI(description))
-//                .search('uri', uri)
-//                .search('msg', encodeURI(error));
-//        }
-//    }
-//} 
 //# sourceMappingURL=app.js.map

@@ -6,6 +6,7 @@ module main.names {
     import WrappedUser = models.WrappedUser;
     import WrappedFriend = models.WrappedFriend;
     import WrappedBabyName = models.WrappedBabyName;
+    import MomentInput = moment.MomentInput;
 
     export class NamesController {
 
@@ -35,6 +36,17 @@ module main.names {
             this.$scope.deleteName = (entry: WrappedBabyName) => this.deleteName(entry);
 
             this.$scope.isNameInvalid = (name) => this.isNameInvalid(name);
+
+            // A name is "new" if it was suggested in the last 3 days
+            this.$scope.isNew = (entry: WrappedBabyName) => {
+                var suggestedDate = moment(<MomentInput>{
+                    year: entry.suggestedDate.year,
+                    month: (entry.suggestedDate.month - 1), // Moment months are zero-indexed
+                    date: entry.suggestedDate.day,
+                });
+
+                return moment.utc().valueOf() - suggestedDate.valueOf() < 3 * 24 * 60 * 60 * 1000;
+            };
 
             this.userService.userSetEvent(user => {
                 this.user = user;

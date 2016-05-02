@@ -501,11 +501,6 @@ var main;
                 var today = moment().startOf('day');
                 this.daysPassed = today.diff(conceptionDate, 'days');
                 this.daysRemaining = this.dueDate.diff(today, 'days');
-                console.log("Due date:", this.dueDate.toISOString());
-                console.log("Today:", today.toISOString());
-                console.log("Conception:", conceptionDate.toISOString());
-                console.log("daysPassed:", this.daysPassed);
-                console.log("daysRemaining:", this.daysRemaining);
             }
             Object.defineProperty(EnhancedProgressModel.prototype, "progress", {
                 get: function () {

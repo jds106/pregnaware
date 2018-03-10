@@ -13,8 +13,8 @@ import namestatsparsers.completelistparser as completelistparser
 # Writes the files to the database
 def save_to_database(df: pd.DataFrame, table_name: str):
     con = mysql.connector.connect(
-            host='pregnawaredb.c9wpah0k0cxu.eu-west-1.rds.amazonaws.com',
-            database='Pregnaware',
+            host='ec2-34-245-208-245.eu-west-1.compute.amazonaws.com',
+            database='pregnaware',
             user='pregnaware',
             password=os.environ['DB_PREGNAWARE_PWD'])
 
@@ -68,25 +68,26 @@ def parse(filepath: str, filename: str):
         elif key not in ['Contents', 'Metadata', 'Terms and Conditions', 'Related Publications']:
             print('Unknown table: {0}'.format(key))
 
-    # if key_top_100_ew:
-    #     results = countryparser.parse(year, gender, 'England and Wales', df_dict[key_top_100_ew])
-    #     save_to_database(results, 'NameStatByCountry')
-    #
-    # if key_top_100_e:
-    #     results = countryparser.parse(year, gender, 'England', df_dict[key_top_100_e])
-    #     save_to_database(results, 'NameStatByCountry')
-    #
-    # if key_top_100_w:
-    #     results = countryparser.parse(year, gender, 'Wales', df_dict[key_top_100_w])
-    #     save_to_database(results, 'NameStatByCountry')
-    #
-    # if key_top_10_region:
-    #     results = regionparser.parse(year, gender, df_dict[key_top_10_region])
-    #     save_to_database(results, 'NameStatByRegion')
-    #
-    # if key_top_10_month:
-    #     results = monthparser.parse(year, gender, df_dict[key_top_10_month])
-    #     save_to_database(results, 'NameStatByMonth')
+    if key_top_100_ew:
+        results = countryparser.parse(year, gender, 'England and Wales', df_dict[key_top_100_ew])
+        save_to_database(results, 'NameStatByCountry')
+
+    if key_top_100_e:
+        results = countryparser.parse(year, gender, 'England', df_dict[key_top_100_e])
+        save_to_database(results, 'NameStatByCountry')
+
+    if key_top_100_w:
+        results = countryparser.parse(year, gender, 'Wales', df_dict[key_top_100_w])
+        save_to_database(results, 'NameStatByCountry')
+
+    if key_top_10_region:
+        results = regionparser.parse(year, gender, df_dict[key_top_10_region])
+        save_to_database(results, 'NameStatByRegion')
+
+    if key_top_10_month:
+        results = monthparser.parse(year, gender, df_dict[key_top_10_month])
+        # print(results)
+        save_to_database(results, 'NameStatByMonth')
 
     if key_full:
         results = completelistparser.parse(year, gender, df_dict[key_full])

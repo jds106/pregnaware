@@ -496,9 +496,9 @@ var main;
                 this.daysInTrimester2 = 14 * 7;
                 this.daysInTrimester3 = 12 * 7;
                 // Note handling of zero-index months
-                this.dueDate = moment().year(dueDate.year).month(dueDate.month - 1).date(dueDate.day);
+                this.dueDate = moment().startOf('day').year(dueDate.year).month(dueDate.month - 1).date(dueDate.day);
                 var conceptionDate = this.dueDate.clone().subtract(this.gestationPeriod);
-                var today = moment();
+                var today = moment().startOf('day');
                 this.daysPassed = today.diff(conceptionDate, 'days');
                 this.daysRemaining = this.dueDate.diff(today, 'days');
             }
@@ -513,8 +513,8 @@ var main;
             });
             Object.defineProperty(EnhancedProgressModel.prototype, "remaining", {
                 get: function () {
-                    var weeks = Math.ceil(this.daysRemaining / 7);
-                    var days = (this.daysRemaining + 1) % 7;
+                    var weeks = Math.floor(this.daysRemaining / 7);
+                    var days = (this.daysRemaining) % 7;
                     return weeks + "w " + days + "d";
                 },
                 enumerable: true,

@@ -1,1 +1,1 @@
-ssh -i ~/Dropbox/Amazon/Pregnaware2.pem ec2-user@ec2-34-245-156-241.eu-west-1.compute.amazonaws.com
+ssh -i ~/Dropbox/Amazon/Pregnaware.pem ubuntu@ec2-34-245-208-245.eu-west-1.compute.amazonaws.com

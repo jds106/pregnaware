@@ -14,6 +14,10 @@ if [ ! -e $DIST_DIR_VERSION/scripts ]; then
     mkdir -p $DIST_DIR_VERSION/scripts
 fi
 
+echo "Stopping MYSQL server..."
+sudo service mysql stop
+echo "MYSQL Server stopped"
+
 # Build
 cd $BUILD_DIR/service
 sbt assembly
@@ -35,6 +39,10 @@ if [ ! -e $DIST_DIR/etc/consul ]; then
 fi
 
 cp -r $BUILD_DIR/etc/consul $DIST_DIR/etc/
+
+echo "Restarting MYSQL server..."
+sudo service mysql start
+echo "MYSQL Server started"
 
 echo
 echo "######################"

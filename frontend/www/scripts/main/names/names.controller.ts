@@ -45,7 +45,7 @@ module main.names {
                     date: entry.suggestedDate.day,
                 });
 
-                return moment.utc().valueOf() - suggestedDate.valueOf() < 3 * 24 * 60 * 60 * 1000;
+                return moment.utc().valueOf() - suggestedDate.valueOf() < 1 * 24 * 60 * 60 * 1000;
             };
 
             this.userService.userSetEvent(user => {

@@ -2,7 +2,7 @@
 var services;
 (function (services) {
     'use strict';
-    var ErrorService = (function () {
+    var ErrorService = /** @class */ (function () {
         function ErrorService($location) {
             // The list of error handlers
             this.errorListeners = [];
@@ -22,7 +22,7 @@ var services;
             this.errorListeners.forEach(function (h) { return h.onErrorClear(); });
         };
         return ErrorService;
-    })();
+    }());
     services.ErrorService = ErrorService;
 })(services || (services = {}));
 /// <reference path="../references.ts" />
@@ -30,7 +30,7 @@ var services;
 (function (services) {
     'use strict';
     // These are the ONLY status codes returned by the app
-    var StatusCodeHandler = (function () {
+    var StatusCodeHandler = /** @class */ (function () {
         function StatusCodeHandler() {
             this.OK = 200;
             this.BadRequest = 400;
@@ -39,9 +39,9 @@ var services;
             this.ServiceUnavailable = 503;
         }
         return StatusCodeHandler;
-    })();
+    }());
     services.StatusCodeHandler = StatusCodeHandler;
-    var FrontEndService = (function () {
+    var FrontEndService = /** @class */ (function () {
         function FrontEndService($http, $cookies, userService, errorService) {
             var _this = this;
             this.sessionIdKey = "sessionId";
@@ -179,14 +179,14 @@ var services;
             return this.$http.get(this.getUrl("namestats/data/" + gender + "/region/summary/" + year), this.getHeaders());
         };
         return FrontEndService;
-    })();
+    }());
     services.FrontEndService = FrontEndService;
 })(services || (services = {}));
 /// <reference path="../references.ts" />
 var services;
 (function (services) {
     'use strict';
-    var UserService = (function () {
+    var UserService = /** @class */ (function () {
         function UserService() {
             // The list of user-set handlers
             this.userListeners = [];
@@ -232,14 +232,14 @@ var services;
             configurable: true
         });
         return UserService;
-    })();
+    }());
     services.UserService = UserService;
 })(services || (services = {}));
 /// <reference path="../references.ts" />
 var services;
 (function (services) {
     'use strict';
-    var StateService = (function () {
+    var StateService = /** @class */ (function () {
         function StateService(frontEndService, userService, errorService) {
             var _this = this;
             this.stateListeners = [];
@@ -274,7 +274,7 @@ var services;
             this.frontEndService.putUserState(this.currentState);
         };
         return StateService;
-    })();
+    }());
     services.StateService = StateService;
 })(services || (services = {}));
 var error;
@@ -285,7 +285,7 @@ var error;
 var error;
 (function (error_1) {
     'use strict';
-    var ErrorController = (function () {
+    var ErrorController = /** @class */ (function () {
         function ErrorController($scope, $location, errorService) {
             // Clear the error when the user clicks "return to home"
             $scope.clearError = function () { return errorService.clearError(); };
@@ -309,7 +309,7 @@ var error;
             });
         }
         return ErrorController;
-    })();
+    }());
     error_1.ErrorController = ErrorController;
 })(error || (error = {}));
 var login;
@@ -320,7 +320,7 @@ var login;
 var login;
 (function (login) {
     'use strict';
-    var LoginController = (function () {
+    var LoginController = /** @class */ (function () {
         function LoginController($scope, $location, frontEndService) {
             var _this = this;
             this.$scope = $scope;
@@ -342,7 +342,7 @@ var login;
             };
         }
         return LoginController;
-    })();
+    }());
     login.LoginController = LoginController;
 })(login || (login = {}));
 /// <reference path="../../references.ts" />
@@ -359,7 +359,7 @@ var main;
     var share;
     (function (share) {
         'use strict';
-        var ShareController = (function () {
+        var ShareController = /** @class */ (function () {
             function ShareController($scope, $uibModalInstance, $window, frontEndService, userService) {
                 var _this = this;
                 this.$scope = $scope;
@@ -400,7 +400,7 @@ var main;
                 return "mailto:" + newUserEmail + "?subject=" + encodeURI(subject) + "&body=" + encodeURI(body);
             };
             return ShareController;
-        })();
+        }());
         share.ShareController = ShareController;
     })(share = main.share || (main.share = {}));
 })(main || (main = {}));
@@ -418,7 +418,7 @@ var main;
     var account;
     (function (account) {
         'use strict';
-        var AccountController = (function () {
+        var AccountController = /** @class */ (function () {
             function AccountController($scope, $uibModalInstance, frontEndService, userService, errorService) {
                 var _this = this;
                 this.$scope = $scope;
@@ -479,7 +479,7 @@ var main;
                 });
             };
             return AccountController;
-        })();
+        }());
         account.AccountController = AccountController;
     })(account = main.account || (main.account = {}));
 })(main || (main = {}));
@@ -489,7 +489,7 @@ var main;
     var progress;
     (function (progress) {
         'use strict';
-        var EnhancedProgressModel = (function () {
+        var EnhancedProgressModel = /** @class */ (function () {
             function EnhancedProgressModel(dueDate) {
                 this.gestationPeriod = moment.duration({ days: 280 });
                 this.daysInTrimester1 = 14 * 7;
@@ -603,7 +603,7 @@ var main;
                 configurable: true
             });
             return EnhancedProgressModel;
-        })();
+        }());
         progress.EnhancedProgressModel = EnhancedProgressModel;
     })(progress = main.progress || (main.progress = {}));
 })(main || (main = {}));
@@ -613,7 +613,7 @@ var main;
     var progress;
     (function (progress) {
         'use strict';
-        var ProgressController = (function () {
+        var ProgressController = /** @class */ (function () {
             function ProgressController($scope, frontEndService, userService, errorService) {
                 var _this = this;
                 this.$scope = $scope;
@@ -682,7 +682,7 @@ var main;
                     .success(function () { return _this.$scope.progress = null; });
             };
             return ProgressController;
-        })();
+        }());
         progress.ProgressController = ProgressController;
     })(progress = main.progress || (main.progress = {}));
 })(main || (main = {}));
@@ -710,7 +710,7 @@ var main;
             var general;
             (function (general) {
                 'use strict';
-                var GeneralStatsController = (function () {
+                var GeneralStatsController = /** @class */ (function () {
                     function GeneralStatsController($scope, isBoy, $uibModalInstance, frontEndService) {
                         var _this = this;
                         this.$scope = $scope;
@@ -775,7 +775,7 @@ var main;
                         return summary.length == 0 ? 0 : summary[0].count;
                     };
                     return GeneralStatsController;
-                })();
+                }());
                 general.GeneralStatsController = GeneralStatsController;
             })(general = stats_1.general || (stats_1.general = {}));
         })(stats = names.stats || (names.stats = {}));
@@ -805,7 +805,7 @@ var main;
             var specific;
             (function (specific) {
                 'use strict';
-                var SpecificStatsController = (function () {
+                var SpecificStatsController = /** @class */ (function () {
                     function SpecificStatsController($scope, isBoy, name, $uibModalInstance, frontEndService) {
                         var _this = this;
                         this.$scope = $scope;
@@ -877,7 +877,7 @@ var main;
                         return stat.length > 0 ? stat[0].count : NaN;
                     };
                     return SpecificStatsController;
-                })();
+                }());
                 specific.SpecificStatsController = SpecificStatsController;
             })(specific = stats_2.specific || (stats_2.specific = {}));
         })(stats = names.stats || (names.stats = {}));
@@ -897,7 +897,7 @@ var main;
     var names;
     (function (names) {
         'use strict';
-        var NamesController = (function () {
+        var NamesController = /** @class */ (function () {
             function NamesController($scope, $uibModal, frontEndService, userService, errorService) {
                 var _this = this;
                 this.$scope = $scope;
@@ -916,7 +916,7 @@ var main;
                         month: (entry.suggestedDate.month - 1),
                         date: entry.suggestedDate.day,
                     });
-                    return moment.utc().valueOf() - suggestedDate.valueOf() < 3 * 24 * 60 * 60 * 1000;
+                    return moment.utc().valueOf() - suggestedDate.valueOf() < 1 * 24 * 60 * 60 * 1000;
                 };
                 this.userService.userSetEvent(function (user) {
                     _this.user = user;
@@ -1032,7 +1032,7 @@ var main;
                 });
             };
             return NamesController;
-        })();
+        }());
         names.NamesController = NamesController;
     })(names = main.names || (main.names = {}));
 })(main || (main = {}));
@@ -1050,7 +1050,7 @@ var main;
     var nav;
     (function (nav) {
         'use strict';
-        var NavController = (function () {
+        var NavController = /** @class */ (function () {
             function NavController($scope, $uibModal, $locale, frontEndService, userService, stateService, errorService) {
                 var _this = this;
                 this.$scope = $scope;
@@ -1130,7 +1130,7 @@ var main;
                 });
             };
             return NavController;
-        })();
+        }());
         nav.NavController = NavController;
     })(nav = main.nav || (main.nav = {}));
 })(main || (main = {}));
@@ -1142,7 +1142,7 @@ var main;
 var main;
 (function (main) {
     'use strict';
-    var MainController = (function () {
+    var MainController = /** @class */ (function () {
         function MainController($scope, userService, errorService) {
             $scope.isLoggedIn = false;
             $scope.isError = false;
@@ -1205,7 +1205,7 @@ var main;
             MainController.errorDirective
         ];
         return MainController;
-    })();
+    }());
     main.MainController = MainController;
 })(main || (main = {}));
 /// <reference path="typings/tsd.d.ts" />
@@ -1238,7 +1238,7 @@ var main;
 /// <reference path="main/nav/nav.controller.ts" />
 /// <reference path="main/main.model.ts" />
 /// <reference path="main/main.controller.ts" />
-/// <reference path="app.ts" /> 
+/// <reference path="app.ts" />
 /// <reference path="references.ts" />
 var App;
 (function (App) {
@@ -1248,12 +1248,12 @@ var App;
     app.service('userService', services.UserService);
     app.service('stateService', services.StateService);
     // The root directive to launch the app
-    app.directive('root', function () { return {
+    app.directive('root', function () { return ({
         controller: main.MainController,
         restrict: 'E',
         replace: true,
         templateUrl: '/scripts/main/main.view.html'
-    }; });
+    }); });
     // Add the directives required by the main view
     main.MainController.directives.forEach(function (d) { return app.directive(d.name, function () { return d; }); });
 })(App || (App = {}));
